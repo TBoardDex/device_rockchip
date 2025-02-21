@@ -7,7 +7,7 @@ config RK_DEBIAN_SUPPORTS
 		RK_CHIP_FAMILY = "rk3399" || RK_CHIP_FAMILY = "rk3399pro" || \
 		RK_CHIP_FAMILY = "rk3566_rk3568" || RK_CHIP_FAMILY = "rk3588" || \
 		RK_CHIP_FAMILY = "rk3562" || RK_CHIP_FAMILY = "rk3528" || \
-		RK_CHIP_FAMILY = "rk3576"
+		RK_CHIP_FAMILY = "rk3576" || RK_CHIP_FAMILY = "rv1126b"
 
 comment "Debian is not supported for this chip"
 	depends on !RK_DEBIAN_SUPPORTS
