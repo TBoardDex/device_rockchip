@@ -113,7 +113,8 @@ build_yocto()
 			return 1
 		fi
 
-		echo "include $RK_CHIP_DIR/$RK_YOCTO_CFG" > build/conf/local.conf
+		ln -rsf "$RK_CHIP_DIR/$RK_YOCTO_CFG"  build/conf/custom.conf
+		echo "include custom.conf" > build/conf/local.conf
 
 		message "=========================================="
 		message "          Start building for custom $RK_YOCTO_CFG"
