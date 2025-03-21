@@ -4,8 +4,8 @@ SITE="${1:-www.baidu.com}"
 SITE_NAME="${2:-$SITE}"
 EXTRA_MSG="$3"
 
-case "$(curl -I -s -m 3 -w "%{http_code}" -o /dev/null "$SITE")" in
-	1*|2*|3*) exit 0;;
+case "$(curl -I -s -m 3 -w "%{http_code}" -o /dev/null "http://${SITE#*://}")" in
+	2*|3*|4*) exit 0;;
 	*)
 		if ping "$SITE" -c 1 -W 1 &>/dev/null; then
 			exit 0
