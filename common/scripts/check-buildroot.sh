@@ -28,3 +28,13 @@ fi
 
 # Buildroot brmake needs unbuffer
 "$RK_SCRIPTS_DIR/check-package.sh" unbuffer unbuffer "expect expect-dev"
+
+# Check for local libiconv
+echo -e "\e[35m"
+if echo "main() {}" | \
+	gcc -x c -liconv - -o /dev/null -Wl,--verbose 2>&1 | \
+	grep "libiconv\..* succeeded$"; then
+	echo "Found libiconv, please remove it!"
+	exit 1
+fi
+echo -e "\e[0m"
