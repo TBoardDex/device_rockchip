@@ -56,6 +56,41 @@ build_buildroot()
 	finish_build build_buildroot $@
 }
 
+gen_yocto_conf()
+{
+	echo "include include/common.conf"
+	echo "include include/debug.conf"
+	echo "include include/audio.conf"
+
+	if [ "$RK_YOCTO_MULTIMEDIA" ]; then
+		echo "include include/multimedia.conf"
+	fi
+
+	if [ "$RK_WIFIBT" ]; then
+		echo "include include/wifibt.conf"
+	fi
+
+	echo
+	echo "MACHINE = \"$RK_YOCTO_MACHINE\""
+
+	if [ "$RK_YOCTO_DISPLAY_PLATFORM_NONE" ]; then
+		return 0
+	fi
+
+	if [ "$RK_CHIP_HAS_GPU" ]; then
+		echo "include include/glmark2.conf"
+
+		if [ "$RK_YOCTO_CHROMIUM" ]; then
+			echo "include include/browser.conf"
+		fi
+	elif [ "$RK_YOCTO_DISPLAY_PLATFORM_WAYLAND" ]; then
+		echo "PACKAGECONFIG:append:pn-weston-init = \" use-pixman\""
+	fi
+
+	echo
+	echo "DISPLAY_PLATFORM := \"$RK_YOCTO_DISPLAY_PLATFORM\""
+}
+
 build_yocto()
 {
 	check_config RK_YOCTO || false
@@ -95,6 +130,8 @@ build_yocto()
 
 		echo
 
+		echo "PREFERRED_PROVIDER_virtual/bootloader = \"u-boot-dummy\""
+		echo "PREFERRED_PROVIDER_u-boot = \"u-boot-dummy\""
 		echo "PREFERRED_PROVIDER_virtual/kernel := \"linux-dummy\""
 		echo "LINUXLIBCVERSION := \"$RK_KERNEL_VERSION_RAW-custom%\""
 		echo "OLDEST_KERNEL := \"$RK_KERNEL_VERSION_RAW\""
@@ -113,40 +150,14 @@ build_yocto()
 			return 1
 		fi
 
-		ln -rsf "$RK_CHIP_DIR/$RK_YOCTO_CFG"  build/conf/custom.conf
+		ln -rsf "$RK_CHIP_DIR/$RK_YOCTO_CFG" build/conf/custom.conf
 		echo "include custom.conf" > build/conf/local.conf
 
 		message "=========================================="
 		message "          Start building for custom $RK_YOCTO_CFG"
 		message "=========================================="
 	else
-		{
-			echo "include include/common.conf"
-			echo "include include/debug.conf"
-			echo "include include/display.conf"
-			echo "include include/multimedia.conf"
-			echo "include include/audio.conf"
-
-			if [ "$RK_WIFIBT" ]; then
-				echo "include include/wifibt.conf"
-			fi
-
-			if [ "$RK_CHIP_HAS_GPU" ]; then
-				echo "include include/glmark2.conf"
-
-				if [ "$RK_YOCTO_CHROMIUM" ]; then
-					echo "include include/browser.conf"
-				fi
-			elif [ "$RK_YOCTO_DISPLAY_PLATFORM" = wayland ]; then
-				echo "PACKAGECONFIG:append:pn-weston-init = \" use-pixman\""
-			fi
-
-			echo
-			echo "DISPLAY_PLATFORM := \"$RK_YOCTO_DISPLAY_PLATFORM\""
-
-			echo
-			echo "MACHINE = \"$RK_YOCTO_MACHINE\""
-		} > build/conf/local.conf
+		gen_yocto_conf > build/conf/local.conf
 
 		message "=========================================="
 		message "          Start building for machine($RK_YOCTO_MACHINE)"
@@ -168,7 +179,7 @@ build_yocto()
 			return 1
 		fi
 
-		ln -rsf "$RK_CHIP_DIR/$RK_YOCTO_EXTRA_CFG"  build/conf/extra.conf
+		ln -rsf "$RK_CHIP_DIR/$RK_YOCTO_EXTRA_CFG" build/conf/extra.conf
 		echo "include extra.conf" >> build/conf/local.conf
 	fi
 
