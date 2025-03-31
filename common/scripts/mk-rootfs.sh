@@ -163,9 +163,13 @@ build_yocto()
 		message "          With extra config:($RK_YOCTO_EXTRA_CFG)"
 		message "=========================================="
 
-		{
-			echo "include $RK_CHIP_DIR/$RK_YOCTO_EXTRA_CFG"
-		} >> build/conf/local.conf
+		if [ ! -r "$RK_CHIP_DIR/$RK_YOCTO_EXTRA_CFG" ]; then
+			error "$RK_CHIP_DIR/$RK_YOCTO_EXTRA_CFG not exist!"
+			return 1
+		fi
+
+		ln -rsf "$RK_CHIP_DIR/$RK_YOCTO_EXTRA_CFG"  build/conf/extra.conf
+		echo "include extra.conf" >> build/conf/local.conf
 	fi
 
 
