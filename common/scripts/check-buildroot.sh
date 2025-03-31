@@ -26,6 +26,8 @@ fi
 
 "$RK_SCRIPTS_DIR/check-header.sh" libc6 dirent.h libc6-dev
 
+"$RK_SCRIPTS_DIR/check-package.sh" gettext msgmerge
+
 # Buildroot brmake needs unbuffer
 "$RK_SCRIPTS_DIR/check-package.sh" unbuffer unbuffer "expect expect-dev"
 
