@@ -48,6 +48,7 @@ config RK_YOCTO_MACHINE
 	default "rockchip-rk3399-sapphire-excavator" \
 		if RK_CHIP_FAMILY = "rk3399"
 	default "rockchip-rk3588-evb" if RK_CHIP_FAMILY = "rk3588"
+	default "rockchip-custom" if RK_CHIP_FAMILY = "rv1126b"
 	default "rockchip-${RK_CHIP}-evb"
 	help
 	  Basename of machine file under yocto/meta-rockchip/conf/machine/.
@@ -77,6 +78,7 @@ endif # yocto cfg default
 
 config RK_YOCTO_EXTRA_CFG
 	string "extra custom local config"
+	default "yocto-${RK_CHIP_FAMILY}" if RK_CHIP_FAMILY = "rv1126b"
 	help
 	  Name of yocto extra custom local config file under $RK_CHIP_DIR.
 
