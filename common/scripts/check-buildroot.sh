@@ -28,9 +28,6 @@ fi
 
 "$RK_SCRIPTS_DIR/check-package.sh" gettext msgmerge
 
-# Buildroot brmake needs unbuffer
-"$RK_SCRIPTS_DIR/check-package.sh" unbuffer unbuffer "expect expect-dev"
-
 # Check for local libiconv
 echo -e "\e[35m"
 if echo "main() {}" | \
