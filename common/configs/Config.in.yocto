@@ -85,7 +85,7 @@ endif # yocto cfg default
 
 config RK_YOCTO_EXTRA_CFG
 	string "extra custom local config"
-	default "yocto-${RK_CHIP_FAMILY}" if RK_CHIP_FAMILY = "rv1126b"
+	default "yocto-${RK_CHIP_FAMILY}.conf" if RK_CHIP_FAMILY = "rv1126b"
 	help
 	  Name of yocto extra custom local config file under $RK_CHIP_DIR.
 
