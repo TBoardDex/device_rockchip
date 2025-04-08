@@ -77,6 +77,9 @@ gen_yocto_conf()
 		return 0
 	fi
 
+	echo
+	echo "include include/display.conf"
+
 	if [ "$RK_CHIP_HAS_GPU" ]; then
 		echo "include include/glmark2.conf"
 
