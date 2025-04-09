@@ -15,7 +15,7 @@ build_wifibt()
 
 	RKWIFIBT_DIR="$RK_SDK_DIR/external/rkwifibt"
 
-	echo -e "\e[36m"
+	echo -ne "\e[35m"
 	if find "$RKWIFIBT_DIR"/* -not -user $RK_OWNER_UID | grep ""; then
 		error "Found files owned by other users!"
 		error "$RKWIFIBT_DIR is dirty for building!"
@@ -26,7 +26,7 @@ build_wifibt()
 		error "sudo chown -h -R $RK_OWNER:$RK_OWNER $RKWIFIBT_DIR/"
 		exit 1
 	fi
-	echo -e "\e[0m"
+	echo -ne "\e[0m"
 
 	# Make sure that the kernel is ready
 	if [ ! -r kernel/include/generated/asm-offsets.h ]; then

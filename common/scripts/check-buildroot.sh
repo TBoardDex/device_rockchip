@@ -24,16 +24,16 @@ if ! "$BUILDROOT_DIR/support/dependencies/check-host-make.sh" 4.0 make \
 	exit 1
 fi
 
-"$RK_SCRIPTS_DIR/check-header.sh" libc6 dirent.h libc6-dev
+"$RK_SCRIPTS_DIR/check-header.sh" dirent.h libc6-dev
 
-"$RK_SCRIPTS_DIR/check-package.sh" gettext msgmerge
+"$RK_SCRIPTS_DIR/check-package.sh" msgmerge gettext
 
 # Check for local libiconv
-echo -e "\e[35m"
+echo -ne "\e[35m"
 if echo "main() {}" | \
 	gcc -x c -liconv - -o /dev/null -Wl,--verbose 2>&1 | \
 	grep "libiconv\..* succeeded$"; then
 	echo "Found libiconv, please remove it!"
 	exit 1
 fi
-echo -e "\e[0m"
+echo -ne "\e[0m"

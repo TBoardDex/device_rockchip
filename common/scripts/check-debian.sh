@@ -69,8 +69,7 @@ case "$RK_DEBIAN_ARCH" in
 		exit 1 ;;
 esac
 
-"$RK_SCRIPTS_DIR/check-package.sh" "qemu-$QEMU_ARCH-static(qemu-user-static)" \
-	qemu-$QEMU_ARCH-static qemu-user-static
+"$RK_SCRIPTS_DIR/check-package.sh" qemu-$QEMU_ARCH-static qemu-user-static
 
 if ! [ -r /proc/sys/fs/binfmt_misc/qemu-$QEMU_ARCH ]; then
 	echo -e "\e[35m"
