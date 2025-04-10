@@ -188,6 +188,20 @@ for d in lib bin sbin; do
 	fi
 done
 
+# For developing usage
+cleanup_symlinks() {
+	if [ -e "$TARGET_DIR/etc/os-release" ]; then
+		return 0
+	fi
+
+	for d in lib bin sbin; do
+		if [ -L "$TARGET_DIR/$d" ]; then
+			rm "$TARGET_DIR/$d"
+		fi
+	done
+}
+trap cleanup_symlinks EXIT
+
 if basename "$(realpath "$0")" | grep -q "^post-"; then
 	notice "Running $(basename "$0") for $TARGET_DIR ($POST_OS init=$POST_INIT)..."
 	cd "$TARGET_DIR"
