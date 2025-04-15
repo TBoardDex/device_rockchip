@@ -250,12 +250,10 @@ build_wifibt()
 		$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8852be modules
 	fi
 
-	if ! [[ "$RK_KERNEL_VERSION_RAW" = "6.1" ]];then
-		echo "building realtek bt drivers"
-		$KMAKE M=$RKWIFIBT_DIR/drivers/bluetooth_uart_driver
-		if [ -n "$WIFI_USB" ]; then
-			$KMAKE M=$RKWIFIBT_DIR/drivers/bluetooth_usb_driver
-		fi
+	echo "building realtek bt drivers"
+	$KMAKE M=$RKWIFIBT_DIR/drivers/bluetooth_uart_driver
+	if [ -n "$WIFI_USB" ]; then
+		$KMAKE M=$RKWIFIBT_DIR/drivers/bluetooth_usb_driver
 	fi
 
 	mkdir -p $TARGET_DIR/etc/ $TARGET_DIR/usr/bin/ \
@@ -346,6 +344,13 @@ build_wifibt()
 
 		cp $RKWIFIBT_DIR/drivers/$WIFI_KO_DIR/*.ko \
 			$TARGET_DIR/lib/modules/
+
+		cp $RKWIFIBT_DIR/drivers/bluetooth_uart_driver/hci_uart.ko \
+			$TARGET_DIR/lib/modules/
+		if [ -n "$WIFI_USB" ]; then
+			cp $RKWIFIBT_DIR/drivers/bluetooth_usb_driver/rtk_btusb.ko \
+				$TARGET_DIR/lib/modules/
+		fi
 	fi
 
 	if [[ "$RK_WIFIBT_MODULES" =~ "RK" ]];then
