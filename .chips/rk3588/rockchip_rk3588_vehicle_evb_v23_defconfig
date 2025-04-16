@@ -1,3 +1,4 @@
+# RK_WIFIBT is not set
 RK_UBOOT_CFG_FRAGMENTS="rk3588-car"
 RK_KERNEL_CFG_FRAGMENTS="rk3588_vehicle.config"
 RK_KERNEL_DTS_NAME="rk3588-vehicle-evb-v23-linux"
