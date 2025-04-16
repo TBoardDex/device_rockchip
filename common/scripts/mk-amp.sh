@@ -181,7 +181,7 @@ build_images()
 		for p in FIRMWARE_CPU_BASE DRAM_SIZE SRAM_BASE SRAM_SIZE SHMEM_BASE \
 			 SHMEM_SIZE LINUX_RPMSG_BASE LINUX_RPMSG_SIZE CUR_CPU
 		do
-			echo $(env | grep -w $p && true)
+			echo $(set | grep -w "^$p" && true)
 		done
 
 		SYS=$(amp_get_string "$ITS_IMAGE" sys)
