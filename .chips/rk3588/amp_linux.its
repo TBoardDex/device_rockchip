@@ -37,7 +37,7 @@
 		};
 	};
 
-	ext_memory {
+	share {
 		shm_base        = <0x07800000>;
 		shm_size        = <0x00400000>;
 		rpmsg_base      = <0x07c00000>;
