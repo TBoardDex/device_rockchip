@@ -38,10 +38,10 @@
 	};
 
 	ext_memory {
-		shm_base        = <0x47800000>;
+		shm_base        = <0x47900000>;
 		shm_size        = <0x00400000>;
-		rpmsg_base      = <0x47c00000>;
-		rpmsg_size      = <0x00500000>;
+		rpmsg_base      = <0x47d00000>;
+		rpmsg_size      = <0x00400000>;
 	};
 
 	configurations {
