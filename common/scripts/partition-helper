@@ -407,8 +407,7 @@ rk_extra_part_cfg()
 {
 	[ "$RK_EXTRA_PARTITION_STR" ] || return 0
 
-	RK_EXTRA_PARTITION_ARRAY=( $(echo ${RK_EXTRA_PARTITION_STR//@/ } | \
-		xargs -n 1 | sort) )
+	RK_EXTRA_PARTITION_ARRAY=( $(echo ${RK_EXTRA_PARTITION_STR//@/ }) )
 	PART_IDX=$(( ${1:-1} - 1 ))
 	echo "${RK_EXTRA_PARTITION_ARRAY[$PART_IDX]}"
 }
