@@ -19,7 +19,7 @@ RK_AVB_TOOL=$RK_AVB_TOOL_DIR/avb_user_tool.sh
 # 1 -> input misc	# 2 -> output misc
 # 3 -> size		# 4 -> enc_key
 
- check_var_in_list()
+check_var_in_list()
 {
 	echo $2 | fgrep -wq $1 && return 0 || return 1
 }
@@ -376,9 +376,27 @@ build_security_ramboot()
 	finish_build $@
 }
 
+build_security_remote_sign()
+{
+	if [ "$RK_SECURITY_REMOTE_SIGN" ]; then
+		rm -rf $RK_OUTDIR/security-remote
+		mkdir -p $RK_OUTDIR/security-remote
+		cp -rf u-boot/fit/fit_signcfg $RK_OUTDIR/security-remote/
+		cp -rf rkbin/tools $RK_OUTDIR/security-remote/
+		rsync -avh --copy-links --exclude='update.img' \
+			"$RK_FIRMWARE_DIR/" \
+			"$RK_OUTDIR/security-remote/"
+		"$RK_OUTDIR/security-remote/tools/fit-sign.sh" --key-dir u-boot/keys \
+			--src-dir $RK_OUTDIR/security-remote \
+			--out-dir $RK_OUTDIR/security-remote
+	fi
+
+	finish_build $@
+}
+
 # Hooks
 
-BUILD_CMDS="security-createkeys security-misc security-ramboot security-system"
+BUILD_CMDS="security-createkeys security-misc security-ramboot security-system security-remote-sign"
 HID_CMDS="createkeys misc system ramboot_prebuild sign"
 
 build_avb_sign()
@@ -413,6 +431,7 @@ build_hook()
 			;;
 		security-ramboot) build_security_ramboot $@;;
 		security-system) build_security_system $@;;
+		security-remote-sign) build_security_remote_sign $@;;
 	esac
 
 	echo $HID_CMDS | fgrep "$item" -wq || return 0
@@ -434,6 +453,7 @@ usage_hook()
 	usage_oneline "security-misc" "build misc with system encryption key"
 	usage_oneline "security-ramboot[:system_image]" "build security ramboot"
 	usage_oneline "security-system[:system_image]" "build security system"
+	usage_oneline "security-remote-sign" "build remote signed image"
 }
 
 clean_hook()

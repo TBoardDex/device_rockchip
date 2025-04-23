@@ -92,7 +92,7 @@ do_build()
 					"kernel/resource.img"
 			fi
 
-			if [ "$RK_SECURITY" ]; then
+			if [ "$RK_SECURITY" ] && [ -z "$RK_SECURITY_REMOTE_SIGN" ]; then
 				if [ "$RK_SECURITY_CHECK_BASE" ]; then
 					run_command \
 						"$RK_SCRIPTS_DIR/mk-security.sh" \
