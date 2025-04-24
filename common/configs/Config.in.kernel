@@ -41,6 +41,10 @@ config RK_KERNEL_CFG
 	default "rk3308_linux_defconfig" if RK_CHIP_FAMILY = "rk3308"
 	default "rockchip_linux_defconfig"
 
+config RK_KERNEL_CFG_FRAGMENTS_BASIC
+	bool "basic defconfig fragments"
+	default y
+
 config RK_KERNEL_CFG_FRAGMENTS
 	string "defconfig fragments"
 

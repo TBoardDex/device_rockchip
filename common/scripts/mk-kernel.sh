@@ -28,6 +28,10 @@ do_make_kernel_config()
 		BASIC_CFG_FRAGMENTS="$BASIC_CFG_FRAGMENTS $cfg"
 	done
 
+	if [ -z "$RK_KERNEL_CFG_FRAGMENTS_BASIC" ]; then
+		unset BASIC_CFG_FRAGMENTS
+	fi
+
 	run_command $KMAKE $KERNEL_CFG $BASIC_CFG_FRAGMENTS $KERNEL_CFG_FRAGMENTS
 }
 
