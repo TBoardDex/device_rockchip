@@ -61,5 +61,9 @@ config RK_DEBIAN_MIRROR
 	string "mirror source for APT"
 	default "mirrors.ustc.edu.cn"
 
+config RK_DEBIAN_LINUX_HEADERS
+	bool "install linux-headers"
+	default y
+
 endif # Debian
 endmenuconfig # Debian

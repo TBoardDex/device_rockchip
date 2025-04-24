@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+[ "$RK_DEBIAN_LINUX_HEADERS" ] || exit 0
+
 TARGET_DIR="$1"
 [ "$TARGET_DIR" ] || exit 1
 
