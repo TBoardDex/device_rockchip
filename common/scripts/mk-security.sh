@@ -163,11 +163,37 @@ rk_security_setup_system_encryption()
 	echo "key=$key" >> $outdir/security.info
 }
 
+rk_security_setup_system_encryption_by_openssl()
+{
+	target_image=$(readlink -f $1)
+	echo "target_image=$target_image"
+	outdir=$(cd $(dirname $target_image);pwd)
+	security_system=$outdir/security_system.img
+
+	key_path=$UBOOT/keys/system_enc_key
+	if [ ! -f "$key_path" ]; then
+		echo "key file not found"
+		exit -1
+	fi
+
+	split -b 1M -d -a 3 $target_image $outdir/rootfs_part_
+	for part in $outdir/rootfs_part_*; do
+		openssl enc -aes-256-ecb \
+			-in "$part" \
+			-out "${part}_enc" \
+			-K $(xxd -p -c 32 $key_path | tr -d '\n') \
+			-nopad
+	done
+	cat $outdir/rootfs_part_*_enc > $security_system
+	rm -rf $outdir/rootfs_part_*
+}
+
 rk_security_setup_system()
 {
 	case $1 in
 		system-verity) shift; rk_security_setup_system_verity $@ ;;
 		system-encryption) shift; rk_security_setup_system_encryption $@ ;;
+		system-encryption-by-openssl) shift; rk_security_setup_system_encryption_by_openssl $@ ;;
 		base) ;;
 		*) exit -1;;
 	esac
@@ -183,15 +209,23 @@ rk_security_setup_ramboot_prebuild()
 	shift
 	optee_storage=$1
 
+	ROOTFS_IMG=rootfs.${RK_ROOTFS_TYPE}
+	ROOTFS_DIR="$RK_OUTDIR/$ROOTFS"
+	IMAGE_DIR="$ROOTFS_DIR/images"
+
 	case $check_method in
 		system-encryption) echo encryption ;;
+		system-encryption-by-openssl) echo encryption-by-openssl ;;
 		system-verity) echo verity ;;
 		base) return ;;
 		*) exit -1;;
 	esac
 
-	if [ ! -f "$init_in" ] || [ ! -f "$security_file" ]; then
-		echo -e "\e[41;1;37minit_in or security_file is missed\e[0m"
+	if [ ! -f "$init_in" ]; then
+		echo -e "\e[41;1;37minit_in is missed\e[0m"
+		exit -1
+	elif [ "$check_method" != "system-encryption-by-openssl" ] && [ ! -f "$security_file" ]; then
+		echo -e "\e[41;1;37msecurity_file is missed\e[0m"
 		exit -1
 	fi
 
@@ -203,6 +237,10 @@ rk_security_setup_ramboot_prebuild()
 		sed -i "s/ENC_EN=/ENC_EN=true/" "$init_file"
 		sed -i "s/CIPHER=/CIPHER=$cipher/" "$init_file"
 		sed -i "s/SECURITY_STORAGE=RPMB/SECURITY_STORAGE=$optee_storage/" "$init_file"
+	elif [ "$check_method" == "system-encryption-by-openssl" ]; then
+		sed -i "s/ENC_EN_BY_OPENSSL=/ENC_EN_BY_OPENSSL=true/" "$init_file"
+		system_size=$(ls -l "$(realpath $RK_FIRMWARE_DIR/rootfs.img)" | awk '{printf $5}')
+		sed -i "s/SYSTEM_SIZE=/SYSTEM_SIZE=$system_size/" "$init_file"
 	else
 		source "$security_file"
 		sed -i "s/ENC_EN=/ENC_EN=false/" "$init_file"

@@ -384,8 +384,9 @@ build_hook()
 		"$RK_SCRIPTS_DIR/mk-ramboot.sh" "$ROOTFS_DIR" \
 			"$IMAGE_DIR/$ROOTFS_IMG" "$RK_BOOT_FIT_ITS"
 		ln -rsf "$ROOTFS_DIR/ramboot.img" "$RK_FIRMWARE_DIR/boot.img"
-	elif [ "$RK_SECURITY_CHECK_SYSTEM_ENCRYPTION" -o \
-		"$RK_SECURITY_CHECK_SYSTEM_VERITY" ]; then
+	elif [ "$RK_SECURITY_CHECK_SYSTEM_ENCRYPTION" ] || \
+	     [ "$RK_SECURITY_CHECK_SYSTEM_VERITY" ] || \
+	     [ "$RK_SECURITY_CHECK_SYSTEM_ENCRYPTION_BY_OPENSSL" ]; then
 		if [ "$RK_ROOTFS_TYPE" == "ubi" ]; then
 			ln -rsf "${RK_OUTDIR}/security/security-system.ubi" \
 				"$RK_FIRMWARE_DIR/rootfs.img"
