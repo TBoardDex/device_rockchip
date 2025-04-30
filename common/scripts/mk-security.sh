@@ -76,6 +76,8 @@ rk_security_setup_createkeys()
 	if [ "$1" == "system-encryption" ]; then
 		openssl rand -out $UBOOT/keys/system_enc_key -hex 32
 	fi
+
+	openssl rand -out $UBOOT/keys/aes128.key -hex 16
 }
 
 rk_security_setup_system_verity()
@@ -421,12 +423,17 @@ build_security_remote_sign()
 		mkdir -p $RK_OUTDIR/security-remote
 		cp -rf u-boot/fit/fit_signcfg $RK_OUTDIR/security-remote/
 		cp -rf rkbin/tools $RK_OUTDIR/security-remote/
-		rsync -avh --copy-links --exclude='update.img' \
+		loader_file=$(realpath "$RK_FIRMWARE_DIR/MiniLoaderAll.bin")
+		cp -rf "$loader_file" "$RK_OUTDIR/security-remote/$(basename "$loader_file")"
+		rsync -avh --copy-links --exclude='update.img' --exclude='MiniLoaderAll.bin' \
 			"$RK_FIRMWARE_DIR/" \
 			"$RK_OUTDIR/security-remote/"
-		"$RK_OUTDIR/security-remote/tools/fit-sign.sh" --key-dir u-boot/keys \
+		cd $RK_OUTDIR/security-remote/tools
+		"./fit-sign.sh" --key-dir $RK_SDK_DIR/u-boot/keys \
 			--src-dir $RK_OUTDIR/security-remote \
 			--out-dir $RK_OUTDIR/security-remote
+		cd -
+		mv "$RK_OUTDIR/security-remote/$(basename "$loader_file")" $RK_OUTDIR/security-remote/MiniLoaderAll.bin
 	fi
 
 	finish_build $@
