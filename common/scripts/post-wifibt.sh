@@ -159,6 +159,27 @@ build_wifibt()
 		fi
 	fi
 
+	if [[ "$RK_WIFIBT_MODULES" = "AIC8800_SDIO" ]];then
+		echo "building AIC8800 SDIO"
+		$KMAKE M=$RKWIFIBT_DIR/drivers/aic8800_sdio
+	fi
+
+	if [[ "$RK_WIFIBT_MODULES" = "AIC8800_USB" ]];then
+		echo "building AIC8800 USB"
+		$KMAKE M=$RKWIFIBT_DIR/drivers/aic8800_usb
+		$KMAKE M=$RKWIFIBT_DIR/drivers/aic_btusb
+	fi
+
+	if [[ "$RK_WIFIBT_MODULES" = "AIC8800_PCIE" ]];then
+		echo "building AIC8800 PCIE"
+		$KMAKE M=$RKWIFIBT_DIR/drivers/aic8800_pcie
+	fi
+
+	if [[ "$RK_WIFIBT_MODULES" = "AIC8800X2_PCIE" ]];then
+		echo "building AIC8800X2 PCIE"
+		$KMAKE M=$RKWIFIBT_DIR/drivers/aic8800d80x2_pcie
+	fi
+
 	if [[ "$RK_WIFIBT_MODULES" = "CYW4354" ]];then
 		echo "building CYW4354"
 		ln -sf chips/CYW4354_Makefile \
@@ -336,6 +357,13 @@ build_wifibt()
 				$TARGET_DIR/lib/firmware/rtlbt/
 			cp $RKWIFIBT_DIR/firmware/realtek/$RK_WIFIBT_MODULES/* \
 				$TARGET_DIR/lib/firmware/
+
+			cp $RKWIFIBT_DIR/drivers/bluetooth_uart_driver/hci_uart.ko \
+				$TARGET_DIR/lib/modules/
+			if [ -n "$WIFI_USB" ]; then
+				cp $RKWIFIBT_DIR/drivers/bluetooth_usb_driver/rtk_btusb.ko \
+					$TARGET_DIR/lib/modules/
+			fi
 		else
 			echo "INFO: $RK_WIFIBT_MODULES isn't bluetooth?"
 		fi
@@ -378,6 +406,46 @@ build_wifibt()
 		cp $RKWIFIBT_DIR/firmware/broadcom/$RK_WIFIBT_MODULES/bt/* \
 			$TARGET_DIR/lib/firmware/
 		cp $RKWIFIBT_DIR/drivers/bcmdhd/*.ko $TARGET_DIR/lib/modules/
+	fi
+
+	if [[ "$RK_WIFIBT_MODULES" =~ "AIC8800_SDIO" ]];then
+		echo "Install AIC file to rootfs"
+		cp $RKWIFIBT_DIR/firmware/aic/sdio/*/* \
+			$TARGET_DIR/lib/firmware/
+		cp $RKWIFIBT_DIR/drivers/aic8800_sdio/aic8800_btlpm/*.ko \
+			$TARGET_DIR/lib/modules/
+		cp $RKWIFIBT_DIR/drivers/aic8800_sdio/aic8800_fdrv/*.ko \
+			$TARGET_DIR/lib/modules/
+		cp $RKWIFIBT_DIR/drivers/aic8800_sdio/aic8800_bsp/*.ko \
+			$TARGET_DIR/lib/modules/
+	fi
+
+	if [[ "$RK_WIFIBT_MODULES" =~ "AIC8800X2_PCIE" ]];then
+		echo "Install AIC file to rootfs"
+		cp $RKWIFIBT_DIR/firmware/aic/pcie/aic8800D80X2/* \
+			$TARGET_DIR/lib/firmware/
+		cp $RKWIFIBT_DIR/drivers/aic8800_pcie/aic8800_fdrv/*.ko \
+			$TARGET_DIR/lib/modules/
+	fi
+
+	if [[ "$RK_WIFIBT_MODULES" =~ "AIC8800_PCIE" ]];then
+		echo "Install AIC file to rootfs"
+		cp $RKWIFIBT_DIR/firmware/aic/pcie/aic8800D80/* \
+			$TARGET_DIR/lib/firmware/
+		cp $RKWIFIBT_DIR/drivers/aic8800_pcie/aic8800_fdrv/*.ko \
+			$TARGET_DIR/lib/modules/
+	fi
+
+	if [[ "$RK_WIFIBT_MODULES" =~ "AIC8800_USB" ]];then
+		echo "Install AIC file to rootfs"
+		cp $RKWIFIBT_DIR/firmware/aic/usb/*/* \
+			$TARGET_DIR/lib/firmware/
+		cp $RKWIFIBT_DIR/drivers/aic8800_usb/aic_load_fw/*.ko \
+			$TARGET_DIR/lib/modules/
+		cp $RKWIFIBT_DIR/drivers/aic8800_usb/aic8800_fdrv/*.ko \
+			$TARGET_DIR/lib/modules/
+		cp $RKWIFIBT_DIR/drivers/aic_btusb/*.ko \
+			$TARGET_DIR/lib/modules/
 	fi
 
 	# Install boot services
