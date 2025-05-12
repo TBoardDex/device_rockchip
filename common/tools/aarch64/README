@@ -117,6 +117,6 @@ For building kmsgrab:
 
 External sources:
 1/ rkwifibt:
-ee9539a wifibt-init.sh: Fix error when wlan0 been renamed
+05e3445 wifi: rtl8821cs: support kernel 6.1
 2/ rktoolkit:
 bc1d85d vendor_storage: fixed hex string begin with 00, get wrong string length when read
