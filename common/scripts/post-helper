@@ -152,7 +152,6 @@ if [ -e "$TARGET_DIR/etc/init.d/rcS" ]; then
 	fi
 fi
 if [ -d "$TARGET_DIR/etc/systemd/system/" ]; then
-	mkdir -p "$TARGET_DIR/lib/systemd/system/"
 	POST_INIT="${POST_INIT:+$POST_INIT }systemd"
 fi
 export POST_INIT="${POST_INIT:-none}"

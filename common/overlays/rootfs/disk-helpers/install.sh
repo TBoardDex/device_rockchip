@@ -1,8 +1,9 @@
 #!/bin/bash -e
 
-POST_ROOTFS_ONLY=1
+[ "$RK_ROOTFS_BOOTANIM" ] || exit 0
 
-source "${RK_POST_HELPER:-$(dirname "$(realpath "$0")")/post-helper}"
+TARGET_DIR="$1"
+[ "$TARGET_DIR" ] || exit 1
 
 if [ "$RK_DISK_HELPERS_DISABLED" ]; then
 	notice "Disabling disk-helpers..."
@@ -13,11 +14,7 @@ if [ "$RK_DISK_HELPERS_DISABLED" ]; then
 	exit 0
 fi
 
-cd "$RK_SDK_DIR"
-
-mkdir -p "$TARGET_DIR/usr/bin"
-
-install -m 0755 external/rkscript/disk-helper "$TARGET_DIR/usr/bin/"
+OVERLAY_DIR="$(dirname "$(realpath "$0")")"
 
 if [ "$RK_DISK_HELPERS_MOUNTALL" ]; then
 	DISK_HELPER_TYPE=mount
@@ -33,12 +30,11 @@ fi
 
 message "Installing $DISK_HELPER_TYPE service..."
 
-install -m 0755 external/rkscript/$DISK_HELPER_TYPE-helper \
-	"$TARGET_DIR/usr/bin/"
+$RK_RSYNC "$OVERLAY_DIR/usr" "$TARGET_DIR/"
 
-SCRIPT=$(ls external/rkscript/ | grep ${DISK_HELPER_TYPE}all.sh)
+SCRIPT=$(ls "$OVERLAY_DIR" | grep ${DISK_HELPER_TYPE}all.sh)
 
-install_busybox_service external/rkscript/$SCRIPT
+install_busybox_service "$OVERLAY_DIR/$SCRIPT"
 
 if [ "$DISK_HELPER_TYPE" = mount ]; then
 	if [ "$RK_DISK_AUTO_FORMAT" ]; then
@@ -57,5 +53,5 @@ if [ "$DISK_HELPER_TYPE" = mount ]; then
 	exit 0
 fi
 
-install_sysv_service external/rkscript/$SCRIPT S
-install_systemd_service external/rkscript/$DISK_HELPER_TYPE-all.service
+install_sysv_service "$OVERLAY_DIR/$SCRIPT" S
+install_systemd_service "$OVERLAY_DIR/$DISK_HELPER_TYPE-all.service"
