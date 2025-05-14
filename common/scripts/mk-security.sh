@@ -409,9 +409,13 @@ build_security_ramboot()
 			"$IMAGE_DIR/rootfs.$RK_SECURITY_INITRD_TYPE"
 	fi
 
-	"$RK_SCRIPTS_DIR/mk-security.sh" sign boot \
-		$DST_DIR/ramboot.img $RK_FIRMWARE_DIR/
-	notice "Security boot.img has update in output/firmware/boot.img"
+	if [ "$RK_SECURITY_REMOTE_SIGN" ]; then
+		notice "Non-security boot.img has update in output/firmware/boot.img"
+	else
+		"$RK_SCRIPTS_DIR/mk-security.sh" sign boot \
+			$DST_DIR/ramboot.img $RK_FIRMWARE_DIR/
+		notice "Security boot.img has update in output/firmware/boot.img"
+	fi
 
 	finish_build $@
 }
