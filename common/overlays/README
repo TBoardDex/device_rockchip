@@ -3,7 +3,7 @@ Overlay dirs
 
 1. The rootfs/*/ would be automatically installed into the rootfs.
 
-2. The <OS>/ would be automatically installed into the related OS (including recovery, etc.).
+2. The <OS>/*/ would be automatically installed into the related OS (including recovery, etc.).
 
 3. Set RK_ROOTFS_EXTRA_OVERLAY_DIRS for custom rootfs overlay dirs.
 

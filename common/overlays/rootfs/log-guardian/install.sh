@@ -7,7 +7,7 @@ TARGET_DIR="$1"
 
 OVERLAY_DIR="$(dirname "$(realpath "$0")")"
 
-message "Installing log-guardian..."
+message "Installing log-guardian service..."
 
 $RK_RSYNC "$OVERLAY_DIR/usr" "$TARGET_DIR/"
 

@@ -7,7 +7,7 @@ TARGET_DIR="$1"
 
 OVERLAY_DIR="$(dirname "$(realpath "$0")")"
 
-message "Installing prebuilt tools: $OVERLAY_DIR to $TARGET_DIR..."
+message "Installing prebuilt tools..."
 
 DEST_DIR="$TARGET_DIR/usr/bin/"
 mkdir -p "$DEST_DIR"

@@ -1,1 +1,0 @@
-../overlays/recovery/install.sh

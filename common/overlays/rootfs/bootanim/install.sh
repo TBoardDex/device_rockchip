@@ -7,7 +7,7 @@ TARGET_DIR="$1"
 
 OVERLAY_DIR="$(dirname "$(realpath "$0")")"
 
-message "Installing bootanim to $TARGET_DIR..."
+message "Installing bootanim service..."
 
 $RK_RSYNC "$OVERLAY_DIR/usr" "$TARGET_DIR/"
 sed -i "s/^\(TIMEOUT=\).*/\1$RK_ROOTFS_BOOTANIM_TIMEOUT/" \

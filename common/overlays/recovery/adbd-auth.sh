@@ -1,1 +1,0 @@
-../rootfs/usb-gadget/adbd-auth.sh

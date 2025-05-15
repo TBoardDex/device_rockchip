@@ -41,43 +41,6 @@ if [ -r "$TARGET_DIR/etc/nsswitch.conf" ]; then
 	sed -i 's/\<compat$/files/' "$TARGET_DIR/etc/nsswitch.conf"
 fi
 
-if [ -x "$TARGET_DIR/usr/bin/weston" ]; then
-	sed -i 's/\(WESTON_USER=\)weston/\1root/' \
-		"$TARGET_DIR/etc/init.d/weston"
-
-	message "Installing weston overlay: $OVERLAY_DIR/weston to $TARGET_DIR..."
-	$RK_RSYNC "$OVERLAY_DIR/weston/" "$TARGET_DIR/" \
-		--exclude="$(basename "$(realpath "$0")")"
-
-	message "Installing Rockchip test scripts to $TARGET_DIR..."
-	$RK_RSYNC "$RK_SDK_DIR/external/rockchip-test/" \
-		"$TARGET_DIR/rockchip-test/" \
-		--include="camera/" --include="video/" --exclude="/*"
-fi
-
-if [ "$RK_YOCTO_USBMOUNT" ]; then
-	message "Installing usbmount..."
-
-	tar xvf "$OVERLAY_DIR/usbmount.tar" -C "$TARGET_DIR"
-
-	for type in storage udisk sdcard; do
-		mkdir -p "$TARGET_DIR/media/$type"{1,2,3}
-		mkdir -p "$TARGET_DIR/mnt/$type"
-		rm -rf "$TARGET_DIR/media/${type}0"
-		ln -sf "/mnt/$type" "$TARGET_DIR/media/${type}0"
-	done
-fi
-
-if [ -x "$TARGET_DIR/usr/bin/pulseaudio" ]; then
-	message "Installing pulseaudio files..."
-
-	$RK_RSYNC "$OVERLAY_DIR/pulseaudio/etc/pulse" "$TARGET_DIR/etc/"
-
-	mkdir -p "$TARGET_DIR/etc/rcS.d"
-	install -m 0755 "$OVERLAY_DIR/pulseaudio/etc/rcS.d/S50pulseaudio" \
-		"$TARGET_DIR/etc/rcS.d/"
-fi
-
 if [ -r "$TARGET_DIR/lib/systemd/system/dhcpcd.service" ]; then
 	message "Enabling dhcpcd service..."
 
@@ -85,3 +48,5 @@ if [ -r "$TARGET_DIR/lib/systemd/system/dhcpcd.service" ]; then
 	mkdir -p "$WANTS_DIR"
 	ln -rsf "$TARGET_DIR/lib/systemd/system/dhcpcd.service" "$WANTS_DIR/"
 fi
+
+$RK_RSYNC "$OVERLAY_DIR/" "$TARGET_DIR/"
