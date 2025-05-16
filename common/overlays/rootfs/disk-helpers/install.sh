@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-[ "$RK_ROOTFS_BOOTANIM" ] || exit 0
-
 TARGET_DIR="$1"
 [ "$TARGET_DIR" ] || exit 1
 
