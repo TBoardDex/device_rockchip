@@ -62,6 +62,9 @@ config RK_RECOVERY_FIT_ITS
 
 endif # FIT image
 
+config RK_RECOVERY_CONSOLE_LOG
+	bool "redirect log output to serial console"
+
 menuconfig RK_RECOVERY_ADBD
 	bool "Android Debug Bridge Daemon (adbd)"
 
