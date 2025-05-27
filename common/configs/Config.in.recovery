@@ -64,7 +64,6 @@ endif # FIT image
 
 menuconfig RK_RECOVERY_ADBD
 	bool "Android Debug Bridge Daemon (adbd)"
-	default y
 
 if RK_RECOVERY_ADBD
 
