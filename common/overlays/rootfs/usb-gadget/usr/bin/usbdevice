@@ -187,7 +187,7 @@ usb_instances()
 
 check_fuser()
 {
-	if ! fuser --help &>/dev/null; then
+	if ! fuser "$0" >/dev/null 2>&1; then
 		echo "Your fuser is missing, please install it."
 		return 1
 	fi
@@ -245,6 +245,25 @@ usb_symlink()
 	[ -e $2 ] || ln -s $1 $2
 }
 
+usb_do_start_daemon()
+{
+	DAEMON=$1
+	shift
+	ARGS=$@
+
+	usb_msg "Starting daemon: $DAEMON $ARGS"
+
+	/sbin/start-stop-daemon -Sqx $DAEMON -- $ARGS >> \
+		$(usb_daemon_file).log 2>&1 || true
+
+	# The daemon might fork itself
+	while /sbin/start-stop-daemon -Kqtx $DAEMON; do
+		sleep .5
+	done
+
+	usb_msg "Exited daemon: $DAEMON $ARGS"
+}
+
 usb_start_daemon()
 {
 	# Already started
@@ -263,16 +282,7 @@ usb_start_daemon()
 		while usb_is_enabled; do
 			# Don't spawn after stopped
 			if usb_daemon_is_enabled; then
-				usb_msg "Starting daemon: $@" >> "$LOG_FILE"
-				/sbin/start-stop-daemon -Sqx $1 -- ${@:2} >> \
-					$(usb_daemon_file).log 2>&1 || true
-
-				# The daemon might fork itself
-				while /sbin/start-stop-daemon -Kqtx $1; do
-					sleep .5
-				done
-
-				usb_msg "Exited daemon: $@" >> "$LOG_FILE"
+				usb_do_start_daemon $@ >> "$LOG_FILE"
 			fi
 			sleep .5
 		done
@@ -753,6 +763,8 @@ usb_stop()
 
 	# Clear functions to avoid stopping them again
 	unset OLD_FUNCS
+
+	rm -f $TMP_DIR/.usb*
 }
 
 usb_restart()
