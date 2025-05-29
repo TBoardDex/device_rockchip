@@ -52,6 +52,9 @@ install_overlays()
 	done
 }
 
+# Install common overlays
+install_overlays common
+
 # Install overlays for recovery, ramboot, etc.
 if [ -z "$POST_ROOTFS" ]; then
 	install_overlays $POST_OS
