@@ -371,11 +371,6 @@ convert_mount_opts()
 
 prepare_part()
 {
-	# Ignore external storages
-	case "$MOUNT_POINT" in
-		/mnt/* | /media/*) return 1 ;;
-	esac
-
 	DEV="$(realpath "$(normalize_device | head -n 1)" 2>/dev/null)"
 	[ "$DEV" ] || return 1
 
