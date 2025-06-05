@@ -425,17 +425,21 @@ build_security_remote_sign()
 {
 	if [ "$RK_SECURITY_REMOTE_SIGN" ]; then
 		rm -rf $RK_OUTDIR/security-remote
-		mkdir -p $RK_OUTDIR/security-remote
-		cp -rf u-boot/fit/fit_signcfg $RK_OUTDIR/security-remote/
-		cp -rf rkbin/tools $RK_OUTDIR/security-remote/
+		mkdir -p $RK_OUTDIR/security-remote/src
+		cp -rf u-boot/fit/fit_signcfg $RK_OUTDIR/security-remote/src/
+		cp -rf rkbin/tools $RK_OUTDIR/security-remote
 		loader_file=$(realpath "$RK_FIRMWARE_DIR/MiniLoaderAll.bin")
-		cp -rf "$loader_file" "$RK_OUTDIR/security-remote/$(basename "$loader_file")"
-		rsync -avh --copy-links --exclude='update.img' --exclude='MiniLoaderAll.bin' \
-			"$RK_FIRMWARE_DIR/" \
-			"$RK_OUTDIR/security-remote/"
+		cp -rf "$loader_file" "$RK_OUTDIR/security-remote/src/$(basename "$loader_file")"
+		uboot_file=$(realpath "$RK_FIRMWARE_DIR/uboot.img")
+		cp -rf "$uboot_file" "$RK_OUTDIR/security-remote/src/$(basename "$uboot_file")"
+		recovery_file=$(realpath "$RK_FIRMWARE_DIR/recovery.img")
+		cp -rf "$recovery_file" "$RK_OUTDIR/security-remote/src/$(basename "$recovery_file")"
+		boot_file=$(realpath "$RK_FIRMWARE_DIR/boot.img")
+		cp -rf "$boot_file" "$RK_OUTDIR/security-remote/src/$(basename "$boot_file")"
+		userdata_file=$(realpath "$RK_FIRMWARE_DIR/userdata.img")
 		cd $RK_OUTDIR/security-remote/tools
 		"./fit-sign.sh" --key-dir $RK_SDK_DIR/u-boot/keys \
-			--src-dir $RK_OUTDIR/security-remote \
+			--src-dir $RK_OUTDIR/security-remote/src \
 			--out-dir $RK_OUTDIR/security-remote
 		cd -
 		mv "$RK_OUTDIR/security-remote/$(basename "$loader_file")" $RK_OUTDIR/security-remote/MiniLoaderAll.bin
