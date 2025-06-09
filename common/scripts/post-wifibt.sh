@@ -4,6 +4,24 @@ POST_ROOTFS_ONLY=1
 
 source "${RK_POST_HELPER:-$(dirname "$(realpath "$0")")/post-helper}"
 
+check_bt()
+{
+	if [ "$RK_WIFIBT_BT_DAEMON_DISABLED" ]; then
+		return 1
+	fi
+
+	if [ "$RK_WIFIBT_BT_DAEMON_DEFAULT" ]; then
+		KERNEL_MAJOR=${RK_KERNEL_VERSION_RAW%.*}
+		KERNEL_MINOR=${RK_KERNEL_VERSION_RAW#*.}
+		if [ "$KERNEL_MAJOR" -eq 6 ] && [ "$KERNEL_MINOR" -gt 1 ]; then
+			notice "Using BT drivers for kernel >6.1"
+			return 1
+		fi
+	fi
+
+	return 0
+}
+
 build_wifibt()
 {
 	check_config RK_KERNEL RK_WIFIBT RK_WIFIBT_MODULES || return 0
@@ -287,11 +305,7 @@ build_wifibt()
 	ln -rsf "$TARGET_DIR/lib/firmware" "$TARGET_DIR/system/etc/firmware"
 	ln -rsf "$TARGET_DIR/system" "$TARGET_DIR/vendor"
 
-	echo "installing tools and scripts"
-	ensure_tools "$TARGET_DIR/usr/bin/brcm_patchram_plus1" \
-		"$TARGET_DIR/usr/bin/dhd_priv" \
-		"$TARGET_DIR/usr/bin/rtk_hciattach"
-
+	echo "installing scripts"
 	install -m 0655 $RKWIFIBT_DIR/conf/* "$TARGET_DIR/etc/"
 	install -m 0755 $RKWIFIBT_DIR/scripts/* "$TARGET_DIR/usr/bin/"
 	rm -f "$TARGET_DIR/usr/bin/wifibt-sleep-hook.sh"
@@ -303,6 +317,26 @@ build_wifibt()
 	if [ "$RK_ROOTFS_PREBUILT_TOOLS" ]; then
 		echo "installing prebuilt debug tools"
 		install -m 0755 $RKWIFIBT_DIR/bin/arm/* "$TARGET_DIR/usr/bin/"
+	fi
+
+	if check_bt; then
+		if ! grep -wq wireless-bluetooth "$RK_KERNEL_DTB"; then
+			echo -e "\e[35m"
+			echo "Missing wireless-bluetooth in $RK_KERNEL_DTS!"
+			echo -e "\e[0m"
+			exit 1
+		fi
+
+		echo "installing BT daemons"
+		ensure_tools "$TARGET_DIR/usr/bin/brcm_patchram_plus1" \
+			"$TARGET_DIR/usr/bin/dhd_priv" \
+			"$TARGET_DIR/usr/bin/rtk_hciattach"
+	else
+		notice "Disabling BT daemon..."
+		sed -i "/^start_bt()/ {
+			n
+			a\\\treturn 0 # BT is not available!
+		}" "$TARGET_DIR/usr/bin/wifibt-init.sh"
 	fi
 
 	if [[ "$RK_WIFIBT_MODULES" = "ALL_CY" ]];then
