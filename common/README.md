@@ -9,20 +9,31 @@ Rockchip Linux SDK for Rockchip SoC boards
 ```shell
    ~$ make help
 ```
-2. Choose SDK defconfig:
+2. Cleanup
 ```shell
-   ~$ make rockchip_defconfig
+   ~$ make cleanall
 ```
-3. Modify SDK configurations:
+. Choose SDK defconfig:
 ```shell
-   ~$ make menuconfig
-   ~$ make savedefconfig
+   ~$ make defconfig
 ```
-4. Modify kernel configurations:
+4. Modify SDK configurations:
+```shell
+   ~$ make config
+```
+5. Modify kernel configurations:
 ```shell
    ~$ make kconfig
 ```
-5. Place custom rootfs files in `device/rockchip/common/overlays/rootfs/default`.
-6. Run `make` to build the images. Logs are saved in `output/log/latest`.
-7. Flash the generated `output/firmware/update.img` to your device.
-8. Boot your device and enjoy.
+6. Modify partition table:
+```shell
+   ~$ make edit-parts
+```
+7. Modify the firmware packaging manifest file:
+```shell
+   ~$ make edit-package-file
+```
+8. Place custom rootfs files in `device/rockchip/common/overlays/rootfs/default`.
+9. Run `make` to build the images. Logs are saved in `output/log/latest`.
+10. Flash the generated `output/firmware/update.img` to your device.
+11. Boot your device and enjoy.
