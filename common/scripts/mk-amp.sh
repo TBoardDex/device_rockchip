@@ -242,7 +242,7 @@ build_hook()
 		set +a
 	fi
 
-	CORE_NUMBERS=$(grep -wcE "amp[0-9]* {|mcu {" $ITS_FILE)
+	CORE_NUMBERS=$(grep -wcE "amp[0-9]* {|mcu {|hpmcu {" $ITS_FILE)
 	echo "CORE_NUMBERS=$CORE_NUMBERS"
 
 	EXT_SHARE=$(amp_get_node "$(cat $ITS_FILE)" share)
@@ -262,7 +262,7 @@ build_hook()
 		fi
 	fi
 
-	ITS_IMAGES=$(grep -wE "amp[0-9]* {|mcu {" $ITS_FILE | grep -oE "amp[0-9]*|mcu")
+	ITS_IMAGES=$(grep -wE "amp[0-9]* {|mcu {|hpmcu {" $ITS_FILE | grep -oE "amp[0-9]*|mcu")
 	build_images "$ITS_IMAGES"
 
 	cd "$RK_OUTDIR"
