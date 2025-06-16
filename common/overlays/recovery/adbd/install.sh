@@ -19,11 +19,8 @@ install_adbd()
 		echo "export USB_PRODUCT=\"$RK_RECOVERY_ADBD_PRODUCT\""
 	} > "$TARGET_DIR/etc/profile.d/usbdevice.sh"
 
-	$RK_RSYNC "$OVERLAY_DIR/usr" "$OVERLAY_DIR/lib" "$TARGET_DIR/"
-
-	install_sysv_service "$OVERLAY_DIR/S50usbdevice.sh" 5 4 3 2 K01 0 1 6
-	install_busybox_service "$OVERLAY_DIR/S50usbdevice.sh"
-	install_systemd_service "$OVERLAY_DIR/usbdevice.service"
+	$RK_RSYNC "$OVERLAY_DIR/usr" "$OVERLAY_DIR/lib" "$OVERLAY_DIR/etc" \
+		"$TARGET_DIR/"
 
 	if [ -e "$TARGET_DIR/usr/bin/adbd" ] && \
 		! grep -q ADBD_SHELL "$TARGET_DIR/usr/bin/adbd"; then
