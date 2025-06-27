@@ -75,8 +75,8 @@ do_build()
 		kernel-modules | modules)
 			MOD_DIR="${2:-$RK_OUTDIR/kernel-modules}"
 			run_command $KMAKE modules
-			run_command $KMAKE modules_install \
-				INSTALL_MOD_PATH="$MOD_DIR"
+			run_command make -C "$RK_SDK_DIR/kernel/" \
+				modules_install INSTALL_MOD_PATH="$MOD_DIR"
 			run_command find "$MOD_DIR/lib/modules/" -type l -delete
 			;;
 		kernel*)
