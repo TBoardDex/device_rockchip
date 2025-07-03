@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 
 case "$(uname -m)" in
 	armv7l) KERNEL_ARCH=armhf ;;
@@ -20,6 +20,7 @@ if [ ! -d debian/ ]; then
 	echo "4.4/4.19: debian/4.19.282-1"
 	echo "5.10: debian/5.10.179-1"
 	echo "6.1: debian/6.1.76-1"
+	echo "6.12: debian/6.12.33-1"
 	echo -e "\e[0m"
 	exit 1
 fi
@@ -60,7 +61,8 @@ make_subdir()
 		top_srcdir="$CUR_DIR" top_rulesdir="$CUR_DIR/debian/rules.d" \
 		OUTDIR=$SUBDIR VERSION=$KVER2 KERNEL_ARCH=$KERNEL_ARCH \
 		KBUILD_HOSTCFLAGS="-static" KBUILD_HOSTLDFLAGS="-static -lz" \
-		HOSTCC="gcc -static" HOSTLD="ld -static" $@
+		HOSTCC="gcc -static" HOSTLD="ld -static" LDFLAGS="-static -lz" \
+		$@
 }
 
 echo
@@ -91,7 +93,7 @@ if [ "$KVER2" = 4.4 ]; then
 
 	make_subdir scripts
 	make_subdir scripts install
-else # 4.19/5.10/6.1
+else # 4.19/5.10/6.1/6.12
 	make_subdir scripts
 	make_subdir tools/objtool
 	make_subdir scripts install
