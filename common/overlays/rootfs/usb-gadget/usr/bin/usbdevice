@@ -353,6 +353,16 @@ ntb_prepare()
 # ---- uac1
 uac1_prepare()
 {
+	echo 3 > p_chmask
+	echo 2 > p_ssize
+	echo 8000,16000,44100,48000 > p_srate
+
+	echo 3 > c_chmask
+	echo 2 > c_ssize
+	echo 4 > req_number
+	echo 8000,16000,44100,48000 > c_srate
+
+	# Enable volume control
 	for f in $(find . -name "*_feature_unit"); do
 		echo 1 >$f
 	done
@@ -362,6 +372,11 @@ uac1_prepare()
 uac2_prepare()
 {
 	uac1_prepare
+
+	# Disable UAC 2.0 volume control by default for Windows system
+	for f in $(find . -name "*_feature_unit"); do
+		echo 0 >$f
+	done
 }
 
 # ---- mtp
