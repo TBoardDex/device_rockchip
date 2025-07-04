@@ -389,8 +389,35 @@ mtp_prepare()
 }
 
 # ---- uvc
+uvc_frame_interval()
+{
+	WIDTH=$(echo $2 | cut -d'x' -f1)
+	HEIGHT=$(echo $2 | cut -d'x' -f2)
+
+	case $1 in
+		yuyv)
+			if [ $WIDTH -ge 1280 ]; then
+				# echo "1000000\n2000000"
+				echo "333333\n666666\n1000000\n2000000"
+			else
+				echo "333333\n666666\n1000000\n2000000"
+			fi
+			;;
+		mjpeg)
+			echo "333333\n666666\n1000000\n2000000"
+			;;
+		h264)
+			echo "333333\n400000\n500000\n666666\n1000000\n2000000"
+			;;
+		h265)
+			echo "333333\n400000\n500000"
+			;;
+	esac
+}
+
 uvc_add_yuyv()
 {
+	FRAME_INTERVAL=$(uvc_frame_interval yuyv $1)
 	WIDTH=$(echo $1 | cut -d'x' -f1)
 	HEIGHT=$(echo $1 | cut -d'x' -f2)
 	DIR=streaming/uncompressed/u/${HEIGHT}p
@@ -400,15 +427,16 @@ uvc_add_yuyv()
 	mkdir -p $DIR
 	echo $WIDTH > $DIR/wWidth
 	echo $HEIGHT > $DIR/wHeight
-	echo 333333 > $DIR/dwDefaultFrameInterval
+	echo -e $FRAME_INTERVAL | head -n 1 > $DIR/dwDefaultFrameInterval
 	echo $((WIDTH * HEIGHT * 20)) > $DIR/dwMinBitRate
 	echo $((WIDTH * HEIGHT * 20)) > $DIR/dwMaxBitRate
 	echo $((WIDTH * HEIGHT * 2)) > $DIR/dwMaxVideoFrameBufferSize
-	echo -e "333333\n666666\n1000000\n2000000" | tee $DIR/dwFrameInterval
+	echo -e "$FRAME_INTERVAL" | tee $DIR/dwFrameInterval
 }
 
 uvc_add_mjpeg()
 {
+	FRAME_INTERVAL=$(uvc_frame_interval mjpeg $1)
 	WIDTH=$(echo $1 | cut -d'x' -f1)
 	HEIGHT=$(echo $1 | cut -d'x' -f2)
 	DIR=streaming/mjpeg/m/${HEIGHT}p
@@ -418,36 +446,57 @@ uvc_add_mjpeg()
 	mkdir -p $DIR
 	echo $WIDTH > $DIR/wWidth
 	echo $HEIGHT > $DIR/wHeight
-	echo 333333 > $DIR/dwDefaultFrameInterval
+	echo -e $FRAME_INTERVAL | head -n 1 > $DIR/dwDefaultFrameInterval
 	echo $((WIDTH * HEIGHT * 20)) > $DIR/dwMinBitRate
 	echo $((WIDTH * HEIGHT * 20)) > $DIR/dwMaxBitRate
 	echo $((WIDTH * HEIGHT * 2)) > $DIR/dwMaxVideoFrameBufferSize
-	echo -e "333333\n666666\n1000000\n2000000" | tee $DIR/dwFrameInterval
+	echo -e "$FRAME_INTERVAL" | tee $DIR/dwFrameInterval
 }
 
 uvc_add_h264()
 {
+	FRAME_INTERVAL=$(uvc_frame_interval h264 $1)
 	WIDTH=$(echo $1 | cut -d'x' -f1)
 	HEIGHT=$(echo $1 | cut -d'x' -f2)
-	DIR=streaming/framebased/f/${HEIGHT}p
+	DIR=streaming/framebased/f1/${HEIGHT}p
 
 	[ ! -d $DIR ] || return 0
 
 	mkdir -p $DIR
 	echo $WIDTH > $DIR/wWidth
 	echo $HEIGHT > $DIR/wHeight
-	echo 333333 > $DIR/dwDefaultFrameInterval
+	echo -e $FRAME_INTERVAL | head -n 1 > $DIR/dwDefaultFrameInterval
 	echo $((WIDTH * HEIGHT * 10)) > $DIR/dwMinBitRate
 	echo $((WIDTH * HEIGHT * 10)) > $DIR/dwMaxBitRate
-	echo -e "333333\n666666\n1000000\n2000000" | tee $DIR/dwFrameInterval
+	echo -e "$FRAME_INTERVAL" | tee $DIR/dwFrameInterval
+}
+
+uvc_add_h265()
+{
+	FRAME_INTERVAL=$(uvc_frame_interval h265 $1)
+	WIDTH=$(echo $1 | cut -d'x' -f1)
+	HEIGHT=$(echo $1 | cut -d'x' -f2)
+	DIR=streaming/framebased/f2/${HEIGHT}p
+
+	[ ! -d $DIR ] || return 0
+
+	mkdir -p $DIR
+	echo $WIDTH > $DIR/wWidth
+	echo $HEIGHT > $DIR/wHeight
+	echo -e $FRAME_INTERVAL | head -n 1 > $DIR/dwDefaultFrameInterval
+	echo $((WIDTH * HEIGHT * 10)) > $DIR/dwMinBitRate
+	echo $((WIDTH * HEIGHT * 10)) > $DIR/dwMaxBitRate
+	echo -e "$FRAME_INTERVAL" | tee $DIR/dwFrameInterval
 }
 
 uvc_support_resolutions()
 {
 	case ${1:-yuyv} in
-		yuyv)	echo "640x480 1280x720";;
-		mjpeg)	echo "640x480 1280x720 1920x1080 2560x1440 2592x1944";;
-		h264)	echo "640x480 1280x720 1920x1080";;
+		yuyv)	echo "320x240 640x360 640x480 1280x720 1920x1080" ;;
+		mjpeg)	echo "320x240 640x360 640x480 768x448 1280x720 \
+			1024x768 1920x1080 2560x1440" ;;
+		h264)	echo "640x480 1280x720 1920x1080 2560x1440 3840x2160" ;;
+		h265)	echo "640x480 1280x720 1920x1080 2560x1440 3840x2160" ;;
 	esac
 }
 
@@ -481,14 +530,29 @@ uvc_prepare()
 			uvc_add_h264 $res >/dev/null
 		done
 
-		echo -ne H264 > $UVC_DIR/streaming/framebased/f/guidFormat \
+		echo -ne H264 > $UVC_DIR/streaming/framebased/f1/guidFormat \
 			2>/dev/null || true
 
-		usb_symlink $UVC_DIR/streaming/framebased/f \
-			$UVC_DIR/streaming/header/h/f
+		usb_symlink $UVC_DIR/streaming/framebased/f1 \
+			$UVC_DIR/streaming/header/h/f1
 	fi
 
-	echo 2048 > $UVC_DIR/streaming_maxpacket 2>/dev/null || true
+	UVC_H265_RES=$(uvc_support_resolutions h265)
+	if [ -n "$UVC_H265_RES" ]; then
+		for res in $UVC_H265_RES; do
+			uvc_add_h265 $res >/dev/null
+		done
+
+		echo -ne H265 > $UVC_DIR/streaming/framebased/f2/guidFormat \
+			2>/dev/null || true
+
+		usb_symlink $UVC_DIR/streaming/framebased/f2 \
+			$UVC_DIR/streaming/header/h/f2
+	fi
+
+	echo 3072 > $UVC_DIR/streaming_maxpacket 2>/dev/null || true
+	echo 2 > $UVC_DIR/uvc_num_request 2>/dev/null || true
+	echo 5 > $UVC_DIR/streaming_maxburst 2>/dev/null || true
 
 	usb_symlink $UVC_DIR/control/header/h $UVC_DIR/control/class/fs/h
 	usb_symlink $UVC_DIR/control/header/h $UVC_DIR/control/class/ss/h
