@@ -1,7 +1,7 @@
-From 1b6df6dc745035bd722037419029b2f9e8b296a5 Mon Sep 17 00:00:00 2001
+From 25bdbba553e08a5e3e07d38f05562ad7f2e7d1d6 Mon Sep 17 00:00:00 2001
 From: Jeffy Chen <jeffy.chen@rock-chips.com>
-Date: Thu, 11 Apr 2024 10:04:17 +0800
-Subject: [PATCH] mconf: Hide submenu for disabled menuconfig
+Date: Tue, 8 Jul 2025 18:04:20 +0800
+Subject: [PATCH 2/3] mconf: Hide submenu for disabled menuconfig
 
 Signed-off-by: Jeffy Chen <jeffy.chen@rock-chips.com>
 ---
