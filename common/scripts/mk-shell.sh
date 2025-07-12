@@ -41,7 +41,10 @@ pre_build_hook()
 				PS1='\u@\h:\w ($BUILDROOT_CFG)\$ ' \
 				/bin/bash -norc"
 			;;
-		*) PS1="\u@\h:\w (rksdk)\$ " /bin/bash --norc ;;
+		*)
+			export PATH="$RK_SCRIPTS_DIR:$PATH"
+			PS1="\u@\h:\w (rksdk)\$ " /bin/bash --norc
+			;;
 	esac
 
 	warning "Exit from $BASH_SOURCE ${@:-shell}."
