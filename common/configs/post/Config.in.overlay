@@ -47,7 +47,7 @@ menuconfig RK_ROOTFS_BOOTANIM
 config RK_ROOTFS_BOOTANIM_TIMEOUT
 	int "timeout"
 	depends on RK_ROOTFS_BOOTANIM
-	default 3
+	default 10
 
 endmenuconfig # Bootanim
 
