@@ -417,9 +417,12 @@ build_hook()
 			ln -rsf "$IMAGE_DIR/security_system.img" \
 				"$RK_FIRMWARE_DIR/rootfs.img"
 		fi
+	elif [ "$RK_FASTBOOT" ]; then
+		"$RK_SCRIPTS_DIR/mk-fitimage.sh" $IMAGE_DIR/fastboot_ramdisk.img "$RK_FASTBOOT_ROOTFS_ITS" \
+			"$RK_SDK_DIR/$RK_KERNEL_IMG" "$RK_SDK_DIR/$RK_KERNEL_DTB" \
+			"$RK_SDK_DIR/kernel/resource.img" "$IMAGE_DIR/$ROOTFS_IMG"
 
-
-
+		ln -rsf "$IMAGE_DIR/fastboot_ramdisk.img" "$RK_FIRMWARE_DIR/rootfs.img"
 	else
 		ln -rsf "$IMAGE_DIR/$ROOTFS_IMG" "$RK_FIRMWARE_DIR/rootfs.img"
 	fi
