@@ -25,13 +25,13 @@ build_buildroot()
 		if [ "$RK_ROOTFS_TYPE" == "ubi" ]; then
 			# UBIFS DOES NOT support R/W block device,
 			# so it only support RO encrypted image.
-			SUFFIX=squashfs
+			ROOTFS=rootfs.squashfs
 		else
-			SUFFIX=$RK_ROOTFS_TYPE
+			ROOTFS=$RK_ROOTFS_IMG
 		fi
 
 		"$RK_SCRIPTS_DIR/mk-security.sh" system \
-			$RK_SECURITY_CHECK_METHOD $IMAGE_DIR/rootfs.$SUFFIX
+			$RK_SECURITY_CHECK_METHOD $IMAGE_DIR/$ROOTFS
 
 		if [ "$RK_ROOTFS_TYPE" == "ubi" ]; then
 			# Force to using dynamic to faster bootup.
@@ -350,7 +350,7 @@ build_hook()
 		ROOTFS=$1
 	fi
 
-	ROOTFS_IMG=rootfs.${RK_ROOTFS_TYPE}
+	ROOTFS_IMG="$RK_ROOTFS_IMG"
 	ROOTFS_DIR="$RK_OUTDIR/$ROOTFS"
 	IMAGE_DIR="$ROOTFS_DIR/images"
 
