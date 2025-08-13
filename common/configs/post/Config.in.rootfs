@@ -11,6 +11,10 @@ config RK_ROOTFS_LD_CACHE
 	bool "create /etc/ld.so.cache"
 	default y if !RK_ROOTFS_LIGHTWEIGHT
 
+config RK_ROOTFS_FORCE_RAMTMP
+	bool "force mount /tmp as a tmpfs"
+	default y
+
 source "post/Config.in.hostname"
 source "post/Config.in.locale"
 

@@ -96,6 +96,10 @@ if [ "$(readlink sbin/init)" != /lib/systemd/systemd ]; then
 	fixup_basic_part pstore /sys/fs/pstore nosuid,nodev,noexec
 fi
 
+if [ "$RK_ROOTFS_FORCE_RAMTMP" ]; then
+	fixup_basic_part tmpfs /tmp mode=1777
+fi
+
 if [ "$POST_OS" = recovery ]; then
 	rm -rf mnt/udisk mnt/sdcard mnt/usb_storage  mnt/external_sd udisk sdcard
 
