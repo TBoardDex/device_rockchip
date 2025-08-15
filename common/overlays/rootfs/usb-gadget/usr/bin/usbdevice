@@ -62,7 +62,8 @@ fi
 
 # Fall back to busybox's fuser
 if ! which fuser >/dev/null; then
-	if busybox 2>&1 | grep -wq fuser; then
+	if busybox --list | grep -wq fuser; then
+		shopt -s expand_aliases
 		alias fuser='busybox fuser'
 	fi
 fi
