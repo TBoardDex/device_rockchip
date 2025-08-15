@@ -216,12 +216,19 @@ build_debian()
 	message "          Start building $RK_DEBIAN_VERSION($ARCH)"
 	message "=========================================="
 
+	if [ "$RK_DEBIAN_SERVER" ]; then
+		TARGET=base
+	else
+		TARGET=desktop
+	fi
+
 	cd debian
-	if [ ! -f linaro-$RK_DEBIAN_VERSION-alip-*.tar.gz ]; then
-		RELEASE=$RK_DEBIAN_VERSION TARGET=desktop ARCH=$ARCH \
+	if [ ! -f linaro-$RK_DEBIAN_VERSION-$ARCH-$TARGET.tar.gz ]; then
+		rm -rf linaro-$RK_DEBIAN_VERSION-*.tar.gz
+		RELEASE=$RK_DEBIAN_VERSION TARGET=$TARGET ARCH=$ARCH \
 			./mk-base-debian.sh
 		ln -sf linaro-$RK_DEBIAN_VERSION-alip-*.tar.gz \
-			linaro-$RK_DEBIAN_VERSION-$ARCH.tar.gz
+			linaro-$RK_DEBIAN_VERSION-$ARCH-$TARGET.tar.gz
 	fi
 
 	DEBIAN_SCRIPT=mk-rootfs-$RK_DEBIAN_VERSION.sh
