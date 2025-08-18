@@ -768,7 +768,8 @@ main()
 		grep -vE "=\"\"$|_DEFAULT=y|^RK_DEFAULT_TARGET|CMDS=" | \
 		grep -vE "^RK_CONFIG|_BASE_CFG=|_LINK=|DIR=|_ENV=|_NAME=|_DTB=" | \
 		grep -vE "_HELPER=|_SUPPORTS=|_ARM64=|_ARM=|_HOST=" | \
-		grep -vE "^RK_ROOTFS_SYSTEM_|^RK_YOCTO_DISPLAY_PLATFORM_" | sort
+		grep -vE "^RK_ROOTFS_SYSTEM_|^RK_YOCTO_DISPLAY_PLATFORM_" | \
+		sort | sed "s/\(PASSWORD=\).*/\1********/"
 	echo
 
 	# Pre-build stage (submodule configuring, etc.)
