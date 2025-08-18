@@ -1,10 +1,5 @@
 #!/bin/bash -e
 
-TARGET_DIR="$1"
-[ "$TARGET_DIR" ] || exit 1
-
-OVERLAY_DIR="$(dirname "$(realpath "$0")")"
-
 message "Installing full-busybox..."
 RK_ROOTFS_PREFER_PREBUILT_TOOLS=y ensure_tools "$TARGET_DIR/bin/busybox"
 
@@ -48,5 +43,3 @@ if [ -r "$TARGET_DIR/lib/systemd/system/dhcpcd.service" ]; then
 	mkdir -p "$WANTS_DIR"
 	ln -rsf "$TARGET_DIR/lib/systemd/system/dhcpcd.service" "$WANTS_DIR/"
 fi
-
-$RK_RSYNC "$OVERLAY_DIR/" "$TARGET_DIR/"
