@@ -260,6 +260,7 @@ usage_hook()
 	usage_oneline "bmake[:<arg1>:<arg2>]" "alias of buildroot-make"
 	usage_oneline "buildroot-sdk" "build the buildroot SDK tarball"
 	usage_oneline "bsdk" "alias of buildroot-sdk"
+	usage_oneline "edit-debian-packages" "edit debian package list"
 	usage_oneline "rootfs[:<rootfs type>]" "build default rootfs"
 	usage_oneline "buildroot" "build buildroot rootfs"
 	usage_oneline "yocto" "build yocto rootfs"
@@ -315,7 +316,7 @@ init_hook()
 	fi
 }
 
-PRE_BUILD_CMDS="buildroot-config bconfig buildroot-make bmake"
+PRE_BUILD_CMDS="buildroot-config bconfig buildroot-make bmake edit-debian-packages"
 pre_build_hook()
 {
 	check_config RK_ROOTFS || false
@@ -341,6 +342,21 @@ pre_build_hook()
 				"$BUILDROOT_BOARD" "$TEMP_DIR"
 			rm -rf "$TEMP_DIR"
 
+			finish_build $@
+			;;
+		edit-debian-packages)
+			check_config RK_DEBIAN || false
+			ARCH=${RK_DEBIAN_ARCH:-armhf}
+			if [ "$RK_DEBIAN_SERVER" ]; then
+				TARGET=base
+			else
+				TARGET=desktop
+			fi
+
+			cd "$RK_SDK_DIR/debian/ubuntu-build-service/"
+			cd "$RK_DEBIAN_VERSION-$TARGET-$ARCH"
+			${EDITOR:-vi} \
+				customization/package-lists/linaro.list.chroot
 			finish_build $@
 			;;
 	esac
