@@ -17,7 +17,6 @@ if [ ! -d debian/ ]; then
 	echo "Please download it from:"
 	echo "https://salsa.debian.org/kernel-team/linux"
 	echo "Tag:"
-	echo "4.4/4.19: debian/4.19.282-1"
 	echo "5.10: debian/5.10.179-1"
 	echo "6.1: debian/6.1.76-1"
 	echo "6.12: debian/6.12.33-1"
@@ -71,31 +70,7 @@ echo
 
 sed -i 's/\(-lcrypto$\)/\1 -ldl -lpthread/' debian/rules.d/scripts/Makefile
 
-if [ "$KVER2" = 4.4 ]; then
-	sed -i -e '/_shipped/,$d' \
-		-e '$a\\n%.c: %.c_shipped\n	cat $< > $@' \
-		-e '$a\\n%.h: %.h_shipped\n	cat $< > $@' \
-		debian/rules.d/Makefile.inc
-
-	sed -i -e '/lex.c:/,$d' \
-		-e 's/kconf_id.c/zconf.hash.c/' \
-		debian/rules.d/scripts/kconfig/Makefile
-
-	sed -i -e '/parse.tab.c:/,$d' \
-		-e 's/keywords.c/keywords.hash.c/' \
-		debian/rules.d/scripts/genksyms/Makefile
-
-	sed -i '/bin2c/d' debian/rules.d/scripts/Makefile
-	sed -i 's/\(.*fixdep\)\(.*\)/\1 bin2c\2/' \
-		debian/rules.d/scripts/basic/Makefile
-
-	sed -i '/autoconf.h/d' scripts/mod/modpost.c
-
-	make_subdir scripts
-	make_subdir scripts install
-else # 4.19/5.10/6.1/6.12
-	make_subdir scripts
-	make_subdir tools/objtool
-	make_subdir scripts install
-	make_subdir tools/objtool install
-fi
+make_subdir scripts
+make_subdir tools/objtool
+make_subdir scripts install
+make_subdir tools/objtool install
