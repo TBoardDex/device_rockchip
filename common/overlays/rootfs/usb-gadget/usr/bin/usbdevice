@@ -28,6 +28,57 @@
 # 	done
 # 	ifconfig usb0 192.168.1.1
 # }
+#
+# root@rk3588:/# more /etc/usbdevice.d/ums.sh
+# #!/bin/bash
+# UMS1_FILE=${UMS1_FILE:-/userdata/ums1_shared.img}
+# UMS1_SIZE=${UMS1_SIZE:-256M}
+# UMS1_FSTYPE=${UMS1_FSTYPE:-vfat}
+# UMS1_MOUNT=${UMS1_MOUNT:-0}
+# UMS1_MOUNTPOINT=${UMS1_MOUNTPOINT:-/mnt/ums1}
+# UMS1_RO=${UMS1_RO:-0}
+#
+# UMS2_FILE=${UMS2_FILE:-/userdata/ums2_shared.img}
+# UMS2_SIZE=${UMS2_SIZE:-256M}
+# UMS2_FSTYPE=${UMS2_FSTYPE:-vfat}
+# UMS2_MOUNT=${UMS2_MOUNT:-0}
+# UMS2_MOUNTPOINT=${UMS2_MOUNTPOINT:-/mnt/ums2}
+# UMS2_RO=${UMS2_RO:-0}
+#
+# UMS_INSTANCES="mass_storage.0 mass_storage.1"
+# ums_setup()
+# {
+# 	case $instance in
+# 		mass_storage.0)
+# 			UMS_FILE=$UMS1_FILE
+# 			UMS_SIZE=$UMS1_SIZE
+# 			UMS_FSTYPE=$UMS1_FSTYPE
+# 			UMS_MOUNT=$UMS1_MOUNT
+# 			UMS_MOUNTPOINT=$UMS1_MOUNTPOINT
+# 			UMS_RO=$UMS1_RO
+# 			;;
+# 		mass_storage.1)
+# 			UMS_FILE=$UMS2_FILE
+# 			UMS_SIZE=$UMS2_SIZE
+# 			UMS_FSTYPE=$UMS2_FSTYPE
+# 			UMS_MOUNT=$UMS2_MOUNT
+# 			UMS_MOUNTPOINT=$UMS2_MOUNTPOINT
+# 			UMS_RO=$UMS2_RO
+# 			;;
+# 	esac
+# }
+# ums_pre_prepare_hook()
+# {
+# 	ums_setup
+# }
+# ums_pre_start_hook()
+# {
+# 	ums_setup
+# }
+# ums_pre_stop_hook()
+# {
+# 	ums_setup
+# }
 
 [ -z "$DEBUG" ] || set -x
 
@@ -585,7 +636,7 @@ UMS_INSTANCES=${UMS_INSTANCES:-mass_storage.0}
 
 ums_prepare()
 {
-	if ! stat "$UMS_FILE" >/dev/null 2>/dev/null; then
+	if [ ! -f "$UMS_FILE" ] && [ ! -b "$UMS_FILE" ]; then
 		usb_msg "Formating $UMS_FILE($UMS_SIZE) to $UMS_FSTYPE"
 		truncate -s $UMS_SIZE "$UMS_FILE"
 		mkfs.$UMS_FSTYPE "$UMS_FILE" || \
