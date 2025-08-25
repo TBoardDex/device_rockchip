@@ -42,13 +42,29 @@ if [ "$RK_FASTBOOT" ]; then
 		dtc -I dtb -O dts -o $DUMP_DTB_DTS $(realpath -q "$KERNEL_DTB") 2>/dev/null
 		ramdisk_c=`grep -A 3 -e ramdisk_c $DUMP_DTB_DTS | grep -w "reg"|awk -F\< '{print $2}'|awk '{print $1}'`
 		ramdisk_r=`grep -A 3 -e ramdisk_r $DUMP_DTB_DTS | grep -w "reg"|awk -F\< '{print $2}'|awk '{print $1}'`
+		ramdisk_c_size=`grep -A 3 -e ramdisk_c /tmp/tmp.11Y0YFUT0U | grep -w "reg"|awk -F'[<> ]' '{print $5}'`
+		ramdisk_r_size=`grep -A 3 -e ramdisk_r /tmp/tmp.11Y0YFUT0U | grep -w "reg"|awk -F'[<> ]' '{print $5}'`
 
 		rm -f "$DUMP_DTB_DTS"
 
 		sed -i -e "s~@RAMDISK_C@~$ramdisk_c~" "$TMP_ITS"
 		sed -i -e "s~@RAMDISK_R@~$ramdisk_r~" "$TMP_ITS"
 		notice "ramdisk_c is " $ramdisk_c
+		notice "ramdisk_c_size is " $ramdisk_c_size
 		notice "ramdisk_r is " $ramdisk_r
+		notice "ramdisk_r_size is " $ramdisk_r_size
+
+		if [ $((ramdisk_c_size)) -lt `du -bL $RAMDISK_IMG | awk '{print $1}'` ]; then
+			error "The size of $RAMDISK_IMG is larger than $ramdisk_c_size"
+			error "Please check the ramdisk_c node of ${KERNEL_DTB%.*}.dts"
+			exit 1
+		fi
+
+		if [ $((ramdisk_r_size)) -lt `du --apparent-size -sbL $RK_OUTDIR/rootfs/target 2>/dev/null | awk '{print $1}'` ]; then
+			error "The size of $RK_OUTDIR/rootfs/target is larger than $ramdisk_r_size"
+			error "Please check the ramdisk_r node of ${KERNEL_DTB%.*}.dts"
+			exit 1
+		fi
 	fi
 fi
 
