@@ -40,10 +40,10 @@ if [ "$RK_FASTBOOT" ]; then
 		DUMP_DTB_DTS=$(mktemp)
 
 		dtc -I dtb -O dts -o $DUMP_DTB_DTS $(realpath -q "$KERNEL_DTB") 2>/dev/null
-		ramdisk_c=`grep -A 3 -e ramdisk_c $DUMP_DTB_DTS | grep -w "reg"|awk -F\< '{print $2}'|awk '{print $1}'`
-		ramdisk_r=`grep -A 3 -e ramdisk_r $DUMP_DTB_DTS | grep -w "reg"|awk -F\< '{print $2}'|awk '{print $1}'`
-		ramdisk_c_size=`grep -A 3 -e ramdisk_c /tmp/tmp.11Y0YFUT0U | grep -w "reg"|awk -F'[<> ]' '{print $5}'`
-		ramdisk_r_size=`grep -A 3 -e ramdisk_r /tmp/tmp.11Y0YFUT0U | grep -w "reg"|awk -F'[<> ]' '{print $5}'`
+		ramdisk_c=`grep -A 3 -e ramdisk_c $DUMP_DTB_DTS | grep -w "reg" | awk -F\< '{print $2}' | awk '{print $1}'`
+		ramdisk_r=`grep -A 3 -e ramdisk_r $DUMP_DTB_DTS | grep -w "reg" | awk -F\< '{print $2}' | awk '{print $1}'`
+		ramdisk_c_size=`grep -A 3 -e ramdisk_c $DUMP_DTB_DTS | grep -w "reg" | awk -F'[<> ]' '{print $5}'`
+		ramdisk_r_size=`grep -A 3 -e ramdisk_r $DUMP_DTB_DTS | grep -w "reg" | awk -F'[<> ]' '{print $5}'`
 
 		rm -f "$DUMP_DTB_DTS"
 
