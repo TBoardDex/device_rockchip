@@ -1,45 +1,46 @@
 #!/bin/bash -e
 
+cd "$TARGET_DIR"
+
 message "Installing full-busybox..."
-RK_ROOTFS_PREFER_PREBUILT_TOOLS=y ensure_tools "$TARGET_DIR/bin/busybox"
+RK_ROOTFS_PREFER_PREBUILT_TOOLS=y ensure_tools bin/busybox
 
 # Login root on serial console
-if [ -r "$TARGET_DIR/etc/inittab" ]; then
+if [ -r etc/inittab ]; then
 	sed -i 's~\(respawn:.*\)/bin/start_getty.*~\1/bin/login -p root~' \
-		"$TARGET_DIR/etc/inittab"
+		etc/inittab
 fi
 
 # Drop Poky warnings in motd
-if [ -r "$TARGET_DIR/etc/motd" ]; then
-	sed -i '/^WARNING: Poky/,+2d' "$TARGET_DIR/etc/motd"
+if [ -r etc/motd ]; then
+	sed -i '/^WARNING: Poky/,+2d' etc/motd
 fi
 
 # Use uid to detect root user
-if [ -r "$TARGET_DIR/etc/profile" ]; then
-	sed -i 's~"$HOME" != "/home/root"~$(id -u) -ne 0~' \
-		"$TARGET_DIR/etc/profile"
+if [ -r etc/profile ]; then
+	sed -i 's~"$HOME" != "/home/root"~$(id -u) -ne 0~' etc/profile
 fi
 
-if [ -r "$TARGET_DIR/etc/ntp.conf" ] && \
-	! grep -q "^server .*ntp" "$TARGET_DIR/etc/ntp.conf"; then
+if [ -r etc/ntp.conf ] && \
+	! grep -q "^server .*ntp" etc/ntp.conf; then
 	message "Applying global NTP server..."
-	echo >> "$TARGET_DIR/etc/ntp.conf"
-	echo "server 0.pool.ntp.org iburst" >> "$TARGET_DIR/etc/ntp.conf"
-	echo "server 1.pool.ntp.org iburst" >> "$TARGET_DIR/etc/ntp.conf"
-	echo "server 2.pool.ntp.org iburst" >> "$TARGET_DIR/etc/ntp.conf"
-	echo "server 3.pool.ntp.org iburst" >> "$TARGET_DIR/etc/ntp.conf"
+	echo >> etc/ntp.conf
+	echo "server 0.pool.ntp.org iburst" >> etc/ntp.conf
+	echo "server 1.pool.ntp.org iburst" >> etc/ntp.conf
+	echo "server 2.pool.ntp.org iburst" >> etc/ntp.conf
+	echo "server 3.pool.ntp.org iburst" >> etc/ntp.conf
 fi
 
 # Switch from the compat to the files module
 # See: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=880846
-if [ -r "$TARGET_DIR/etc/nsswitch.conf" ]; then
-	sed -i 's/\<compat$/files/' "$TARGET_DIR/etc/nsswitch.conf"
+if [ -r etc/nsswitch.conf ]; then
+	sed -i 's/\<compat$/files/' etc/nsswitch.conf
 fi
 
-if [ -r "$TARGET_DIR/lib/systemd/system/dhcpcd.service" ]; then
+if [ -r lib/systemd/system/dhcpcd.service ]; then
 	message "Enabling dhcpcd service..."
 
-	WANTS_DIR="$TARGET_DIR/etc/systemd/system/multi-user.target.wants"
+	WANTS_DIR=etc/systemd/system/multi-user.target.wants
 	mkdir -p "$WANTS_DIR"
-	ln -rsf "$TARGET_DIR/lib/systemd/system/dhcpcd.service" "$WANTS_DIR/"
+	ln -rsf lib/systemd/system/dhcpcd.service "$WANTS_DIR/"
 fi
