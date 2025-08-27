@@ -81,6 +81,9 @@ do_build()
 			;;
 		kernel*)
 			run_command $KMAKE "$RK_KERNEL_DTS_NAME.img"
+			run_command find "kernel/arch/$RK_KERNEL_ARCH/boot/dts" \
+				-name "$RK_KERNEL_DTS_NAME.dtb" \
+				-exec ln -sf --relative {} "$RK_KERNEL_DTB" \;
 
 			# The FIT image for initrd would be packed in rootfs stage
 			if [ -n "$RK_BOOT_FIT_ITS" ] && \
@@ -128,8 +131,7 @@ build_recovery_kernel()
 	KERNEL_DIR="$RK_SDK_DIR/kernel"
 	RECOVERY_KERNEL_DIR="$RK_OUTDIR/recovery-kernel"
 	RECOVERY_KERNEL_IMG="${RK_KERNEL_IMG#kernel/}"
-	RECOVERY_KERNEL_DTB="${RK_KERNEL_DTS_DIR#kernel/}/${RK_KERNEL_RECOVERY_DTS_NAME:-$RK_KERNEL_DTS_NAME}.dtb"
-	RECOVERY_KERNEL_DTB_TARGET="${RECOVERY_KERNEL_DTB##*/boot/dts/}"
+	RECOVERY_KERNEL_DTS_NAME="${RK_KERNEL_RECOVERY_DTS_NAME:-$RK_KERNEL_DTS_NAME}"
 
 	if [ -z "$RK_KERNEL_RECOVERY_CFG" ] && \
 		[ -z "$RK_KERNEL_RECOVERY_CFG_FRAGMENTS" ] && \
@@ -141,8 +143,7 @@ build_recovery_kernel()
 		run_command cd "$RECOVERY_KERNEL_DIR"
 
 		make_kernel_config
-		run_command $KMAKE "$(basename "$RECOVERY_KERNEL_IMG")"
-		run_command $KMAKE "$RECOVERY_KERNEL_DTB_TARGET"
+		run_command $KMAKE "$RECOVERY_KERNEL_DTS_NAME.img"
 	else
 		if [ ! -d "$RECOVERY_KERNEL_DIR" ] || \
 			[ -L "$RECOVERY_KERNEL_DIR" ]; then
@@ -155,10 +156,9 @@ build_recovery_kernel()
 
 		run_command cd "$RECOVERY_KERNEL_DIR"
 		run_command ln -rsf "$KERNEL_DIR/.git" .
-		run_command ln -rsf "$KERNEL_DIR/$LOADER_LOGO" logo.bmp
-		run_command ln -rsf "$KERNEL_DIR/$KERNEL_LOGO" logo_kernel.bmp
 		run_command mkdir -p scripts
 		run_command ln -rsf "$KERNEL_DIR/scripts/resource_tool" scripts/
+		run_command rm -f logo.bmp logo_kernel.bmp
 
 		# HACK: Based on kernel/Makefile's MRPROPER_FILES
 		run_command tar cf "$RK_OUTDIR/kernel.tar" \
@@ -169,11 +169,12 @@ build_recovery_kernel()
 			"$KERNEL_DIR/arch/$RK_KERNEL_ARCH/include/generated" \
 			"$KERNEL_DIR/Module.symvers"
 
-
 		KMAKE="$KMAKE O=$RECOVERY_KERNEL_DIR"
 		make_recovery_kernel_config
-		run_command $KMAKE "$(basename "$RECOVERY_KERNEL_IMG")"
-		run_command $KMAKE "$RECOVERY_KERNEL_DTB_TARGET"
+		run_command $KMAKE "$RECOVERY_KERNEL_DTS_NAME.img"
+
+		run_command ln -rsf "$KERNEL_DIR/$LOADER_LOGO" logo.bmp
+		run_command ln -rsf "$KERNEL_DIR/$KERNEL_LOGO" logo_kernel.bmp
 
 		run_command tar xf "$RK_OUTDIR/kernel.tar" -C /
 		run_command rm -f "$RK_OUTDIR/kernel.tar"
@@ -181,9 +182,10 @@ build_recovery_kernel()
 
 	run_command ln -rsf "$RECOVERY_KERNEL_IMG" \
 		"$RK_OUTDIR/recovery-kernel.img"
-	run_command ln -rsf "$RECOVERY_KERNEL_DTB" \
-		"$RK_OUTDIR/recovery-kernel.dtb"
-	run_command scripts/resource_tool "$RECOVERY_KERNEL_DTB" \
+	run_command find "arch/$RK_KERNEL_ARCH/boot/dts" \
+		-name "$RECOVERY_KERNEL_DTS_NAME.dtb" \
+		-exec ln -sf --relative {} "$RK_OUTDIR/recovery-kernel.dtb" \;
+	run_command scripts/resource_tool "$RK_OUTDIR/recovery-kernel.dtb" \
 		logo.bmp logo_kernel.bmp
 	run_command ln -rsf resource.img "$RK_OUTDIR/recovery-resource.img"
 }
