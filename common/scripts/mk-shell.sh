@@ -21,12 +21,7 @@ pre_build_hook()
 	case "${1:-shell}" in
 		yocto-shell | yshell)
 			YOCTO_DIR="$RK_SDK_DIR/yocto"
-			if [ ! -r "$YOCTO_DIR/build/conf/rksdk_override.conf" ] ||
-				[ ! -r "$YOCTO_DIR/build/conf/local.conf" ]; then
-				fatal "ERROR: Please build yocto firstly!"
-				exit 1
-			fi
-
+			"$RK_SCRIPTS_DIR/mk-rootfs.sh" yocto-config
 			LANG=en_US.UTF-8 LANGUAGE=en_US.en LC_ALL=en_US.UTF-8 \
 				/bin/bash -c "cd $YOCTO_DIR; \
 					source oe-init-build-env; \

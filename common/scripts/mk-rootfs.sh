@@ -94,11 +94,9 @@ gen_yocto_conf()
 	echo "DISPLAY_PLATFORM := \"$RK_YOCTO_DISPLAY_PLATFORM\""
 }
 
-build_yocto()
+build_yocto_conf()
 {
 	check_config RK_YOCTO || false
-
-	IMAGE_DIR="${1:-$RK_OUTDIR/yocto}"
 
 	"$RK_SCRIPTS_DIR/check-yocto.sh"
 
@@ -157,13 +155,13 @@ build_yocto()
 		echo "include custom.conf" > build/conf/local.conf
 
 		message "=========================================="
-		message "          Start building for custom $RK_YOCTO_CFG"
+		message "          Using yocto custom $RK_YOCTO_CFG"
 		message "=========================================="
 	else
 		gen_yocto_conf > build/conf/local.conf
 
 		message "=========================================="
-		message "          Start building for machine($RK_YOCTO_MACHINE)"
+		message "          Using yocto machine($RK_YOCTO_MACHINE)"
 		message "=========================================="
 	fi
 
@@ -185,7 +183,15 @@ build_yocto()
 		ln -rsf "$RK_CHIP_DIR/$RK_YOCTO_EXTRA_CFG" build/conf/extra.conf
 		echo "include extra.conf" >> build/conf/local.conf
 	fi
+}
 
+build_yocto()
+{
+	check_config RK_YOCTO || false
+
+	IMAGE_DIR="${1:-$RK_OUTDIR/yocto}"
+
+	build_yocto_conf
 
 	source oe-init-build-env build
 
@@ -450,6 +456,7 @@ post_build_hook()
 source "${RK_BUILD_HELPER:-$(dirname "$(realpath "$0")")/build-helper}"
 
 case "${1:-rootfs}" in
+	yocto-config | yconfig) build_yocto_conf ;;
 	buildroot-config | bconfig | buildroot-make | bmake) pre_build_hook $@ ;;
 	buildroot-sdk | bsdk) post_build_hook $@ ;;
 	buildroot | debian | yocto) init_hook $@ ;&
