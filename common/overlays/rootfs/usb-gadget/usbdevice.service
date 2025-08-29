@@ -11,6 +11,8 @@ RemainAfterExit=yes
 
 Restart=on-failure
 RestartSec=1s
+StartLimitIntervalSec=0
+StartLimitBurst=0
 
 [Install]
 WantedBy=sysinit.target
