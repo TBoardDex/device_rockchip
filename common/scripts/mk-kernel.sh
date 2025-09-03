@@ -133,52 +133,40 @@ build_recovery_kernel()
 	RECOVERY_KERNEL_IMG="${RK_KERNEL_IMG#kernel/}"
 	RECOVERY_KERNEL_DTS_NAME="${RK_KERNEL_RECOVERY_DTS_NAME:-$RK_KERNEL_DTS_NAME}"
 
-	if [ -z "$RK_KERNEL_RECOVERY_CFG" ] && \
-		[ -z "$RK_KERNEL_RECOVERY_CFG_FRAGMENTS" ] && \
-		[ -z "$RK_KERNEL_RECOVERY_DTS_NAME" ] && \
-		[ -z "$RK_KERNEL_RECOVERY_LOGO" ] && \
-		[ -z "$RK_KERNEL_RECOVERY_LOGO_KERNEL" ]; then
+	if [ -L "$RECOVERY_KERNEL_DIR" ]; then
 		run_command rm -rf "$RECOVERY_KERNEL_DIR"
-		run_command ln -rsf "$KERNEL_DIR" "$RECOVERY_KERNEL_DIR"
-		run_command cd "$RECOVERY_KERNEL_DIR"
-
-		make_kernel_config
-		run_command $KMAKE "$RECOVERY_KERNEL_DTS_NAME.img"
-	else
-		if [ ! -d "$RECOVERY_KERNEL_DIR" ] || \
-			[ -L "$RECOVERY_KERNEL_DIR" ]; then
-			run_command rm -rf "$RECOVERY_KERNEL_DIR"
-			run_command mkdir -p "$RECOVERY_KERNEL_DIR"
-		fi
-
-		LOADER_LOGO="${RK_KERNEL_RECOVERY_LOGO:-logo.bmp}"
-		KERNEL_LOGO="${RK_KERNEL_RECOVERY_LOGO_KERNEL:-logo_kernel.bmp}"
-
-		run_command cd "$RECOVERY_KERNEL_DIR"
-		run_command ln -rsf "$KERNEL_DIR/.git" .
-		run_command mkdir -p scripts
-		run_command ln -rsf "$KERNEL_DIR/scripts/resource_tool" scripts/
-		run_command rm -f logo.bmp logo_kernel.bmp
-
-		# HACK: Based on kernel/Makefile's MRPROPER_FILES
-		run_command tar cf "$RK_OUTDIR/kernel.tar" \
-			--remove-files --ignore-failed-read \
-			"$KERNEL_DIR/.config" "$KERNEL_DIR/.config.old" \
-			"$KERNEL_DIR/include/config" \
-			"$KERNEL_DIR/include/generated" \
-			"$KERNEL_DIR/arch/$RK_KERNEL_ARCH/include/generated" \
-			"$KERNEL_DIR/Module.symvers"
-
-		KMAKE="$KMAKE O=$RECOVERY_KERNEL_DIR"
-		make_recovery_kernel_config
-		run_command $KMAKE "$RECOVERY_KERNEL_DTS_NAME.img"
-
-		run_command ln -rsf "$KERNEL_DIR/$LOADER_LOGO" logo.bmp
-		run_command ln -rsf "$KERNEL_DIR/$KERNEL_LOGO" logo_kernel.bmp
-
-		run_command tar xf "$RK_OUTDIR/kernel.tar" -C /
-		run_command rm -f "$RK_OUTDIR/kernel.tar"
 	fi
+	run_command mkdir -p "$RECOVERY_KERNEL_DIR"
+
+	LOADER_LOGO="${RK_KERNEL_RECOVERY_LOGO:-logo.bmp}"
+	KERNEL_LOGO="${RK_KERNEL_RECOVERY_LOGO_KERNEL:-logo_kernel.bmp}"
+
+	run_command cd "$RECOVERY_KERNEL_DIR"
+	run_command ln -rsf "$KERNEL_DIR/.git" .
+	run_command mkdir -p scripts
+	run_command ln -rsf "$KERNEL_DIR/scripts/resource_tool" scripts/
+	run_command rm -f logo.bmp logo_kernel.bmp
+
+	# HACK: Fake mrproper
+	# Based on kernel/Makefile's MRPROPER_FILES
+	run_command tar cf "$RK_OUTDIR/kernel.tar" \
+		--remove-files --ignore-failed-read \
+		"$KERNEL_DIR/.config" "$KERNEL_DIR/.config.old" \
+		"$KERNEL_DIR/include/config" \
+		"$KERNEL_DIR/include/generated" \
+		"$KERNEL_DIR/arch/$RK_KERNEL_ARCH/include/generated" \
+		"$KERNEL_DIR/Module.symvers"
+
+	KMAKE="$KMAKE O=$RECOVERY_KERNEL_DIR"
+	make_recovery_kernel_config
+	run_command $KMAKE "$RECOVERY_KERNEL_DTS_NAME.img"
+
+	run_command ln -rsf "$KERNEL_DIR/$LOADER_LOGO" logo.bmp
+	run_command ln -rsf "$KERNEL_DIR/$KERNEL_LOGO" logo_kernel.bmp
+
+	# HACK: Restore mrproper files
+	run_command tar xf "$RK_OUTDIR/kernel.tar" -C /
+	run_command rm -f "$RK_OUTDIR/kernel.tar"
 
 	run_command ln -rsf "$RECOVERY_KERNEL_IMG" \
 		"$RK_OUTDIR/recovery-kernel.img"
