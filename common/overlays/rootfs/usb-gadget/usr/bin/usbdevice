@@ -88,12 +88,15 @@
 # Enable error out after loading env
 set -e
 
-TMP_DIR=/var/run/
-LOCK_FILE=$TMP_DIR/.usbdevice.lock
-USB_FUNCS_FILE=$TMP_DIR/.usb_funcs
-USB_CONFIGURED_FILE=$TMP_DIR/.usb_configured
+TMP_DIR=/var/run/usbdevice
+mkdir -p $TMP_DIR
 
-LOG_DIR=/var/log/
+LOCK_FILE=$TMP_DIR/lock
+USB_FUNCS_FILE=$TMP_DIR/funcs
+USB_CONFIGURED_FILE=$TMP_DIR/configured
+USB_FIFO_FILE=$TMP_DIR/fifo
+
+LOG_DIR=/var/log
 LOG_FILE=$LOG_DIR/usbdevice.log
 
 CONFIGFS_DIR=/sys/kernel/config
@@ -105,27 +108,32 @@ USB_FUNCTIONS_DIR=$USB_GADGET_DIR/functions
 USB_CONFIGS_DIR=$USB_GADGET_DIR/configs/b.1
 USB_CONFIGS_STRINGS_DIR=$USB_CONFIGS_DIR/$USB_STRINGS_ATTR
 
-# Make sure that we own this session (pid equals sid)
-if [ $(sed "s/(.*)//" /proc/$$/stat | cut -d' ' -f6) != $$ ]; then
-	setsid $0 $@
-	exit $?
-fi
-
-# Fall back to busybox's fuser
-if ! which fuser >/dev/null; then
-	if busybox --list | grep -wq fuser; then
-		shopt -s expand_aliases
-		alias fuser='busybox fuser'
-	fi
-fi
+USB_SERVICE_NAME=usb-service
 
 # ---- helper functions
 usb_msg()
 {
 	if which logger >/dev/null; then
-		logger -t "$(basename "$0")" "[$$]: $@"
+		logger -t "$(basename "$0")" "[$BASHPID]: $@"
 	fi
-	echo "[$(date +"%F %T")] $(basename "$0"): $@"
+	echo "[$(date +"%F %T")] $(basename "$0") [$BASHPID]: $@"
+}
+
+usb_lock()
+{
+	touch $LOCK_FILE
+	exec 3<$LOCK_FILE
+	flock -x 3
+}
+
+usb_unlock()
+{
+	flock -u 3
+}
+
+usb_service_is_running()
+{
+	grep -wq "^$USB_SERVICE_NAME$" /proc/*/comm
 }
 
 usb_enable()
@@ -142,6 +150,11 @@ usb_disable()
 usb_is_enabled()
 {
 	[ -f $USB_FUNCS_FILE ]
+}
+
+usb_clear_started()
+{
+	echo > $USB_FUNCS_FILE
 }
 
 usb_set_started()
@@ -172,7 +185,7 @@ usb_set_disconnected()
 
 usb_daemon_file()
 {
-	echo $TMP_DIR/.usb_daemon_$instance
+	echo $TMP_DIR/usb_daemon_$instance
 }
 
 usb_daemon()
@@ -237,17 +250,8 @@ usb_instances()
 	done
 }
 
-check_fuser()
-{
-	if ! fuser "$0" >/dev/null 2>&1; then
-		echo "Your fuser is missing, please install it."
-		return 1
-	fi
-}
-
 usb_run_stage()
 {
-	check_fuser
 	for f in $1_pre_$2_hook $1_$2 $1_post_$2_hook; do
 		type $f >/dev/null 2>/dev/null || continue
 
@@ -258,7 +262,6 @@ usb_run_stage()
 
 usb_wait_access()
 {
-	check_fuser
 	for i in `seq 200`;do
 		if fuser -s $@ 2>/dev/null; then
 			return 0
@@ -306,7 +309,7 @@ usb_do_start_daemon()
 	usb_msg "Starting daemon: $DAEMON $ARGS"
 
 	/sbin/start-stop-daemon -Sqx $DAEMON -- $ARGS >> \
-		$(usb_daemon_file).log 2>&1 || true
+		$LOG_DIR/$(basename $(usb_daemon_file)).log 2>&1 || true
 
 	# The daemon might fork itself
 	while /sbin/start-stop-daemon -Kqtx $DAEMON; do
@@ -328,14 +331,16 @@ usb_start_daemon()
 
 	# Start and spawn background daemon
 	{
-		exec 3<&-
-
+		exec 0<&- # fifo
+		exec 3<&- # lock
 		cd /; cd /
-		while usb_is_enabled; do
-			# Don't spawn after stopped
-			if usb_daemon_is_enabled; then
-				usb_do_start_daemon $@ >> "$LOG_FILE"
-			fi
+
+		# Apply process name
+		echo -n ${instance}-daemon > /proc/$BASHPID/comm
+
+		# Don't spawn after stopped
+		while usb_daemon_is_enabled; do
+			usb_do_start_daemon $@
 			sleep .5
 		done
 	}&
@@ -639,7 +644,8 @@ ums_prepare()
 	if [ ! -f "$UMS_FILE" ] && [ ! -b "$UMS_FILE" ]; then
 		usb_msg "Formating $UMS_FILE($UMS_SIZE) to $UMS_FSTYPE"
 		truncate -s $UMS_SIZE "$UMS_FILE"
-		mkfs.$UMS_FSTYPE "$UMS_FILE" || \
+		mkfs.$UMS_FSTYPE -F "$UMS_FILE" || \
+			mkfs.$UMS_FSTYPE "$UMS_FILE" || \
 			usb_msg "Failed to format $UMS_FILE to $UMS_FSTYPE"
 	fi
 }
@@ -659,7 +665,7 @@ ums_to_pc()
 			echo 1 > lun.0/cdrom
 		fi
 
-		fsck -y "$UMS_FILE" || true
+		fsck -t "$UMS_FSTYPE" -y "$UMS_FILE" || true
 		echo "$UMS_FILE" > lun.0/file
 	fi
 }
@@ -667,7 +673,7 @@ ums_to_pc()
 ums_to_device()
 {
 	echo > lun.0/file
-	fsck -y "$UMS_FILE" || true
+	fsck -t "$UMS_FSTYPE" -y "$UMS_FILE" || true
 
 	[ "$UMS_MOUNT" -eq 1 ] || return 0
 
@@ -788,10 +794,8 @@ usb_prepare()
 
 	usb_msg "Using USB UDC device: $USB_UDC"
 
-	# Parse started USB functions
-	OLD_FUNCS=$(usb_get_started)
-
 	# Stop old USB functions when USB functions changed
+	OLD_FUNCS=$(usb_get_started)
 	if [ -n "$OLD_FUNCS" ] && [ "$OLD_FUNCS" != "$USB_FUNCS" ]; then
 		usb_msg "Functions changed $OLD_FUNCS -> $USB_FUNCS"
 		usb_stop
@@ -869,96 +873,173 @@ usb_start()
 
 usb_stop()
 {
-	if [ -n "$OLD_FUNCS" ]; then
-		usb_msg "Stopping functions: $OLD_FUNCS"
-	fi
-
 	usb_set_disconnected
 
-	if [ "$(cat $USB_GADGET_DIR/UDC)" ]; then
+	if [ "$UDC" ] && [ "$(cat $USB_GADGET_DIR/UDC)" ]; then
 		echo > $USB_GADGET_DIR/UDC
 	fi
 
-	for func in $OLD_FUNCS; do
-		for instance in $(usb_instances $func); do
-			cd $USB_FUNCTIONS_DIR/$instance \
-				>/dev/null 2>/dev/null || continue
+	OLD_FUNCS=$(usb_get_started)
+	if [ -n "$OLD_FUNCS" ]; then
+		usb_msg "Stopping functions: $OLD_FUNCS"
+		for func in $OLD_FUNCS; do
+			for instance in $(usb_instances $func); do
+				cd $USB_FUNCTIONS_DIR/$instance \
+					>/dev/null 2>/dev/null || continue
 
-			usb_msg "Stopping instance: $instance"
-			usb_run_stage $func stop
-
-			usb_stop_daemon
+				usb_msg "Stopping instance: $instance"
+				usb_stop_daemon
+				usb_run_stage $func stop
+			done
 		done
-	done
+
+		# Clear functions to avoid stopping them again
+		usb_clear_started
+	fi
 
 	rm -f $USB_CONFIGS_DIR/f-*
 
 	# Keep ffs instances registered and mounted, to avoid random crashes
 	find $USB_FUNCTIONS_DIR -mindepth 1 -maxdepth 1 ! -name 'ffs.*' | \
 		xargs rmdir 2>/dev/null || true
-
-	# Clear functions to avoid stopping them again
-	unset OLD_FUNCS
-
-	rm -f $TMP_DIR/.usb_daemon_*
 }
 
 usb_restart()
 {
-	usb_disable
-	usb_run_stage usb stop
-
-	usb_enable
-	usb_run_stage usb start
+	usb_do_handle_request stop
+	usb_do_handle_request start
 }
 
-# Lock it
-touch $LOCK_FILE
-exec 3<$LOCK_FILE
-flock -x 3
+usb_do_handle_request()
+{
+	case "$1" in
+		start|update)
+			usb_enable
+			usb_run_stage usb start
+			;;
+		stop)
+			usb_run_stage usb stop
+			usb_disable
+			;;
+		restart)
+			usb_run_stage usb restart
+			;;
+		*) usb_msg "Unknown request $1!" ;;
+	esac
+}
+
+usb_handle_request()
+{
+	usb_msg "Handling $ACTION request..."
+
+	# Nothing to update when disabled
+	if [ "$ACTION" = update ] && ! usb_is_enabled; then
+		return 0
+	fi
+
+	# Nothing to do when USB gadget not available
+	if ! usb_run_stage usb prepare; then
+		usb_run_stage usb stop
+		return 0
+	fi
+
+	usb_do_handle_request $ACTION
+
+	usb_msg "Done $ACTION request"
+	echo
+}
+
+usb_service()
+{
+	# Fall back to busybox's fuser
+	if ! which fuser >/dev/null; then
+		if busybox --list | grep -wq fuser; then
+			shopt -s expand_aliases
+			alias fuser='busybox fuser'
+		fi
+	fi
+
+	# Check fuser
+	if ! fuser /dev/null | tee /dev/null >/dev/null; then
+		echo "Your fuser is missing, please install it."
+		return 1
+	fi
+
+	# Recreate FIFO
+	fuser -s -k $USB_FIFO_FILE 2>/dev/null || true
+	rm -f $USB_FIFO_FILE
+	mkfifo $USB_FIFO_FILE
+
+	{
+		exec 3<&- # lock
+
+		# Apply process name
+		echo -n $USB_SERVICE_NAME > /proc/$BASHPID/comm
+
+		if [ -z "$DEBUG" ]; then
+			usb_msg "Starting $USB_SERVICE_NAME($$)," \
+				"log saved to $LOG_FILE"
+
+			# Redirect outputs to log file
+			exec >>$LOG_FILE 2>&1
+		fi
+
+		# Poll and handle requests
+		while true; do
+			while true; do
+				# Error and EOF
+				if ! read -r ACTION || [ -z "$ACTION" ]; then
+					break
+				fi
+
+				usb_lock
+				usb_handle_request
+				usb_unlock
+				if [ "$ACTION" = stop ]; then
+					usb_msg "Exited $USB_SERVICE_NAME"
+					return 0
+				fi
+			done < $USB_FIFO_FILE
+		done
+	}&
+
+	# Sync service status
+	for i in `seq 100`;do
+		if usb_service_is_running; then
+			return 0
+		fi
+		sleep .01
+	done
+
+	usb_msg "Failed to start $USB_SERVICE_NAME"
+	return 1
+}
+
+usb_lock
 
 ACTION=${1:-update}
-if [ "$ACTION" = update ]; then
-	usb_is_enabled || exit 0
-fi
-
-if [ -z "$DEBUG" ]; then
-	usb_msg "Starting $0 ${ACTION}, log saved to $LOG_FILE"
-
-	# Redirect outputs to log file
-	exec >>$LOG_FILE 2>&1
-fi
-
-usb_msg "Handling ${ACTION} request"
-
-if ! usb_run_stage usb prepare; then
-	usb_run_stage usb stop
-	if [ "$ACTION" = stop ]; then
-		exit 0
-	else
-		exit 1
-	fi
-fi
 
 case "$ACTION" in
-	start|update)
-		usb_enable
-		usb_run_stage usb start
-		;;
-	stop)
-		usb_disable
-		usb_run_stage usb stop
-		;;
-	restart)
-		usb_run_stage usb restart
+	start|restart)
+		# Make sure that the USB gadget service is running
+		if ! usb_service_is_running; then
+			usb_service
+		fi
+		;& # fall-through
+	update|stop)
+		if ! usb_service_is_running; then
+			usb_msg "$USB_SERVICE_NAME is unavailable"
+			exit 0
+		fi
+
+		# Send request to the service
+		usb_msg "Sending $ACTION request to service..."
+		usb_msg "Check $LOG_FILE for $USB_SERVICE_NAME log..."
+		echo $ACTION > $USB_FIFO_FILE&
 		;;
 	*)
 		echo "Usage: usbdevice [start|stop|restart|update]" >&2
 		;;
 esac
 
-usb_msg "Done $ACTION request"
-echo
-
-# Unlock it
-flock -u 3
+usb_unlock
