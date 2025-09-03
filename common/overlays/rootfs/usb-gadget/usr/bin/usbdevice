@@ -900,7 +900,7 @@ usb_stop()
 	# Clear functions to avoid stopping them again
 	unset OLD_FUNCS
 
-	rm -f $TMP_DIR/.usb*
+	rm -f $TMP_DIR/.usb_daemon_*
 }
 
 usb_restart()
