@@ -83,7 +83,7 @@ do_build()
 			run_command $KMAKE "$RK_KERNEL_DTS_NAME.img"
 			run_command find "kernel/arch/$RK_KERNEL_ARCH/boot/dts" \
 				-name "$RK_KERNEL_DTS_NAME.dtb" \
-				-exec ln -sf --relative {} "$RK_KERNEL_DTB" \;
+				-exec ln -sf --relative {} "$RK_KERNEL_DTB" "\\;"
 
 			# The FIT image for initrd would be packed in rootfs stage
 			if [ -n "$RK_BOOT_FIT_ITS" ] && \
@@ -184,7 +184,7 @@ build_recovery_kernel()
 		"$RK_OUTDIR/recovery-kernel.img"
 	run_command find "arch/$RK_KERNEL_ARCH/boot/dts" \
 		-name "$RECOVERY_KERNEL_DTS_NAME.dtb" \
-		-exec ln -sf --relative {} "$RK_OUTDIR/recovery-kernel.dtb" \;
+		-exec ln -sf --relative {} "$RK_OUTDIR/recovery-kernel.dtb" "\\;"
 	run_command scripts/resource_tool "$RK_OUTDIR/recovery-kernel.dtb" \
 		logo.bmp logo_kernel.bmp
 	run_command ln -rsf resource.img "$RK_OUTDIR/recovery-resource.img"
