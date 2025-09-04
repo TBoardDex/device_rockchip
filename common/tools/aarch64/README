@@ -2,7 +2,7 @@ Prebuilt tools (static linked)
 ==============================
 
 Prebuilt from Rockchip buildroot 2021 SDK with kernel 6.1:
-7310c257b4 linux-tool-perf: Fix target platform error for aarch64 static build
+6e89a9d2b6f umtprd: Update to newer version and enable USB SS
 
 Using rockchip_{rk3036,rk3326_64}_defconfig with addition configs:
 BR2_GCC_VERSION_11_X=y
