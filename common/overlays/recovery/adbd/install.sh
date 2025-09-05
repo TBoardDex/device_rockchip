@@ -17,7 +17,7 @@ install_adbd()
 		echo "export USB_FW_VERSION=\"$RK_RECOVERY_ADBD_FW_VER\""
 		echo "export USB_MANUFACTURER=\"$RK_RECOVERY_ADBD_MANUFACTURER\""
 		echo "export USB_PRODUCT=\"$RK_RECOVERY_ADBD_PRODUCT\""
-	} > "$TARGET_DIR/etc/profile.d/usbdevice.sh"
+	} > "$TARGET_DIR/etc/profile.d/usb-gadget.sh"
 
 	$RK_RSYNC "$OVERLAY_DIR/usr" "$OVERLAY_DIR/lib" "$OVERLAY_DIR/etc" \
 		"$TARGET_DIR/"

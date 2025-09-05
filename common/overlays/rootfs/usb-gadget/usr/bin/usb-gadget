@@ -1,25 +1,25 @@
 #!/bin/bash
 #
 # Usage:
-# usbdevice [start|update|stop]
+# usb-gadget [start|update|stop]
 #
 # Hookable stages:
 # usb_<pre|post>_<init|prepare|start|stop|restart>_hook
 # <usb function>_<pre|post>_<prepare|start|stop>_hook
 #
 # Example hook:
-# root@RK3588:/# more /etc/usbdevice.d/usb_init.sh
+# root@RK3588:/# more /etc/usb-gadget.d/usb_init.sh
 # #!/bin/sh
 # usb_pre_init_hook()
 # {
 #	echo "usb pre-init hook"
 # }
 #
-# root@RK3588:/# more /etc/usbdevice.d/uvc.sh
+# root@RK3588:/# more /etc/usb-gadget.d/uvc.sh
 # #!/bin/sh
 # UVC_INSTANCES="uvc.0 uvc.1"
 #
-# root@rk3588:/# more /etc/usbdevice.d/rndis.sh
+# root@rk3588:/# more /etc/usb-gadget.d/rndis.sh
 # #!/bin/sh
 # rndis_post_start_hook()
 # {
@@ -29,7 +29,7 @@
 # 	ifconfig usb0 192.168.1.1
 # }
 #
-# root@rk3588:/# more /etc/usbdevice.d/ums.sh
+# root@rk3588:/# more /etc/usb-gadget.d/ums.sh
 # #!/bin/bash
 # UMS1_FILE=${UMS1_FILE:-/userdata/ums1_shared.img}
 # UMS1_SIZE=${UMS1_SIZE:-256M}
@@ -88,7 +88,7 @@
 # Enable error out after loading env
 set -e
 
-TMP_DIR=/var/run/usbdevice
+TMP_DIR=/var/run/usb-gadget
 mkdir -p $TMP_DIR
 
 LOCK_FILE=$TMP_DIR/lock
@@ -97,7 +97,7 @@ USB_CONFIGURED_FILE=$TMP_DIR/configured
 USB_FIFO_FILE=$TMP_DIR/fifo
 
 LOG_DIR=/var/log
-LOG_FILE=$LOG_DIR/usbdevice.log
+LOG_FILE=$LOG_DIR/usb-gadget.log
 
 CONFIGFS_DIR=/sys/kernel/config
 USB_GROUP=rockchip
@@ -754,8 +754,8 @@ usb_prepare()
 	usb_load_config
 
 	# Allow function/variable overriding
-	if [ -d /etc/usbdevice.d ]; then
-		for hook in $(find /etc/usbdevice.d/ -type f); do
+	if [ -d /etc/usb-gadget.d ]; then
+		for hook in $(find /etc/usb-gadget.d/ -type f); do
 			source "$hook"
 		done
 	fi
@@ -1038,7 +1038,7 @@ case "$ACTION" in
 		echo $ACTION > $USB_FIFO_FILE&
 		;;
 	*)
-		echo "Usage: usbdevice [start|stop|restart|update]" >&2
+		echo "Usage: $(basename "$0") [start|stop|restart|update]" >&2
 		;;
 esac
 
