@@ -78,5 +78,8 @@ config RK_DEBIAN_LINUX_HEADERS
 	bool "install linux-headers"
 	default y
 
+config RK_DEBIAN_UNIFIED_IMAGE
+	bool "unified rootfs compatible with all chips"
+
 endif # Debian
 endmenuconfig # Debian
