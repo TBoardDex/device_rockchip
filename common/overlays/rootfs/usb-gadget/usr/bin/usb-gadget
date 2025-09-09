@@ -128,7 +128,21 @@ usb_lock()
 
 usb_unlock()
 {
-	flock -u 3
+	exec 3<&- # Close lock file
+}
+
+usb_daemon_prepare()
+{
+	# Close opened files
+	exec 0<&- # fifo?
+	exec 3<&- # lock file
+
+	cd /; cd /
+
+	# Apply process name
+	if [ "$1" ]; then
+		echo -n $1 > /proc/$BASHPID/comm
+	fi
 }
 
 usb_service_is_running()
@@ -283,7 +297,18 @@ usb_release()
 usb_mount()
 {
 	mkdir -p $2
-	mountpoint -q $2 || mount $@
+
+	# Already mounted
+	if mountpoint -q $2; then
+		return 0
+	fi
+
+	{
+		# Prepare for fuse daemon
+		usb_daemon_prepare
+
+		mount $@
+	}&
 }
 
 usb_umount()
@@ -331,12 +356,7 @@ usb_start_daemon()
 
 	# Start and spawn background daemon
 	{
-		exec 0<&- # fifo
-		exec 3<&- # lock
-		cd /; cd /
-
-		# Apply process name
-		echo -n ${instance}-daemon > /proc/$BASHPID/comm
+		usb_daemon_prepare ${instance}-daemon
 
 		# Don't spawn after stopped
 		while usb_daemon_is_enabled; do
@@ -697,8 +717,8 @@ ums_to_device()
 ums_start()
 {
 	case "$USB_STATE" in
-		CONFIGURED) ums_to_pc ;;
-		DISCONNECTED) ums_to_device ;;
+		configured) ums_to_pc ;;
+		*) ums_to_device ;;
 	esac
 }
 
@@ -792,9 +812,6 @@ usb_prepare()
 		usb_run_stage usb init || return 1
 	fi
 
-	USB_STATE=$(cat /sys/class/android_usb/android*/state 2>/dev/null)
-	usb_msg "USB state: ${USB_STATE:-unknown}"
-
 	USB_UDC=$(ls /sys/class/udc/ | head -n 1)
 	if [ -z "$USB_UDC" ]; then
 		usb_msg "Failed to find a valid UDC device..."
@@ -803,11 +820,14 @@ usb_prepare()
 
 	usb_msg "Using USB UDC device: $USB_UDC"
 
+	USB_STATE=$(cat /sys/class/udc/$USB_UDC/state)
+	usb_msg "USB state: ${USB_STATE:-unknown}"
+
 	# Stop old USB functions when USB functions changed
 	OLD_FUNCS=$(usb_get_started)
 	if [ -n "$OLD_FUNCS" ] && [ "$OLD_FUNCS" != "$USB_FUNCS" ]; then
 		usb_msg "Functions changed $OLD_FUNCS -> $USB_FUNCS"
-		usb_stop
+		usb_run_stage usb stop
 	fi
 
 	# Update USB PID
@@ -821,8 +841,8 @@ usb_start()
 	echo "$USB_CONFIG" > $USB_CONFIGS_STRINGS_DIR/configuration
 
 	case "$USB_STATE" in
-		CONFIGURED) usb_set_configured ;;
-		DISCONNECTED)
+		configured) usb_set_configured ;;
+		*)
 			if usb_is_configured; then
 				usb_msg "Reconfigure after disconnected"
 
@@ -979,11 +999,11 @@ usb_service()
 	rm -f $USB_FIFO_FILE
 	mkfifo $USB_FIFO_FILE
 
-	{
-		exec 3<&- # lock
+	# Clean up
+	usb_run_stage usb stop
 
-		# Apply process name
-		echo -n $USB_SERVICE_NAME > /proc/$BASHPID/comm
+	{
+		usb_daemon_prepare $USB_SERVICE_NAME
 
 		if [ -z "$DEBUG" ]; then
 			usb_msg "Starting $USB_SERVICE_NAME($$)," \
@@ -1003,11 +1023,11 @@ usb_service()
 
 				usb_lock
 				usb_handle_request
-				usb_unlock
 				if [ "$ACTION" = stop ]; then
 					usb_msg "Exited $USB_SERVICE_NAME"
-					return 0
+					exit 0
 				fi
+				usb_unlock
 			done < $USB_FIFO_FILE
 		done
 	}&
@@ -1044,7 +1064,7 @@ case "$ACTION" in
 		# Send request to the service
 		usb_msg "Sending $ACTION request to service..."
 		usb_msg "Check $LOG_FILE for $USB_SERVICE_NAME log..."
-		echo $ACTION > $USB_FIFO_FILE&
+		echo $ACTION > $USB_FIFO_FILE
 		;;
 	*)
 		echo "Usage: $(basename "$0") [start|stop|restart|update]" >&2
