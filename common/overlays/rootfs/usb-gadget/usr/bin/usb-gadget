@@ -94,7 +94,7 @@ mkdir -p $TMP_DIR
 LOCK_FILE=$TMP_DIR/lock
 USB_FUNCS_FILE=$TMP_DIR/funcs
 USB_CONFIGURED_FILE=$TMP_DIR/configured
-USB_FIFO_FILE=$TMP_DIR/fifo
+USB_CMD_FILE=$TMP_DIR/commands
 
 LOG_DIR=/var/log
 LOG_FILE=$LOG_DIR/usb-gadget.log
@@ -135,7 +135,7 @@ usb_unlock()
 usb_daemon_prepare()
 {
 	# Close opened files
-	exec 0<&- # fifo?
+	exec 0<&- # input (cmd file?)
 	exec 3<&- # lock file
 
 	cd /; cd /
@@ -148,7 +148,8 @@ usb_daemon_prepare()
 
 usb_service_is_running()
 {
-	grep -wq "^$USB_SERVICE_NAME$" /proc/*/comm
+	grep -wl "^$USB_SERVICE_NAME$" /proc/*/comm 2>/dev/null | \
+		grep -wq "comm$"
 }
 
 usb_enable()
@@ -996,14 +997,10 @@ usb_service()
 		return 1
 	fi
 
-	# Recreate FIFO
-	fuser -s -k $USB_FIFO_FILE 2>/dev/null || true
-	rm -f $USB_FIFO_FILE
-	mkfifo $USB_FIFO_FILE
-
 	# Initial clean up
 	usb_run_stage usb stop
 
+	# USB gadget service
 	{
 		usb_daemon_prepare $USB_SERVICE_NAME
 
@@ -1016,21 +1013,21 @@ usb_service()
 		fi
 
 		# Poll and handle requests
-		while true; do
-			while true; do
-				# Error and EOF
-				if ! read -r ACTION || [ -z "$ACTION" ]; then
-					break
-				fi
+		echo > $USB_CMD_FILE
+		tail -f $USB_CMD_FILE | while true; do
+			# Error and EOF
+			if ! read -r ACTION || [ -z "$ACTION" ]; then
+				continue
+			fi
 
-				usb_lock
-				usb_handle_request
-				if [ "$ACTION" = stop ]; then
-					usb_msg "Exited $USB_SERVICE_NAME"
-					exit 0
-				fi
-				usb_unlock
-			done < $USB_FIFO_FILE
+			usb_lock
+			usb_handle_request
+			usb_unlock
+
+			if [ "$ACTION" = stop ]; then
+				usb_msg "Exited $USB_SERVICE_NAME"
+				exit 0
+			fi
 		done
 	}&
 
@@ -1066,7 +1063,7 @@ case "$ACTION" in
 		# Send request to the service
 		usb_msg "Sending $ACTION request to service..."
 		usb_msg "Check $LOG_FILE for $USB_SERVICE_NAME log..."
-		echo $ACTION > $USB_FIFO_FILE
+		echo $ACTION >> $USB_CMD_FILE
 		;;
 	*)
 		echo "Usage: $(basename "$0") [start|stop|restart|update]" >&2
