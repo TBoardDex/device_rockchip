@@ -71,15 +71,22 @@ if ! [ "$RK_DEBIAN_UNIFIED_IMAGE" ]; then
 		tar xvf rknpu2.tar
 	fi
 
-	mkdir -p var/cache/apt/archives/partial
-	for d in libmali-$LIBMALI-*.deb camera_engine_${CAMERA_ENGINE}_*.deb; do
-		if [ -r "$d" ]; then
-			message "Installing $d..."
-			chroot . bash -c \
-				"apt install -fy --allow-downgrades /$d"
-		fi
-	done
-	"$RK_TOOLS_DIR/x86_64/ldconfig" -r "$TARGET_DIR/"
+	PKGS=
+	if [ "$CAMERA_ENGINE" ]; then
+		PKGS="$(ls ./* | grep "camera_engine_${CAMERA_ENGINE}_.*.deb")"
+	fi
+	if [ "$LIBMALI" ]; then
+		PKGS="$PKGS $(ls ./* | grep "libmali-$LIBMALI-.*.deb")"
+	fi
+	if [ "$PKGS" ]; then
+		message "Installing chip related packages..."
+
+		mkdir -p var/cache/apt/archives/partial
+		PKGS="$(echo $PKGS | xargs)"
+		chroot . bash -c "apt install -fy --allow-downgrades $PKGS"
+
+		"$RK_TOOLS_DIR/x86_64/ldconfig" -r "$TARGET_DIR/"
+	fi
 
 	rm -rf *.deb *.tar
 	touch usr/local/first_boot_flag
