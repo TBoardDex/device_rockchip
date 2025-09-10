@@ -128,6 +128,7 @@ usb_lock()
 
 usb_unlock()
 {
+	flock -u 3
 	exec 3<&- # Close lock file
 }
 
@@ -411,7 +412,7 @@ ADB_INSTANCES=${ADB_INSTANCES:-ffs.adb}
 
 adb_prepare()
 {
-	usb_mount adb /dev/usb-ffs/adb -o uid=2000,gid=2000 -t functionfs
+	usb_mount ${instance#ffs.} /dev/usb-ffs/adb -t functionfs
 	/sbin/ifup --force lo 2>/dev/null || /sbin/ifup -f lo 2>/dev/null
 	usb_start_daemon /usr/bin/adbd
 	usb_wait_access -m /dev/usb-ffs/adb
@@ -422,9 +423,18 @@ NTB_INSTANCES=${NTB_INSTANCES:-ffs.ntb}
 
 ntb_prepare()
 {
-	usb_mount ntb /dev/usb-ffs/ntb -o uid=2000,gid=2000 -t functionfs
+	usb_mount ${instance#ffs.} /dev/usb-ffs/ntb -t functionfs
 	usb_start_daemon /usr/bin/ntbd
 	usb_wait_access -m /dev/usb-ffs/ntb
+}
+
+# ---- mtp
+MTP_INSTANCES=${MTP_INSTANCES:-ffs.mtp}
+mtp_prepare()
+{
+	usb_mount ${instance#ffs.} /dev/usb-ffs/mtp -t functionfs
+	usb_start_daemon /usr/bin/umtprd
+	usb_wait_access -m /dev/usb-ffs/mtp
 }
 
 # ---- uac1
@@ -454,15 +464,6 @@ uac2_prepare()
 	for f in $(find . -name "*_feature_unit"); do
 		echo 0 >$f
 	done
-}
-
-# ---- mtp
-MTP_INSTANCES=${MTP_INSTANCES:-ffs.mtp}
-mtp_prepare()
-{
-	usb_mount mtp /dev/usb-ffs/mtp -o uid=2000,gid=2000 -t functionfs
-	usb_start_daemon /usr/bin/umtprd
-	usb_wait_access -m /dev/usb-ffs/mtp
 }
 
 # ---- uvc
@@ -746,7 +747,8 @@ usb_init()
 
 	mkdir -p $USB_GADGET_STRINGS_DIR
 	SERIAL=$(grep Serial /proc/cpuinfo | cut -d':' -f2)
-	echo ${SERIAL:-0123456789ABCDEF} > $USB_GADGET_STRINGS_DIR/serialnumber
+	echo ${USB_SERIAL:-${SERIAL:-0123456789ABCDEF}} > \
+		$USB_GADGET_STRINGS_DIR/serialnumber
 	echo ${USB_MANUFACTUER:-Rockchip}  > $USB_GADGET_STRINGS_DIR/manufacturer
 	echo ${USB_PRODUCT:-rk3xxx}  > $USB_GADGET_STRINGS_DIR/product
 
@@ -812,8 +814,8 @@ usb_prepare()
 		usb_run_stage usb init || return 1
 	fi
 
-	USB_UDC=$(ls /sys/class/udc/ | head -n 1)
-	if [ -z "$USB_UDC" ]; then
+	USB_UDC=${USB_UDC:-$(ls /sys/class/udc/ | head -n 1)}
+	if [ -z "$USB_UDC" ] || [ ! -d /sys/class/udc/$USB_UDC ]; then
 		usb_msg "Failed to find a valid UDC device..."
 		return 1
 	fi
@@ -999,7 +1001,7 @@ usb_service()
 	rm -f $USB_FIFO_FILE
 	mkfifo $USB_FIFO_FILE
 
-	# Clean up
+	# Initial clean up
 	usb_run_stage usb stop
 
 	{
