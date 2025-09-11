@@ -81,9 +81,9 @@ do_build()
 			;;
 		kernel*)
 			run_command $KMAKE "$RK_KERNEL_DTS_NAME.img"
-			run_command find "kernel/arch/$RK_KERNEL_ARCH/boot/dts" \
-				-name "$RK_KERNEL_DTS_NAME.dtb" \
-				-exec ln -sf --relative {} "$RK_KERNEL_DTB" "\\;"
+			run_command ln -rsf \
+				"$KERNEL_DTS_DIR/$RK_KERNEL_DTS_NAME.dtb" \
+				"$RK_KERNEL_DTB"
 
 			# The FIT image for initrd would be packed in rootfs stage
 			if [ -n "$RK_BOOT_FIT_ITS" ] && \
@@ -132,6 +132,7 @@ build_recovery_kernel()
 	RECOVERY_KERNEL_DIR="$RK_OUTDIR/recovery-kernel"
 	RECOVERY_KERNEL_IMG="${RK_KERNEL_IMG#kernel/}"
 	RECOVERY_KERNEL_DTS_NAME="${RK_KERNEL_RECOVERY_DTS_NAME:-$RK_KERNEL_DTS_NAME}"
+	REOVERY_KERNEL_DTB="${KERNEL_DTS_DIR#kernel/}/$RECOVERY_KERNEL_DTS_NAME.dtb"
 
 	if [ -L "$RECOVERY_KERNEL_DIR" ]; then
 		run_command rm -rf "$RECOVERY_KERNEL_DIR"
@@ -170,9 +171,8 @@ build_recovery_kernel()
 
 	run_command ln -rsf "$RECOVERY_KERNEL_IMG" \
 		"$RK_OUTDIR/recovery-kernel.img"
-	run_command find "arch/$RK_KERNEL_ARCH/boot/dts" \
-		-name "$RECOVERY_KERNEL_DTS_NAME.dtb" \
-		-exec ln -sf --relative {} "$RK_OUTDIR/recovery-kernel.dtb" "\\;"
+	run_command ln -rsf "$REOVERY_KERNEL_DTB" \
+		"$RK_OUTDIR/recovery-kernel.dtb"
 	run_command scripts/resource_tool "$RK_OUTDIR/recovery-kernel.dtb" \
 		logo.bmp logo_kernel.bmp
 	run_command ln -rsf resource.img "$RK_OUTDIR/recovery-resource.img"
@@ -420,6 +420,10 @@ build_hook()
 	message "Toolchain for kernel:"
 	message "${RK_KERNEL_TOOLCHAIN:-gcc}"
 	echo
+
+	KERNEL_DTS="$(find "kernel/arch/$RK_KERNEL_ARCH/boot/dts" \
+		-name "$RK_KERNEL_DTS_NAME.dts")"
+	KERNEL_DTS_DIR="$(dirname "$KERNEL_DTS")"
 
 	case "$1" in
 		recovery-kernel) build_recovery_kernel $@ ;;
