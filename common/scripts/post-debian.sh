@@ -7,7 +7,7 @@ rm -rf sha256sum*
 if [ "$RK_DEBIAN_USER" != linaro ]; then
 	message "Changing default user to $RK_DEBIAN_USER..."
 
-	if [ -d home/linaro ]; then
+	if [ ! -d home/$RK_DEBIAN_USER ]; then
 		mv home/linaro home/$RK_DEBIAN_USER || true
 	fi
 	grep -rwl "linaro" rockchip-test/ etc/ boot/ 2>/dev/null | \
