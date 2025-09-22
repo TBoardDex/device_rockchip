@@ -100,7 +100,7 @@ config RK_USB_RNDIS
 	bool "Remote Network Driver Interface Specification (RNDIS)"
 
 menuconfig RK_USB_UMS
-	bool "USB mass storage (UMS)"
+	bool "USB Mass Storage (UMS)"
 
 if RK_USB_UMS
 
@@ -153,7 +153,7 @@ config RK_USB_MIDI
 	bool "Musical Instrument Digital Interface (MIDI)"
 
 config RK_USB_SERIAL
-	bool "USB Gadget Serial (GSER)"
+	bool "Generic Serial (GSER)"
 
 config RK_USB_EXTRA
 	string "extra USB gadget configs"
