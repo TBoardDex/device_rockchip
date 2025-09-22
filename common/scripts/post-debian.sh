@@ -16,7 +16,7 @@ fi
 
 if [ "$RK_DEBIAN_PASSWORD" != linaro ]; then
 	message "Changing default user's password..."
-	echo "$RK_DEBIAN_USER:$RK_DEBIAN_PASSWORD" | chroot . chpasswd -m
+	echo "$RK_DEBIAN_USER:$RK_DEBIAN_PASSWORD" | chroot . chpasswd -m || true
 fi
 
 if ! [ "$RK_DEBIAN_UNIFIED_IMAGE" ]; then
@@ -68,7 +68,7 @@ if ! [ "$RK_DEBIAN_UNIFIED_IMAGE" ]; then
 
 	if [ "$RKNPU" ]; then
 		message "Extracting NPU2 tarball..."
-		tar xvf rknpu2.tar
+		tar xvf rknpu2.tar || true
 	fi
 
 	PKGS=
@@ -83,9 +83,10 @@ if ! [ "$RK_DEBIAN_UNIFIED_IMAGE" ]; then
 
 		mkdir -p var/cache/apt/archives/partial
 		PKGS="$(echo $PKGS | xargs)"
-		chroot . bash -c "apt install -fy --allow-downgrades $PKGS"
+		chroot . bash -c "apt install -fy --allow-downgrades $PKGS" \
+			|| true
 
-		"$RK_TOOLS_DIR/x86_64/ldconfig" -r "$TARGET_DIR/"
+		"$RK_TOOLS_DIR/x86_64/ldconfig" -r "$TARGET_DIR/" || true
 	fi
 
 	rm -rf *.deb *.tar
