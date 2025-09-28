@@ -534,6 +534,8 @@ main()
 		if [ "$TAG" ]; then
 			notice "Version: $TAG"
 		fi
+		notice "GIT commit: \"$(cd "$RK_COMMON_DIR"; \
+			git log --oneline 2>/dev/null | head -n 1)\""
 		echo
 	fi
 
