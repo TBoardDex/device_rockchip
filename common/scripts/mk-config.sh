@@ -155,8 +155,10 @@ jump_config()
 			export KCONFIG_JUMP_SYMBOL="RK_USB_GADGET$" ;;
 		wifibt)
 			export KCONFIG_JUMP_SYMBOL="RK_WIFIBT$" ;;
-		overlay)
+		overlay|rootfs-overlay)
 			export KCONFIG_JUMP_SYMBOL="RK_ROOTFS_OVERLAY$" ;;
+		post-rootfs)
+			export KCONFIG_JUMP_SYMBOL="RK_ROOTFS_LIGHTWEIGHT$" ;;
 		extra-parts)
 			export KCONFIG_JUMP_SYMBOL="RK_EXTRA_PARTITION_NUM$" ;;
 	esac
@@ -195,7 +197,9 @@ usage_hook()
 	usage_oneline "config-rootfs-type" "modify SDK rootfs type config"
 	usage_oneline "config-usb-gadget" "modify SDK USB gadget config"
 	usage_oneline "config-wifibt" "modify SDK Wi-Fi/BT config"
-	usage_oneline "config-overlay" "modify SDK rootfs overlay config"
+	usage_oneline "config-rootfs-overlay" "modify SDK rootfs overlay config"
+	usage_oneline "config-overlay" "alias of config-rootfs-overlay"
+	usage_oneline "config-post-rootfs" "modify SDK post rootfs config"
 	usage_oneline "config-extra-parts" "modify SDK extra partitions config"
 }
 
@@ -207,7 +211,8 @@ clean_hook()
 INIT_CMDS="chip defconfig lunch [^:]*_defconfig \
 	olddefconfig savedefconfig menuconfig config \
 	config-rootfs-type config-usb-gadget config-wifibt \
-	config-overlay config-extra-parts default"
+	config-rootfs-overlay config-overlay config-post-rootfs \
+	config-extra-parts default"
 init_hook()
 {
 	case "${1:-default}" in
