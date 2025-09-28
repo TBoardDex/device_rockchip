@@ -9,7 +9,11 @@ fixup_root()
 	message "Fixing up rootfs type: $1"
 
 	FS_TYPE=$1
-	sed -i "s~\([[:space:]]/[[:space:]]\+\)\w\+~\1${FS_TYPE}~" "$FSTAB"
+	if grep -q "[[:space:]]/[[:space:]]" "$FSTAB"; then
+		sed -i "s~\([[:space:]]/[[:space:]]\+\)\w\+~\1${FS_TYPE}~" "$FSTAB"
+	else
+		echo -e "/dev/root\t/\t$FS_TYPE\tdefaults\t0 1" >> "$FSTAB"
+	fi
 }
 
 del_part()
