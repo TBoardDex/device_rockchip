@@ -4,18 +4,6 @@ source "${RK_POST_HELPER:-$(dirname "$(realpath "$0")")/post-helper}"
 
 FSTAB="etc/fstab"
 
-fixup_root()
-{
-	message "Fixing up rootfs type: $1"
-
-	FS_TYPE=$1
-	if grep -q "[[:space:]]/[[:space:]]" "$FSTAB"; then
-		sed -i "s~\([[:space:]]/[[:space:]]\+\)\w\+~\1${FS_TYPE}~" "$FSTAB"
-	else
-		echo -e "/dev/root\t/\t$FS_TYPE\tdefaults\t0 1" >> "$FSTAB"
-	fi
-}
-
 del_part()
 {
 	SRC="$1"
@@ -44,6 +32,31 @@ fixup_part()
 	echo -e "$SRC\t$MOUNTPOINT\t$FS_TYPE\t$MOUNT_OPTS\t0 $PASS" >> "$FSTAB"
 
 	mkdir -p "$TARGET_DIR/$MOUNTPOINT"
+}
+
+fixup_root()
+{
+	message "Fixing up rootfs: $1 ${RK_ROOTFS_RO:+(ro)}"
+
+	SRC="/dev/root"
+	MOUNTPOINT="/"
+	FS_TYPE=$1
+	MOUNT_OPTS="defaults"
+	PASS="1"
+
+	ROOTFS_ARRAY=($(grep "[[:space:]]/[[:space:]]" "$FSTAB" || true))
+	if [ ${#ROOTFS_ARRAY[@]} -ne 0 ]; then
+		SRC="${ROOTFS_ARRAY[0]}"
+		MOUNT_OPTS="${ROOTFS_ARRAY[3]}"
+		PASS="${ROOTFS_ARRAY[5]}"
+	fi
+
+	if [ "$RK_ROOTFS_RO" ] && \
+		! echo "$MOUNT_OPTS" | grep -E ",ro\>|^ro\>" ; then
+		MOUNT_OPTS="${MOUNT_OPTS},ro"
+	fi
+
+	fixup_part "$SRC" "$MOUNTPOINT" "$FS_TYPE" "$MOUNT_OPTS" "$PASS"
 }
 
 fixup_basic_part()

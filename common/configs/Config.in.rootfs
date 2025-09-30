@@ -48,6 +48,10 @@ config RK_ROOTFS_INITRD
 	depends on RK_ROOTFS_EXT2 || RK_ROOTFS_SQUASHFS || RK_ROOTFS_ROMFS || \
 		RK_ROOTFS_CPIO || RK_ROOTFS_CPIO_GZ
 
+config RK_ROOTFS_RO
+	bool "readonly"
+	depends on !RK_ROOTFS_INITRD && !RK_ROOTFS_SQUASHFS && !RK_ROOTFS_EROFS
+
 config RK_ROOTFS_TYPE
 	string
 	default "ext2" if RK_ROOTFS_EXT2

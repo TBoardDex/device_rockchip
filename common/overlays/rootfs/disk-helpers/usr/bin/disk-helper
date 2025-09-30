@@ -1,10 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
 # Uncomment below to see more logs
 # set -x
 
-BUSYBOX_MOUNT_OPTS="loop (a|)sync (no|)atime (no|)diratime (no|)relatime (no|)dev (no|)exec (no|)suid (r|)shared (r|)slave (r|)private (un|)bindable (r|)bind move remount ro"
-NTFS_3G_MOUNT_OPTS="ro uid=[0-9]* gid=[0-9]* umask=[0-9]* fmask=[0-9]* dmask=[0-9]*"
+BUSYBOX_MOUNT_OPTS="loop (a|)sync (no|)atime (no|)diratime (no|)relatime (no|)dev (no|)exec (no|)suid (r|)shared (r|)slave (r|)private (un|)bindable (r|)bind move remount ro defaults"
+NTFS_3G_MOUNT_OPTS="ro uid=[0-9]* gid=[0-9]* umask=[0-9]* fmask=[0-9]* dmask=[0-9]* defaults"
 
 message()
 {
@@ -184,15 +184,9 @@ format_ubifs()
 
 remount_part()
 {
-	mountpoint -q $MOUNT_POINT || return
-
-	if is_ro; then
-		[ "$1" != ro ] || return
-	else
-		[ "$1" != rw ] || return
+	if mountpoint -q $MOUNT_POINT; then
+		mount -o remount,${1:-$MOUNT_OPTS} $MOUNT_POINT
 	fi
-
-	mount -o remount,$1 $MOUNT_POINT
 }
 
 format_part()
@@ -479,13 +473,6 @@ prepare_part()
 	esac
 	MOUNT_OPTS=${OPTS:+" -o ${OPTS%,}"}
 
-	# Save initial ro/rw state
-	if is_ro; then
-		MOUNT_RO_RW=ro
-	else
-		MOUNT_RO_RW=rw
-	fi
-
 	# Prepare for ubi
 	if [ "$FSTYPE" = ubifs ] ||
 		[ "$(dd if=$DEV bs=1 count=3 status=none)" = UBI ]; then
@@ -535,12 +522,5 @@ mount_part()
 			format_part || return 1
 			$MOUNT $DEV $MOUNT_POINT $MOUNT_OPTS || return 1
 		fi
-	fi
-
-	# Save ro/rw state
-	if is_ro; then
-		MOUNT_RO_RW=ro
-	else
-		MOUNT_RO_RW=rw
 	fi
 }
