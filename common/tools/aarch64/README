@@ -2,7 +2,7 @@ Prebuilt tools (static linked)
 ==============================
 
 Prebuilt from Rockchip buildroot 2021 SDK with kernel 6.1:
-a9518e81c5d android-adbd: Prefer ipv4 in socket_inaddr_any_server()
+1963a9939c4 android-adbd: Support setting adb user
 
 Using rockchip_{rk3036,rk3326_64}_defconfig with addition configs:
 BR2_GCC_VERSION_11_X=y
