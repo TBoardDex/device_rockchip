@@ -15,13 +15,17 @@ menu "Extra partitions (oem, userdata, etc.)"
 
 if RK_UBI && RK_EXTRA_PARTITION_NUM > 0
 
-config RK_UBI_PAGE_SIZE
-	hex "ubi image page size (B)"
+config RK_UBI_MINIO_SIZE
+	hex "UBI minimum I/O unit size (B)"
 	default "0x800"
 
-config RK_UBI_BLOCK_SIZE
-	hex "ubi image block size (B)"
-	default "0x20000"
+config RK_UBI_PEB_SIZE
+	hex "UBI physical eraseblock (PEB) size (B)"
+	default "0x1f000"
+
+config RK_UBI_SUBPAGE_SIZE
+	hex "UBI sub-page size (B)"
+	default "0x800"
 
 config RK_FLASH_SIZE
 	int "size of flash storage (M)"

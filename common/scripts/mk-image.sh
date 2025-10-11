@@ -202,12 +202,9 @@ mk_ubi_image()
 {
     TARGET_DIR="$(dirname "$TARGET")"
     UBI_VOL_NAME=${LABEL:-ubi}
-    # default page size 2KB
-    UBI_PAGE_SIZE=${RK_UBI_PAGE_SIZE:-2048}
-    UBIFS_MINIOSIZE=$UBI_PAGE_SIZE
-
-    # default block size 128KB
-    UBI_BLOCK_SIZE=${RK_UBI_BLOCK_SIZE:-0x20000}
+    UBI_MINIO_SIZE=${RK_UBI_MINIO_SIZE:-0x800}
+    UBI_PEB_SIZE=${RK_UBI_PEB_SIZE:-0x20000}
+    UBI_SUBPAGE_SIZE=${RK_UBI_SUBPAGE_SIZE:-0x800}
 
     UBINIZE_CFG="$TARGET_DIR/${UBI_VOL_NAME}-ubinize.cfg"
 
@@ -219,33 +216,30 @@ mk_ubi_image()
     echo "vol_alignment=1" >> $UBINIZE_CFG
     echo "vol_flags=autoresize" >> $UBINIZE_CFG
     echo "image=$TARGET.$FS_TYPE" >> $UBINIZE_CFG
-    ubinize -o $TARGET -m $UBIFS_MINIOSIZE -p $UBI_BLOCK_SIZE \
-        -v $UBINIZE_CFG
+    ubinize -o $TARGET -m $UBI_MINIO_SIZE -p $UBI_PEB_SIZE \
+        -s $UBI_SUBPAGE_SIZE -v $UBINIZE_CFG
 }
 
 mk_ubifs_image()
 {
-    # default page size 2KB
-    UBI_PAGE_SIZE=${RK_UBI_PAGE_SIZE:-2048}
+    UBIFS_MINIO_SIZE=${RK_UBI_MINIO_SIZE:-0x800}
+    UBI_PEB_SIZE=${RK_UBI_PEB_SIZE:-0x20000}
+    UBI_SUBPAGE_SIZE=${RK_UBI_SUBPAGE_SIZE:-0x800}
 
-    # default block size 128KB
-    UBI_BLOCK_SIZE=${RK_UBI_BLOCK_SIZE:-0x20000}
+    UBIFS_LEB_SIZE=$(( $UBI_PEB_SIZE - 2 * $UBI_SUBPAGE_SIZE ))
+    UBIFS_MAX_LEB_CNT=$(( $SIZE_KB * 1024 / $UBIFS_LEB_SIZE ))
 
-    UBIFS_LEBSIZE=$(( $UBI_BLOCK_SIZE - 2 * $UBI_PAGE_SIZE ))
-    UBIFS_MINIOSIZE=$UBI_PAGE_SIZE
-    UBIFS_MAXLEBCNT=$(( $SIZE_KB * 1024 / $UBIFS_LEBSIZE ))
-
-    mkfs.ubifs -x lzo -e $UBIFS_LEBSIZE -m $UBIFS_MINIOSIZE \
-        -c $UBIFS_MAXLEBCNT -d $SRC_DIR -F -v -o $TARGET || return 1
+    mkfs.ubifs -x lzo -e $UBIFS_LEB_SIZE -m $UBIFS_MINIO_SIZE \
+        -c $UBIFS_MAX_LEB_CNT -d $SRC_DIR -F -v -o $TARGET || return 1
 }
 
 rm -rf $TARGET
 
 case $FS_TYPE in
-	ubi*)
-		IS_UBI=1
-		FS_TYPE=${FS_TYPE##ubi-}
-		;;
+    ubi*)
+        IS_UBI=1
+        FS_TYPE=${FS_TYPE##ubi-}
+        ;;
 esac
 
 case $FS_TYPE in
