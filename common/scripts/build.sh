@@ -716,7 +716,7 @@ main()
 
 	set +a
 
-	# The real kernel version: 4.4/4.19/5.10/6.1, etc.
+	# The real kernel version: 6.1/6.12, etc.
 	export RK_KERNEL_VERSION_RAW=$(kernel_version_raw)
 	export RK_KERNEL_VERSION="$(kernel_version)"
 

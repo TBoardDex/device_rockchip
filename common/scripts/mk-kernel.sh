@@ -348,7 +348,7 @@ init_hook()
 		RK_KERNEL_VERSION=$KERNEL_CURRENT
 		notice "Using current kernel version($RK_KERNEL_VERSION)"
 	else
-		RK_KERNEL_VERSION=5.10
+		RK_KERNEL_VERSION=6.1
 		notice "Fallback to kernel version($RK_KERNEL_VERSION)"
 	fi
 

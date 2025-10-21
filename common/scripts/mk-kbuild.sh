@@ -17,7 +17,6 @@ if [ ! -d debian/ ]; then
 	echo "Please download it from:"
 	echo "https://salsa.debian.org/kernel-team/linux"
 	echo "Tag:"
-	echo "5.10: debian/5.10.179-1"
 	echo "6.1: debian/6.1.76-1"
 	echo "6.12: debian/6.12.33-1"
 	echo -e "\e[0m"
