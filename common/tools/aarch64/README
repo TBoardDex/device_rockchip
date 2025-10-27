@@ -2,7 +2,7 @@ Prebuilt tools (static linked)
 ==============================
 
 Prebuilt from Rockchip buildroot 2025 SDK with kernel 6.1:
-ea6e20d142 edid-decode: Support static
+4ca3327fbf configs: rockchip: Enable ltrace in prebuilt tools
 
 Using rockchip_tools_{32,64}_defconfig.
 
