@@ -20,13 +20,14 @@ usage()
     echo ${@:-"Wrong argumants"}
     echo "Usage: $0 [options] <source directory> <dest image>"
     echo "Options:"
-    echo "-t, --type <type>    Filesystem type <ext4|msdos|...> (default is: ext4)"
-    echo "-s, --size <size>    Filesystem size <size(M|K)|auto> (default is: auto)"
-    echo "-l, --label <label>  Filesystem label"
+    echo "-t, --type <type>        Filesystem type <ext4|msdos|...> (default is: ext4)"
+    echo "-s, --size <size>        Filesystem size <size(M|K)|auto> (default is: auto)"
+    echo "-l, --label <label>      Filesystem label"
+    echo "-o, --options <options>  Filesystem options"
     exit 1
 }
 
-unset SRC_DIR TARGET FS_TYPE SIZE LABEL
+unset SRC_DIR TARGET FS_TYPE SIZE LABEL OPTIONS
 while true; do
     case "$1" in
         "")
@@ -44,6 +45,10 @@ while true; do
             ;;
         -l|--label)
             LABEL=$2
+            shift 2 || usage
+            ;;
+        -o|--options)
+            OPTIONS="$2"
             shift 2 || usage
             ;;
         *)
@@ -131,7 +136,7 @@ mkimage()
     case $FS_TYPE in
         ext[234])
             /sbin/mke2fs -t $FS_TYPE $TARGET -d $SRC_DIR -b 4096 ${SIZE_KB}K \
-                ${LABEL:+-L $LABEL} || return 1
+                ${LABEL:+-L $LABEL} $OPTIONS || return 1
 
             # Set max-mount-counts to 0, and disable the time-dependent checking.
             tune2fs -c 0 -i 0 $TARGET
@@ -140,14 +145,14 @@ mkimage()
             truncate -s ${SIZE_KB}K $TARGET
 
             # Use fat32 by default
-            mkfs.vfat -F 32 ${LABEL:+-n $LABEL} $TARGET && MTOOLS_SKIP_CHECK=1 \
-                mcopy -bspmn -D s -i $TARGET $SRC_DIR/* ::/
+            mkfs.vfat -F 32 ${LABEL:+-n $LABEL} $OPTIONS $TARGET && \
+                MTOOLS_SKIP_CHECK=1 mcopy -bspmn -D s -i $TARGET $SRC_DIR/* ::/
             ;;
         ntfs)
             truncate -s ${SIZE_KB}K $TARGET
 
             # Enable compression
-            mkntfs -FCQ ${LABEL:+-L $LABEL} $TARGET
+            mkntfs -FCQ ${LABEL:+-L $LABEL} $OPTIONS $TARGET
             if check_host_tool ntfscp; then
                 copy_to_ntfs
             else
@@ -157,12 +162,12 @@ mkimage()
         btrfs)
             truncate -s ${SIZE_KB}K $TARGET
 
-            mkfs.btrfs ${LABEL:+-L $LABEL} -r $SRC_DIR $TARGET
+            mkfs.btrfs ${LABEL:+-L $LABEL} $OPTIONS -r $SRC_DIR $TARGET
             ;;
         f2fs)
             truncate -s ${SIZE_KB}K $TARGET
 
-            mkfs.f2fs ${LABEL:+-l $LABEL} $TARGET
+            mkfs.f2fs ${LABEL:+-l $LABEL} $OPTIONS $TARGET
             sload.f2fs -f $SRC_DIR $TARGET
             ;;
         ubi|ubifs|ubi-ubifs) mk_ubifs_image ;;
@@ -230,7 +235,7 @@ mk_ubifs_image()
     UBIFS_MAX_LEB_CNT=$(( $SIZE_KB * 1024 / $UBIFS_LEB_SIZE ))
 
     mkfs.ubifs -x lzo -e $UBIFS_LEB_SIZE -m $UBIFS_MINIO_SIZE \
-        -c $UBIFS_MAX_LEB_CNT -d $SRC_DIR -F -v -o $TARGET || return 1
+        -c $UBIFS_MAX_LEB_CNT -d $SRC_DIR -F -v $OPTIONS -o $TARGET || return 1
 }
 
 rm -rf $TARGET
@@ -252,7 +257,7 @@ case $FS_TYPE in
         ;;
     erofs)
         [ $SIZE_KB -eq 0 ] || fatal "$FS_TYPE: fixed size not supported."
-        mkfs.erofs -zlz4hc $TARGET $SRC_DIR|| exit 1
+        mkfs.erofs -zlz4hc $OPTIONS $TARGET $SRC_DIR|| exit 1
         ;;
     squashfs)
         [ $SIZE_KB -eq 0 ] || fatal "$FS_TYPE: fixed size not supported."
@@ -271,12 +276,13 @@ case $FS_TYPE in
         fi
 
         mksquashfs $SRC_DIR $TARGET -noappend \
-            ${SQUASHFS_COMP:-"-no-compression"} || exit 1
+            ${SQUASHFS_COMP:-"-no-compression"} || \
+            mksquashfs $SRC_DIR $TARGET -noappend || exit 1
         ;;
     jffs2)
         [ $SIZE_KB -eq 0 ] || fatal "$FS_TYPE: fixed size not supported."
         mkfs.jffs2 -r $SRC_DIR -o $TARGET 0x10000 \
-            --pad=0x400000 -s 0x1000 -n || exit 1
+            --pad=0x400000 -s 0x1000 -n $OPTIONS || exit 1
         ;;
     *)
         usage "File system: $FS_TYPE not supported."

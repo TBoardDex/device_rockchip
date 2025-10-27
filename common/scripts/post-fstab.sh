@@ -141,5 +141,5 @@ for idx in $(seq 1 "$(rk_extra_part_num)"); do
 	fi
 
 	fixup_device_part "$DEV" "$MOUNTPOINT" "$FS_TYPE" \
-		"$(rk_extra_part_options $idx)"
+		"$(rk_extra_part_mnt_opts $idx)"
 done
