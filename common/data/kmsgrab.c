@@ -178,7 +178,7 @@ static void usage(const char *prog, int fd) {
 int main(int argc, const char** argv) {
 	int id, fd;
 
-	fd = open("/dev/dri/card0", O_RDWR);
+	fd = drmOpen("rockchip", NULL);
 	if (fd < 0) {
 		fprintf(stderr, "drm open failed\n");
 		return -1;
@@ -219,6 +219,8 @@ int main(int argc, const char** argv) {
 	dump_fb(fd, id);
 
 	// /* Add delay */ }
+
+	drmClose(fd);
 
 	return 0;
 }
