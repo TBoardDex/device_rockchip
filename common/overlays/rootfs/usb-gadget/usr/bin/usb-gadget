@@ -7,7 +7,7 @@
 # usb_<pre|post>_<init|prepare|start|stop|restart>_hook
 # <usb function>_<pre|post>_<prepare|start|stop>_hook
 #
-# Example hook:
+# Example hooks:
 # root@RK3588:/# more /etc/usb-gadget.d/usb_init.sh
 # #!/bin/sh
 # usb_pre_init_hook()
@@ -408,6 +408,14 @@ usb_load_config()
 	UMS_RO=$([ "$(ums_parse ums_block_ro)" != on ] || echo 1)
 
 	USB_FUNCS="$(sed -n "s/usb_\(.*\)_en/\1/p" "$USB_CONFIG_FILE" | xargs)"
+}
+
+# ---- acm
+acm_stop()
+{
+	if [ -c /dev/ttyGS0 ]; then
+		usb_release /dev/ttyGS0
+	fi
 }
 
 # ---- adb
