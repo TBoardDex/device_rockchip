@@ -423,8 +423,16 @@ ADB_INSTANCES=${ADB_INSTANCES:-ffs.adb}
 
 adb_prepare()
 {
+	# ADB shell requires PTS.
+	if ! mountpoint -q /dev/pts; then
+		mkdir -p /dev/pts
+		mount -t devpts -o mode=0620,ptmxmode=0000,gid=5 none /dev/pts
+	fi
+
+	# ADB requires local loopback
+	/sbin/ifup --force lo 2>/dev/null || /sbin/ifup -f lo 2>/dev/null || true
+
 	usb_mount ${instance#ffs.} /dev/usb-ffs/adb -t functionfs
-	/sbin/ifup --force lo 2>/dev/null || /sbin/ifup -f lo 2>/dev/null
 	usb_start_daemon /usr/bin/adbd
 	usb_wait_access -m /dev/usb-ffs/adb
 }
