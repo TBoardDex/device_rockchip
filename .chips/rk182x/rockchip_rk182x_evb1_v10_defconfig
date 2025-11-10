@@ -1,0 +1,5 @@
+RK_UBOOT_SPL=y
+RK_KERNEL_RISCV=y
+RK_KERNEL_CFG="rk182x_defconfig"
+RK_KERNEL_DTS_NAME="rk182x-evb1-v10"
+RK_PARAMETER="parameter.txt"
