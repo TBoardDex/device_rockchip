@@ -146,7 +146,7 @@ EOF
 	if [ $i -lt 3 ]; then
 		cat << EOF
 	default "empty" if RK_CHIP_FAMILY = "rk3308"
-	default "normal"
+	default "testdata"
 EOF
 	fi
 
