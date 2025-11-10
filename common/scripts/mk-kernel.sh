@@ -473,8 +473,13 @@ post_build_hook()
 		pack_linux_headers "$1"
 	else
 		pack_linux_headers host
-		pack_linux_headers armhf
-		[ "$RK_CHIP_ARM32" ] || pack_linux_headers aarch64
+
+		if [ "$RK_CHIP_ARM32" ]; then
+			pack_linux_headers armhf
+		elif [ "$RK_CHIP_ARM64" ]; then
+			pack_linux_headers armhf
+			pack_linux_headers aarch64
+		fi
 	fi
 
 	finish_build linux-headers

@@ -17,16 +17,22 @@ config RK_KERNEL_ARCH
 	string
 	default "arm" if RK_KERNEL_ARM32
 	default "arm64" if RK_KERNEL_ARM64
+	default "riscv" if RK_KERNEL_RISCV
 
 choice
 	prompt "arch"
 
 config RK_KERNEL_ARM64
 	bool "arm64"
-	depends on !RK_CHIP_ARM32
+	depends on RK_CHIP_ARM64
 
 config RK_KERNEL_ARM32
 	bool "arm"
+	depends on RK_CHIP_ARM32 || RK_CHIP_ARM64
+
+config RK_KERNEL_RISCV
+	bool "riscv"
+	depends on RK_CHIP_RISCV
 
 endchoice # arch
 
@@ -38,6 +44,7 @@ config RK_KERNEL_CFG
 	default "rv1126b_defconfig" if RK_CHIP_FAMILY = "rv1126b"
 	default "rk1806_linux_defconfig" if RK_CHIP = "rk1806"
 	default "rk1808_linux_defconfig" if RK_CHIP = "rk1808"
+	default "rk182x_defconfig" if RK_CHIP = "rk182x"
 	default "rk3308_linux_defconfig" if RK_CHIP_FAMILY = "rk3308"
 	default "rockchip_linux_defconfig"
 
@@ -53,11 +60,9 @@ config RK_KERNEL_DTS_NAME
 
 config RK_KERNEL_IMG
 	string
-	default "kernel/arch/$RK_KERNEL_ARCH/boot/zImage" \
-		if RK_KERNEL_ARM32 && RK_BOOT_COMPRESSED
-	default "kernel/arch/$RK_KERNEL_ARCH/boot/Image.lz4" \
-		if RK_KERNEL_ARM64 && RK_BOOT_COMPRESSED
-	default "kernel/arch/$RK_KERNEL_ARCH/boot/Image"
+	default "kernel/arch/$RK_KERNEL_ARCH/boot/Image" if !RK_BOOT_COMPRESSED
+	default "kernel/arch/$RK_KERNEL_ARCH/boot/zImage" if RK_KERNEL_ARM32
+	default "kernel/arch/$RK_KERNEL_ARCH/boot/Image.lz4"
 
 if RK_RECOVERY
 

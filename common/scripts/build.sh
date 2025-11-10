@@ -161,7 +161,12 @@ start_log()
 get_toolchain()
 {
 	MODULE="$1"
-	TC_ARCH="${2/arm64/aarch64}"
+	case "$2" in
+		arm64) TC_ARCH="aarch64" ;;
+		riscv) TC_ARCH="riscv64" ;;
+		*) TC_ARCH="$2" ;;
+	esac
+
 	TC_VENDOR="${3-none}"
 	TC_OS="${4:-linux}"
 
@@ -180,6 +185,11 @@ get_toolchain()
 	# RV1126 uses custom toolchain
 	if [ "$RK_CHIP_FAMILY" = "rv1126_rv1109" ]; then
 		TC_VENDOR=rockchip830
+	fi
+
+	# RISCV toolchain
+	if [ "$RK_CHIP_FAMILY" = "rk182x" ]; then
+		TC_VENDOR=unknown
 	fi
 
 	TC_DIR="$RK_SDK_DIR/prebuilts/gcc/linux-x86/$TC_ARCH"

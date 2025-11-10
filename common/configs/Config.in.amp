@@ -22,13 +22,15 @@ choice
 
 config RK_AMP_ARM64
 	bool "arm64"
-	depends on !RK_CHIP_ARM32
+	depends on RK_CHIP_ARM64
 
 config RK_AMP_ARM32
 	bool "arm"
+	depends on RK_CHIP_ARM32 || RK_CHIP_ARM64
 
 config RK_AMP_RISCV
 	bool "riscv"
+#	depends on RK_CHIP_RISCV # For MCU
 
 endchoice # AMP arch
 

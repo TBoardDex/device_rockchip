@@ -54,6 +54,7 @@ config RK_DEBIAN_ARM64
 
 config RK_DEBIAN_ARMHF
 	bool "armhf"
+	depends on RK_KERNEL_ARM32 || RK_KERNEL_ARM64
 
 endchoice # rootfs arch
 
