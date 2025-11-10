@@ -1,3 +1,5 @@
+RK_BUILDROOT_BASE_CFG="rk3588_vehicle_dual_evb"
+RK_ROOTFS_EXTRA_OVERLAY_DIRS="vehicle-dual-evb"
 # RK_WIFIBT is not set
 RK_UBOOT_CFG_FRAGMENTS="rk3588-ab-car"
 RK_KERNEL_CFG_FRAGMENTS="rk3588_vehicle.config"
