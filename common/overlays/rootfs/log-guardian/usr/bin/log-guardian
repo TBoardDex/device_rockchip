@@ -99,7 +99,7 @@ process_dir() {
 
 	# 1/ Try to remove backup logs
 	for suffix in "~" $(find "$LOG_DIR" -type f -name "*.*" | \
-		grep -oE "[0-9]+$" | sort -rh | uniq); do
+		grep -oE "[0-9]+$|[0-9]+.gz$" | sort -rh | uniq); do
 		log "Removing \"*.$suffix\"..."
 		find "$LOG_DIR" -type f -name "*.$suffix" -exec rm {} +
 		is_full "$LOG_DIR" || return 0
