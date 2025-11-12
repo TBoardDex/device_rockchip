@@ -32,9 +32,16 @@ menuconfig RK_USB_ADBD
 
 if RK_USB_ADBD
 
+menuconfig RK_USB_ADBD_TCP
+	bool "listen on TCP port"
+	default y
+
 config RK_USB_ADBD_TCP_PORT
 	int "TCP port"
+	depends on RK_USB_ADBD_TCP
 	default 5555
+
+endmenuconfig # TCP
 
 config RK_USB_ADBD_SHELL
 	string "login shell"
