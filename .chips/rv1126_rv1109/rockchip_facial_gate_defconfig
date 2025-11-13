@@ -4,4 +4,3 @@ RK_KERNEL_CFG_FRAGMENTS="rv1126-facial-gate.config"
 RK_KERNEL_DTS_NAME="rv1109-evb-ddr3-v13-facial-gate"
 RK_EXTRA_PARTITION_1_SRC="facial_gate"
 RK_PARAMETER="parameter-facial-gate.txt"
-RK_USE_FIT_IMG=y

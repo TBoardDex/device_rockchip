@@ -5,7 +5,6 @@ RK_BUILDROOT_BASE_CFG="rv1126b_robot"
 # RK_ROOTFS_ASYNC_COMMIT is not set
 # RK_ROOTFS_DEBUG_INFO is not set
 RK_WIFIBT_CHIP="RK960"
-RK_UBOOT_SPL=y
 RK_UBOOT_CFG_FRAGMENTS="rk-amp"
 RK_AMP=y
 RK_AMP_RISCV=y
@@ -14,4 +13,3 @@ RK_KERNEL_CFG_FRAGMENTS="rv1126b_robot.config rockchip_amp.config"
 RK_KERNEL_DTS_NAME="rv1126b-evb1-v10-amp"
 RK_RECOVERY=y
 RK_PARAMETER="parameter-robot.txt"
-RK_USE_FIT_IMG=y
