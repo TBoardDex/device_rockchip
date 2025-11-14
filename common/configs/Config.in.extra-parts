@@ -14,7 +14,7 @@ config RK_UBI_MINIO_SIZE
 
 config RK_UBI_PEB_SIZE
 	hex "UBI physical eraseblock (PEB) size (B)"
-	default "0x1f000"
+	default "0x20000"
 
 config RK_UBI_SUBPAGE_SIZE
 	hex "UBI sub-page size (B)"
