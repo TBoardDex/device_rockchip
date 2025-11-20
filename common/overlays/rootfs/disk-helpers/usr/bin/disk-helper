@@ -337,8 +337,10 @@ resize_part()
 		return
 	fi
 
-	message "Done with rootfs"
-	is_rootfs && return
+	if is_rootfs; then
+		message "Done with rootfs"
+		return
+	fi
 
 	message "Fallback to format resize"
 	TEMP_BACKUP=$(mktemp -d)
