@@ -16,7 +16,7 @@
 			compression  = "none";
 			arch         = "arm";
 			udelay       = <10000>;
-			load         = <0x07b00000>;
+			load         = <0x08200000>;
 			cpu          = <0>;
 			compile {
 				size         = <0x00800000>;
