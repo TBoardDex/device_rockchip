@@ -163,12 +163,12 @@ get_toolchain()
 	MODULE="$1"
 	case "$2" in
 		arm64) TC_ARCH="aarch64" ;;
-		riscv) TC_ARCH="riscv64" ;;
 		*) TC_ARCH="$2" ;;
 	esac
 
-	TC_VENDOR="${3-none}"
+	TC_VENDOR="${3:-none}"
 	TC_OS="${4:-linux}"
+	TC_ABI="${5}"
 
 	MACHINE=$(uname -m)
 	if [ "$MACHINE" != x86_64 ]; then
@@ -178,26 +178,35 @@ get_toolchain()
 			echo aarch64-linux-gnu-
 		elif [ "$TC_ARCH" = arm -a "$MACHINE" != armv7l ]; then
 			echo arm-linux-gnueabihf-
+		else
+			exit 1
 		fi
 		return 0
 	fi
 
-	# RV1126 uses custom toolchain
+	# RV1126 uses Rockchip custom toolchain
 	if [ "$RK_CHIP_FAMILY" = "rv1126_rv1109" ]; then
 		TC_VENDOR=rockchip830
 	fi
 
-	# RISCV toolchain
+	# RK182x uses Xuantie custom toolchain
 	if [ "$RK_CHIP_FAMILY" = "rk182x" ]; then
 		TC_VENDOR=unknown
 	fi
 
 	TC_DIR="$RK_SDK_DIR/prebuilts/gcc/linux-x86/$TC_ARCH"
-	if [ "$TC_VENDOR" ]; then
-		TC_PATTERN="$TC_ARCH-$TC_VENDOR-$TC_OS-[^-]*-gcc"
+	if [ "$TC_OS" = linux ]; then
+		if [ "$TC_ABI" ]; then
+			TC_PATTERN="$TC_ARCH-$TC_VENDOR-$TC_OS-$TC_ABI-gcc"
+		else
+			# Any ABI
+			TC_PATTERN="$TC_ARCH-$TC_VENDOR-$TC_OS-[^-]*-gcc"
+		fi
 	else
-		TC_PATTERN="$TC_ARCH-$TC_OS-[^-]*-gcc"
+		unset TC_ABI # Without ABI
+		TC_PATTERN="$TC_ARCH-$TC_VENDOR-$TC_OS-gcc"
 	fi
+	notice "Toolchain pattern for $MODULE: $TC_PATTERN" >&2
 	GCC="$(find "$TC_DIR" -name "*gcc" | grep -m 1 "/$TC_PATTERN$" || true)"
 	if [ ! -x "$GCC" ]; then
 		{
@@ -205,6 +214,7 @@ get_toolchain()
 			error "Arch: $TC_ARCH"
 			error "Vendor: $TC_VENDOR"
 			error "OS: $TC_OS"
+			error "ABI: $TC_ABI"
 		} >&2
 		exit 1
 	fi

@@ -21,18 +21,20 @@ config RK_KERNEL_ARCH
 
 choice
 	prompt "arch"
-
-config RK_KERNEL_ARM64
-	bool "arm64"
-	depends on RK_CHIP_ARM64
+	default RK_KERNEL_ARM64
 
 config RK_KERNEL_ARM32
 	bool "arm"
 	depends on RK_CHIP_ARM32 || RK_CHIP_ARM64
 
+config RK_KERNEL_ARM64
+	bool "arm64"
+	depends on RK_CHIP_ARM64
+
+# Including riscv 32bit and 64bit
 config RK_KERNEL_RISCV
 	bool "riscv"
-	depends on RK_CHIP_RISCV
+	depends on RK_CHIP_RISCV64
 
 endchoice # arch
 

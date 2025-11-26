@@ -233,7 +233,11 @@ build_hook()
 
 	"$RK_SCRIPTS_DIR/check-amp.sh"
 
-	export CROSS_COMPILE=$(get_toolchain AMP "$RK_AMP_ARCH" "" none)
+	if [ "$RK_AMP_RISCV" ]; then
+		export CROSS_COMPILE=$(get_toolchain AMP "$RK_AMP_ARCH" none embed)
+	else
+		export CROSS_COMPILE=$(get_toolchain AMP "$RK_AMP_ARCH")
+	fi
 	[ "$CROSS_COMPILE" ] || exit 1
 
 	if [ -f "$RK_CHIP_DIR/$RK_AMP_CFG" ]; then

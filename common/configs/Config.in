@@ -36,7 +36,7 @@ config RK_CHIP
 	help
 	  Rockchip SoC.
 
-config RK_CHIP_RISCV
+config RK_CHIP_RISCV64
 	bool
 	depends on RK_CHIP_FAMILY = "rk182x"
 	default y
@@ -51,7 +51,7 @@ config RK_CHIP_ARM32
 
 config RK_CHIP_ARM64
 	bool
-	depends on !RK_CHIP_RISCV && !RK_CHIP_ARM32
+	depends on !RK_CHIP_RISCV64 && !RK_CHIP_ARM32
 	default y
 
 config RK_CHIP_HAS_GPU
