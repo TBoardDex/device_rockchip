@@ -2,7 +2,7 @@ Prebuilt tools (static linked)
 ==============================
 
 Prebuilt from Rockchip buildroot 2025 SDK with kernel 6.1:
-4ca3327fbf configs: rockchip: Enable ltrace in prebuilt tools
+ae5dd7c6c0 android-adbd: Port upstream -EPIPE patch
 
 Using rockchip_tools_{32,64}_defconfig.
 
