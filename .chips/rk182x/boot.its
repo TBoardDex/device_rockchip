@@ -12,7 +12,7 @@
     images {
         fdt {
 	    description = "Flattened Device Tree blob";
-	    data = /incbin/("./arch/riscv/boot/dts/rockchip/rk182x-evb1-v10.dtb");
+            data = /incbin/("@KERNEL_DTB@");
             type = "flat_dt";
             arch = "riscv";
             compression = "none";
@@ -25,7 +25,7 @@
 
         kernel {
 	    description = "RK1820 Linux kernel";
-	    data = /incbin/("./arch/riscv/boot/Image");
+            data = /incbin/("@KERNEL_IMG@");
             type = "kernel";
             arch = "riscv";
             os = "linux";
