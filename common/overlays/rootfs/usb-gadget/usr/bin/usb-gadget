@@ -28,6 +28,12 @@
 # 	done
 # 	ifconfig usb0 192.168.1.1
 # }
+# rndis_pre_stop_hook()
+# {
+# 	if ifconfig usb0 >/dev/null 2>&1; then
+#		ifconfig usb0 down || true
+#	fi
+# }
 #
 # root@rk3588:/# more /etc/usb-gadget.d/ums.sh
 # #!/bin/bash
