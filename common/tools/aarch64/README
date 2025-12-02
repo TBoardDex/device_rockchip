@@ -2,9 +2,9 @@ Prebuilt tools (static linked)
 ==============================
 
 Prebuilt from Rockchip buildroot 2025 SDK with kernel 6.1:
-ae5dd7c6c0 android-adbd: Port upstream -EPIPE patch
+4fa8e3f9bf configs: Add rockchip_tools_riscv64_defconfig
 
-Using rockchip_tools_{32,64}_defconfig.
+Using rockchip_tools_{arm32,arm64,riscv64}_defconfig.
 
 For building kmsgrab:
 1/ ./build.sh shell

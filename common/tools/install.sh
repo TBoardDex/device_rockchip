@@ -10,14 +10,21 @@ OVERLAY_DIR="$(dirname "$(realpath "$0")")"
 DEST_DIR="$TARGET_DIR/usr/bin/"
 mkdir -p "$DEST_DIR"
 
+unset TOOL_ARCH
 case "$RK_KERNEL_ARCH" in
 	arm) TOOL_ARCH=armhf ;;
 	arm64) TOOL_ARCH=aarch64 ;;
-	*)
-		notice "No available prebuilt tools..."
-		exit 0
+	riscv)
+		if [ "$RK_CHIP_RISCV64" ]; then
+			TOOL_ARCH=riscv64
+		fi
 		;;
 esac
+
+if [ -z "$TOOL_ARCH" ]; then
+	notice "No available prebuilt tools..."
+	exit 0
+fi
 
 message "Installing prebuilt tools..."
 
