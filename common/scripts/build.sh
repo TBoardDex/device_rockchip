@@ -224,11 +224,22 @@ get_toolchain()
 
 ensure_tools()
 {
+	case "$RK_KERNEL_ARCH" in
+		arm) TOOL_ARCH=armhf ;;
+		arm64) TOOL_ARCH=aarch64 ;;
+		*) unset TOOL_ARCH ;;
+	esac
+
 	for t in "$@"; do
-		if [ "$RK_ROOTFS_PREFER_PREBUILT_TOOLS" ] || \
-			[ "$RK_ROOTFS_PREBUILT_TOOLS" ] || \
-			[ ! -e "$t" ]; then
-			install -v -D -m 0755 "$RK_TOOLS_DIR/armhf/${t##*/}" "$t"
+		if [ -z "$RK_ROOTFS_PREFER_PREBUILT_TOOLS" ] && \
+			[ -z "$RK_ROOTFS_PREBUILT_TOOLS" ] && [ -e "$t" ]; then
+			# Keep the original tool
+			continue
+		fi
+
+		if [ "$TOOL_ARCH" ]; then
+			install -v -D -m 0755 \
+				"$RK_TOOLS_DIR/$TOOL_ARCH/${t##*/}" "$t"
 			continue
 		fi
 

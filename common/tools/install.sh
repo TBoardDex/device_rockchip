@@ -7,15 +7,18 @@ TARGET_DIR="$1"
 
 OVERLAY_DIR="$(dirname "$(realpath "$0")")"
 
-message "Installing prebuilt tools..."
-
 DEST_DIR="$TARGET_DIR/usr/bin/"
 mkdir -p "$DEST_DIR"
 
-if [ "$RK_KERNEL_ARM32" ]; then
-	TARGET_ARCH=armhf
-else
-	TARGET_ARCH=aarch64
-fi
+case "$RK_KERNEL_ARCH" in
+	arm) TOOL_ARCH=armhf ;;
+	arm64) TOOL_ARCH=aarch64 ;;
+	*)
+		notice "No available prebuilt tools..."
+		exit 0
+		;;
+esac
 
-$RK_RSYNC --exclude=adbd --exclude=README "$OVERLAY_DIR/$TARGET_ARCH/" "$DEST_DIR/"
+message "Installing prebuilt tools..."
+
+$RK_RSYNC --exclude=adbd --exclude=README "$OVERLAY_DIR/$TOOL_ARCH/" "$DEST_DIR/"
