@@ -118,13 +118,26 @@ USB_CONFIGS_STRINGS_DIR=$USB_CONFIGS_DIR/$USB_STRINGS_ATTR
 
 USB_SERVICE_NAME=usb-service
 
+shopt -s expand_aliases 2>/dev/null || true
+
 # ---- helper functions
+
+# Parent pid of child process
+alias current_pid='cut -d" " -f4 /proc/self/stat'
+
 usb_msg()
 {
 	if which logger >/dev/null; then
-		logger -t "$(basename "$0")" "[$BASHPID]: $@"
+		logger -t "$(basename "$0")" "[$(current_pid)]: $@"
 	fi
-	echo "[$(date +"%F %T")] $(basename "$0") [$BASHPID]: $@"
+	echo "[$(date +"%F %T")] $(basename "$0") [$(current_pid)]: $@"
+}
+
+usb_lock_command()
+{
+	touch $USB_CMD_FILE
+	exec 4<$USB_CMD_FILE
+	flock -x 4
 }
 
 usb_lock()
@@ -145,12 +158,13 @@ usb_daemon_prepare()
 	# Close opened files
 	exec 0<&- # input (cmd file?)
 	exec 3<&- # lock file
+	exec 4<&- # lock command file
 
 	cd /; cd /
 
 	# Apply process name
 	if [ "$1" ]; then
-		echo -n $1 > /proc/$BASHPID/comm
+		echo -n $1 > /proc/$(current_pid)/comm
 	fi
 }
 
@@ -1011,7 +1025,6 @@ usb_service()
 	# Fall back to busybox's fuser
 	if ! which fuser >/dev/null; then
 		if busybox --list | grep -wq fuser; then
-			shopt -s expand_aliases
 			alias fuser='busybox fuser'
 		fi
 	fi
@@ -1030,7 +1043,7 @@ usb_service()
 		usb_daemon_prepare $USB_SERVICE_NAME
 
 		if [ -z "$DEBUG" ]; then
-			usb_msg "Starting $USB_SERVICE_NAME($$)," \
+			usb_msg "Starting $USB_SERVICE_NAME," \
 				"log saved to $LOG_FILE"
 
 			# Redirect outputs to log file
@@ -1051,6 +1064,9 @@ usb_service()
 
 			if [ "$ACTION" = stop ]; then
 				usb_msg "Exited $USB_SERVICE_NAME"
+
+				# Clear command file to quit 'tail -f'
+				echo > $USB_CMD_FILE
 				exit 0
 			fi
 		done
@@ -1068,27 +1084,43 @@ usb_service()
 	return 1
 }
 
+# Lock command handling
+usb_lock_command
+
+# Lock request handling
 usb_lock
 
 ACTION=${1:-update}
 
 case "$ACTION" in
-	start|restart)
+	start|restart|update|stop)
 		# Make sure that the USB gadget service is running
 		if ! usb_service_is_running; then
-			usb_service
-		fi
-		;& # fall-through
-	update|stop)
-		if ! usb_service_is_running; then
-			usb_msg "$USB_SERVICE_NAME is unavailable"
-			exit 0
+			if echo "$ACTION" | grep -q "start$"; then
+				usb_service
+			else
+				usb_msg "$USB_SERVICE_NAME is unavailable"
+				exit 0
+			fi
 		fi
 
 		# Send request to the service
 		usb_msg "Sending $ACTION request to service..."
 		usb_msg "Check $LOG_FILE for $USB_SERVICE_NAME log..."
 		echo $ACTION >> $USB_CMD_FILE
+
+		# Sync service status
+		if [ "$ACTION" = stop ]; then
+			usb_unlock
+
+			for i in `seq 1000`;do
+				if ! usb_service_is_running; then
+					break
+				fi
+				sleep .01
+			done
+			exit 0
+		fi
 		;;
 	*)
 		echo "Usage: $(basename "$0") [start|stop|restart|update]" >&2
