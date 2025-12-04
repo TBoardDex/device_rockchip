@@ -42,7 +42,7 @@
 		shm_base        = <0x07800000>;
 		shm_size        = <0x00400000>;
 		rpmsg_base      = <0x07c00000>;
-		rpmsg_size      = <0x00500000>;
+		rpmsg_size      = <0x00600000>;
 	};
 
 	configurations {
