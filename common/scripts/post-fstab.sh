@@ -118,7 +118,7 @@ if [ "$RK_ROOTFS_FORCE_RAMTMP" ]; then
 fi
 
 if [ "$POST_OS" = recovery ]; then
-	rm -rf mnt/udisk mnt/sdcard mnt/usb_storage  mnt/external_sd udisk sdcard
+	rm -rf mnt/udisk mnt/sdcard mnt/usb_storage mnt/external_sd udisk sdcard
 
 	fixup_device_part /dev/sda1 /mnt/udisk auto
 	ln -sf mnt/udisk udisk
