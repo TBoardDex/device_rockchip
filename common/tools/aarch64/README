@@ -2,7 +2,7 @@ Prebuilt tools (static linked)
 ==============================
 
 Prebuilt from Rockchip buildroot 2025 SDK with kernel 6.1:
-4fa8e3f9bf configs: Add rockchip_tools_riscv64_defconfig
+c02c65018b frecon: Support switching off VT
 
 Using rockchip_tools_{arm32,arm64,riscv64}_defconfig.
 
