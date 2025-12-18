@@ -36,11 +36,3 @@ fi
 if [ -r etc/nsswitch.conf ]; then
 	sed -i 's/\<compat$/files/' etc/nsswitch.conf
 fi
-
-if [ -r lib/systemd/system/dhcpcd.service ]; then
-	message "Enabling dhcpcd service..."
-
-	WANTS_DIR=etc/systemd/system/multi-user.target.wants
-	mkdir -p "$WANTS_DIR"
-	ln -rsf lib/systemd/system/dhcpcd.service "$WANTS_DIR/"
-fi
