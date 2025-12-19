@@ -118,15 +118,15 @@ if [ "$RK_ROOTFS_FORCE_RAMTMP" ]; then
 fi
 
 if [ "$POST_OS" = recovery ]; then
-	rm -rf mnt/udisk mnt/sdcard mnt/usb_storage mnt/external_sd udisk sdcard
+	rm -rfv mnt/udisk mnt/sdcard mnt/usb_storage mnt/external_sd udisk sdcard
 
 	fixup_device_part /dev/sda1 /mnt/udisk auto
-	ln -sf mnt/udisk udisk
-	ln -sf udisk mnt/usb_storage
+	ln -sfv mnt/udisk udisk
+	ln -sfv udisk mnt/usb_storage
 
 	fixup_device_part /dev/mmcblk1p1 /mnt/sdcard auto
-	ln -sf mnt/sdcard sdcard
-	ln -sf sdcard mnt/external_sd
+	ln -sfv mnt/sdcard sdcard
+	ln -sfv sdcard mnt/external_sd
 fi
 
 for idx in $(seq 1 "$(rk_extra_part_num)"); do

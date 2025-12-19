@@ -2,13 +2,13 @@
 
 cd "$TARGET_DIR"
 
-rm -rf sha256sum*
+rm -rfv sha256sum*
 
 if [ "$RK_DEBIAN_USER" != linaro ]; then
 	message "Changing default user to $RK_DEBIAN_USER..."
 
 	if [ ! -d home/$RK_DEBIAN_USER ]; then
-		mv home/linaro home/$RK_DEBIAN_USER || true
+		mv -v home/linaro home/$RK_DEBIAN_USER || true
 	fi
 	grep -rwl "linaro" rockchip-test/ etc/ boot/ 2>/dev/null | \
 		xargs sed -i "s/\<linaro\>/$RK_DEBIAN_USER/g" 2>/dev/null || true
@@ -81,7 +81,7 @@ if ! [ "$RK_DEBIAN_UNIFIED_IMAGE" ]; then
 	if [ "$PKGS" ]; then
 		message "Installing chip related packages..."
 
-		mkdir -p var/cache/apt/archives/partial
+		mkdir -pv var/cache/apt/archives/partial
 		PKGS="$(echo $PKGS | xargs)"
 		chroot . bash -c "apt install -fy --allow-downgrades $PKGS" \
 			|| true
@@ -89,6 +89,6 @@ if ! [ "$RK_DEBIAN_UNIFIED_IMAGE" ]; then
 		"$RK_TOOLS_DIR/x86_64/ldconfig" -r "$TARGET_DIR/" || true
 	fi
 
-	rm -rf *.deb *.tar
+	rm -rfv *.deb *.tar
 	touch usr/local/first_boot_flag
 fi

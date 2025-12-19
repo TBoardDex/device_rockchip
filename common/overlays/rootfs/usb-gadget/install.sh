@@ -9,7 +9,7 @@ find "$TARGET_DIR/etc" "$TARGET_DIR/lib" "$TARGET_DIR/usr/bin" \
 	-name "*usbdevice*" -print0 -o -name ".usb_config" -print0 \
 	-o -name "android-tools-adbd*" -print0 \
 	-o -name "android-gadget*" -print0 \
-	-o -name "*adbd.sh" -print0 2>/dev/null | xargs -0 rm -rf
+	-o -name "*adbd.sh" -print0 2>/dev/null | xargs -0 rm -rfv
 
 if [ ! "$RK_USB_GADGET" ]; then
 	notice "USB gadget disabled..."
