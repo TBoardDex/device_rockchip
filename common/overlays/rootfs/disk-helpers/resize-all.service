@@ -1,7 +1,7 @@
 [Unit]
 Description=Resize all internal mounted partitions
 DefaultDependencies=no
-After=local-fs.target
+After=systemd-fsck-root.service
 ConditionPathExists=/etc/fstab
 
 [Service]
