@@ -21,8 +21,8 @@
 			load         = <0x02e00000>;
 			compile {
 				size         = <0x00400000>;
-				srambase     = <0xfffa0000>;
-				sramsize     = <0x00010000>;
+				sram_start   = <0xfffa0000>;
+				sram_size    = <0x00010000>;
 				sys          = "rtt";
 				rtt_config   = "board/rk3308_ddr2_v10/amp_rtt-linux_defconfig"
 			};

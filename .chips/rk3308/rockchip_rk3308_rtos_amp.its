@@ -23,8 +23,8 @@
 			udelay       = <10000>;
 			compile {
 				size         = <0x00900000>;
-				srambase     = <0xfffb0000>;
-				sramsize     = <0x00010000>;
+				sram_start   = <0xfffb0000>;
+				sram_size    = <0x00010000>;
 				sys          = "hal";	 // "hal" or "rtt"
 			};
 			hash {
@@ -45,8 +45,8 @@
 			udelay       = <10000>;
 			compile {
 				size         = <0x00a00000>;
-				srambase     = <0xfff88000>;
-				sramsize     = <0x00008000>;
+				sram_start   = <0xfff88000>;
+				sram_size    = <0x00008000>;
 				sys          = "rtt";
 				rtt_config   = "board/rk3308_ddr2_v10/amp_rtt-hal_defconfig"
 			};
@@ -68,8 +68,8 @@
 			udelay       = <10000>;
 			compile {
 				size         = <0x00a00000>;
-				srambase     = <0xfff90000>;
-				sramsize     = <0x00010000>;
+				sram_start   = <0xfff90000>;
+				sram_size    = <0x00010000>;
 				sys          = "hal";
 			};
 			hash {
@@ -90,8 +90,8 @@
 			udelay       = <10000>;
 			compile {
 				size         = <0x00a00000>;
-				srambase     = <0xfffa0000>;
-				sramsize     = <0x00010000>;
+				sram_start   = <0xfffa0000>;
+				sram_size    = <0x00010000>;
 				sys          = "hal";
 			};
 			hash {

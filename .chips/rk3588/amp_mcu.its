@@ -17,6 +17,13 @@
 			arch         = "arm";
 			udelay       = <10000>;
 			load         = <0x07a00000>;
+			sram_start   = <0x00000000>;    // {pmu1_sgrf_soc_con10[15:0],16'h0}
+			dev_start    = <0xF0000000>;
+			exsram_start = <0x00000000>;    // {pmu1_sgrf_soc_con11[15:0],16'h0}
+			experi_start = <0x00000000>;    // {pmu1_sgrf_soc_con12[15:0],16'h0}
+			uc_start     = <0x07C00000>;    // {pmu1_sgrf_soc_con8[3:0],pmu1_sgrf_soc_con6[15:0],12'h0}
+			uc_end       = <0xFEE00000>;    // {pmu1_sgrf_soc_con8[7:4],pmu1_sgrf_soc_con7[15:0],12'h0}
+
 			cpu          = <0>;
 			compile {
 				size         = <0x00200000>;

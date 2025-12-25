@@ -17,6 +17,10 @@
 			arch         = "arm";
 			udelay       = <10000>;
 			load         = <0x48000000>;
+			sram_start   = <0x40000000>;    // {SYS_SGRF_SOC_CON17[31:10],10’h0}
+			dev_start    = <0x20000000>;
+			uc_start     = <0x20000000>;    // {SYS_SGRF_SOC_CON14[31:12],12’h0}
+			uc_end       = <0x48000000>;    // {SYS_SGRF_SOC_CON15[31:12],12’h0}
 			cpu          = <0>;
 			compile {
 				sys          = "rtt";    // "hal" or "rtt"

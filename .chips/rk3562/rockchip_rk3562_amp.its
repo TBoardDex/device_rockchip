@@ -21,8 +21,8 @@
 			load         = <0x01800000>;
 			compile {
 				size         = <0x00800000>;
-				srambase     = <0xfe480000>;
-				sramsize     = <0x00010000>;
+				sram_start   = <0xfe480000>;
+				sram_size    = <0x00010000>;
 				sys          = "hal";    // "hal" or "rtt"
 			}
 			udelay       = <10000>;

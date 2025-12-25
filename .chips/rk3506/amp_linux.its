@@ -19,8 +19,8 @@
 			thumb        = <0>;      // 0: arm or thumb2; 1: thumb
 			hyp          = <0>;      // 0: el1/svc; 1: el2/hyp
 			load         = <0x03e00000>;
-			srambase     = <0xfff80000>;
-			sramsize     = <0x0000c000>;
+			sram_start   = <0xfff80000>;
+			sram_size    = <0x0000c000>;
 			compile {
 				size     = <0x00100000>;
 				sys      = "rtt";

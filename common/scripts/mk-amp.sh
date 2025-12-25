@@ -168,8 +168,8 @@ build_images()
 		# update all parameters
 		FIRMWARE_CPU_BASE=$(amp_get_value "$ITS_IMAGE" load)
 		DRAM_SIZE=$(amp_get_value "$ITS_IMAGE" size)
-		SRAM_BASE=$(amp_get_value "$ITS_IMAGE" srambase)
-		SRAM_SIZE=$(amp_get_value "$ITS_IMAGE" sramsize)
+		SRAM_BASE=$(amp_get_value "$ITS_IMAGE" sram_start)
+		SRAM_SIZE=$(amp_get_value "$ITS_IMAGE" sram_size)
 		CUR_CPU=$(amp_get_value "$ITS_IMAGE" cpu)
 		CPU_BIN=$(amp_get_string "$ITS_IMAGE" data)
 		if (( $CUR_CPU > 0xff )); then

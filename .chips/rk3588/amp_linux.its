@@ -23,8 +23,8 @@
 
 			compile {
 				size         = <0x00800000>;
-				srambase     = <0xff000000>;
-				sramsize     = <0x00100000>;
+				sram_start   = <0xff000000>;
+				sram_size    = <0x00100000>;
 				sys          = "rtt";    // "hal" or "rtt"
 				core         = "ap";
 				rtt_config   = "board/rk3588_evb1/defconfig"

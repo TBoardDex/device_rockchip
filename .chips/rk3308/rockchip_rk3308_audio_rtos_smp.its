@@ -22,8 +22,8 @@
 			load         = <0x00800000>;
 			compile {
 				size         = <0x02700000>;
-				srambase     = <0xfff88000>;
-				sramsize     = <0x00038000>;
+				sram_start   = <0xfff88000>;
+				sram_size    = <0x00038000>;
 				sys          = "rtt";
 				rtt_config   = "board/rk3308_audio_v10/smp_defconfig"
 			};
