@@ -484,7 +484,7 @@ prepare_part()
 
 	# Prepare for ubi
 	if [ "$FSTYPE" = ubifs ] ||
-		[ "$(dd if=$DEV bs=1 count=3 status=none)" = UBI ]; then
+		dd if=$DEV bs=1 count=3 status=none | grep -q "^UBI$"; then
 		if ! prepare_ubi; then
 			message "Failed to prepare ubi for $DEV"
 

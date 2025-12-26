@@ -27,9 +27,9 @@ log() {
 PID=$(cat $PID_FILE 2>/dev/null || true)
 if [ "$PID" ]; then
 	log "Stopping log-guardian ($PID)..."
-	kill -9 -$PID 2>/dev/null || true
-	killall -9 log-guardian || true
 	rm -f "$PID_FILE"
+	kill -$PID 2>/dev/null || true
+	kill -9 -$PID 2>/dev/null || true
 fi
 
 for opt in $@; do
