@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 RK_RTOS_BSP_DIR=$RK_SDK_DIR/rtos/bsp/rockchip
-ITS_FILE="$RK_CHIP_DIR/$RK_AMP_FIT_ITS"
+ITS_CONFIG="$RK_CHIP_DIR/$RK_AMP_FIT_ITS"
 
 RK_SCRIPTS_DIR="${RK_SCRIPTS_DIR:-$(dirname "$(realpath "$0")")}"
 
@@ -41,6 +41,49 @@ amp_get_node()
 				}
 			}
 		}'
+}
+
+amp_filter_comments()
+{
+	# Remove single-line comments (// ...)
+	# Remove multi-line comments (/* ... */)
+	# Remove comments at end of lines but keep the line
+	cat "$1" | sed -e 's|//.*||' -e 's|/\*.*\*/||g' | \
+	awk '
+		BEGIN { in_comment = 0; }
+		{
+			line = $0;
+			# Handle multi-line comments
+			while (1) {
+				if (!in_comment) {
+					# Check for /* comment start
+					pos = index(line, "/*");
+					if (pos > 0) {
+						# Output part before comment
+						printf "%s", substr(line, 1, pos-1);
+						line = substr(line, pos+2);
+						in_comment = 1;
+						continue;
+					}
+				} else {
+					# Check for */ comment end
+					pos = index(line, "*/");
+					if (pos > 0) {
+						line = substr(line, pos+2);
+						in_comment = 0;
+						continue;
+					} else {
+						# Entire line is inside comment
+						line = "";
+					}
+				}
+				break;
+			}
+			if (!in_comment && line != "") {
+				print line;
+			}
+		}
+	'
 }
 
 amp_touch_export()
@@ -246,6 +289,8 @@ build_hook()
 		set +a
 	fi
 
+	ITS_FILE="$RK_SCRIPTS_DIR/$(mktemp temp_mk_amp_XXXXXXX.its)"
+	echo "$(amp_filter_comments "$ITS_CONFIG")" > "$ITS_FILE"
 	CORE_NUMBERS=$(grep -wcE "amp[0-9]* {|mcu {|hpmcu {" $ITS_FILE)
 	echo "CORE_NUMBERS=$CORE_NUMBERS"
 
@@ -276,6 +321,7 @@ build_hook()
 
 	$RK_RTOS_BSP_DIR/tools/mkimage -f amp.its -E -p 0xe00 $RK_FIRMWARE_DIR/amp.img
 
+	rm $ITS_FILE -f
 	finish_build amp $@
 }
 
