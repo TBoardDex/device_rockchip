@@ -760,7 +760,8 @@ main()
 	case "$OPTIONS" in
 		cleanall)
 			run_build_hooks clean
-			rm -rf "$RK_OUTDIR" "$RK_SDK_DIR/rockdev"
+			rm -rf "$RK_OUTDIR" "$RK_SDK_DIR/rockdev" \
+				"$RK_SDK_DIR/buildroot/output"
 			finish_build cleanall
 			exit 0 ;;
 		clean-*)

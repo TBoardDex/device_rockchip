@@ -7,9 +7,11 @@ usage_hook()
 
 clean_hook()
 {
-	rm -rf buildroot/output/$RK_RECOVERY_CFG
-	rm -rf "$RK_OUTDIR/recovery"
+	if [ "$RK_RECOVERY_CFG" ]; then
+		"$RK_SCRIPTS_DIR/mk-buildroot.sh" "$RK_RECOVERY_CFG" clean
+	fi
 
+	rm -rf "$RK_OUTDIR/recovery"
 	rm -rf "$RK_FIRMWARE_DIR/recovery.img"
 }
 

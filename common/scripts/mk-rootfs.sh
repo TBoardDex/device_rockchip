@@ -275,12 +275,12 @@ usage_hook()
 
 clean_hook()
 {
+	if [ "$RK_BUILDROOT_CFG" ]; then
+		"$RK_SCRIPTS_DIR/mk-buildroot.sh" "$RK_BUILDROOT_CFG" clean
+	fi
+
 	rm -rf yocto/build/tmp yocto/build/*cache
 	rm -rf debian/binary
-
-	if check_config RK_BUILDROOT &>/dev/null; then
-		rm -rf buildroot/output/$RK_BUILDROOT_CFG
-	fi
 
 	rm -rf "$RK_OUTDIR/buildroot"
 	rm -rf "$RK_OUTDIR/yocto"

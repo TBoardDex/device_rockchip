@@ -7,11 +7,17 @@ BUILDROOT_BOARD=$1
 ROOTFS_OUTPUT_DIR="${2:-$RK_SDK_DIR/output/buildroot}"
 BUILDROOT_DIR="$RK_SDK_DIR/buildroot"
 
-"$RK_SCRIPTS_DIR/check-buildroot.sh"
-
 BUILDROOT_OUTPUT_DIR="$BUILDROOT_DIR/output/${RK_DEFCONFIG:+${RK_DEFCONFIG%_defconfig}/}$BUILDROOT_BOARD"
 BUILDROOT_CONFIG="$BUILDROOT_OUTPUT_DIR/.config"
 BUILDROOT_CONFIG_ORIG="$BUILDROOT_OUTPUT_DIR/.config.orig"
+
+# Handle buildroot cleanup
+if [ "$2" = clean ]; then
+	rm -rf "$BUILDROOT_OUTPUT_DIR"
+	exit 0
+fi
+
+"$RK_SCRIPTS_DIR/check-buildroot.sh"
 
 # Handle buildroot make
 if [ "$2" = make ]; then

@@ -512,6 +512,10 @@ usage_hook()
 
 clean_hook()
 {
+	if [ "$RK_SECURITY_INITRD_CFG" ]; then
+		"$RK_SCRIPTS_DIR/mk-buildroot.sh" "$RK_SECURITY_INITRD_CFG" clean
+	fi
+
 	rm -rf $RK_OUTDIR/security*
 }
 
