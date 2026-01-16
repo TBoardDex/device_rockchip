@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) 2026 Rockchip Electronics Co., Ltd
+ *
+ * SPDX-License-Identifier: GPL-2.0
+ */
+
+/dts-v1/;
+/ {
+    description = "U-Boot FIT source file for arm";
+
+    images {
+        fdt {
+            description = "FDT";
+            data = /incbin/("@KERNEL_DTB@");
+            type = "flat_dt";
+            arch = "arm64";
+            compression = "none";
+
+            load = <0x48300000>;
+            hash {
+                algo = "sha256";
+            };
+        };
+
+        kernel {
+            description = "Linux kernel";
+            data = /incbin/("@KERNEL_IMG@");
+            type = "kernel";
+            arch = "arm64";
+            os = "linux";
+            compression = "gzip";
+            comp = <@KERNEL_C@>;
+            entry = <0x40400000>;
+            load = <0x40400000>;
+
+            hash {
+                algo = "sha256";
+            };
+        };
+    };
+
+    configurations {
+        default = "conf";
+        conf {
+            description = "Boot Linux kernel with FDT blob and no ramdisk";
+            rollback-index = <0x0>;
+            fdt = "fdt";
+            kernel = "kernel";
+            signature {
+                algo = "sha256,rsa2048";
+                padding = "pss";
+                key-name-hint = "dev";
+                sign-images = "fdt", "kernel";
+            };
+        };
+    };
+};
