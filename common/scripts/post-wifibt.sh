@@ -80,29 +80,6 @@ build_wifibt()
 			$KMAKE M=$RKWIFIBT_DIR/drivers/bcmdhd CONFIG_BCMDHD=m \
 				CONFIG_BCMDHD_PCIE=y CONFIG_BCMDHD_SDIO=
 		fi
-
-		if ! [[ "$RK_KERNEL_VERSION_RAW" = "6.1" ]];then
-			if [ -n "$WIFI_USB" ]; then
-				echo "building rtl8188fu usb"
-				$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8188fu modules
-			fi
-			echo "building rtl8189fs sdio"
-			$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8189fs modules
-			echo "building rtl8723ds sdio"
-			$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8723ds modules
-			echo "building rtl8821cs sdio"
-			$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8821cs modules
-			echo "building rtl8822cs sdio"
-			$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8822cs modules
-			echo "building rtl8852bs sdio"
-			$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8852bs modules \
-			DRV_PATH=$RKWIFIBT_DIR/drivers/rtl8852bs
-			if [ -n "$WIFI_PCIE" ]; then
-				echo "building rtl8852be pcie"
-				$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8852be modules \
-					DRV_PATH=$RKWIFIBT_DIR/drivers/rtl8852be
-			fi
-		fi
 	fi
 
 	if [[ "$RK_WIFIBT_MODULES" =~ "ALL_CY" ]];then
@@ -140,29 +117,6 @@ build_wifibt()
 		ln -sf chips/CYW54591_Makefile \
 			$RKWIFIBT_DIR/drivers/infineon/Makefile
 		$KMAKE M=$RKWIFIBT_DIR/drivers/infineon
-
-		if ! [[ "$RK_KERNEL_VERSION_RAW" = "6.1" ]];then
-			if [ -n "$WIFI_USB" ]; then
-				echo "building rtl8188fu usb"
-				$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8188fu modules
-			fi
-			echo "building rtl8189fs sdio"
-			$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8189fs modules
-			echo "building rtl8723ds sdio"
-			$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8723ds modules
-			echo "building rtl8821cs sdio"
-			$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8821cs modules
-			echo "building rtl8822cs sdio"
-			$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8822cs modules
-			echo "building rtl8852bs sdio"
-			$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8852bs modules \
-				DRV_PATH=$RKWIFIBT_DIR/drivers/rtl8852bs
-			if [ -n "$WIFI_PCIE" ]; then
-				echo "building rtl8852be pcie"
-				$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8852be modules \
-					DRV_PATH=$RKWIFIBT_DIR/drivers/rtl8852be
-			fi
-		fi
 	fi
 
 	if [[ "$RK_WIFIBT_MODULES" =~ "AP6" ]];then
@@ -289,10 +243,12 @@ build_wifibt()
 		$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8852be modules
 	fi
 
-	echo "building realtek bt drivers"
-	$KMAKE M=$RKWIFIBT_DIR/drivers/bluetooth_uart_driver
-	if [ -n "$WIFI_USB" ]; then
-		$KMAKE M=$RKWIFIBT_DIR/drivers/bluetooth_usb_driver
+	if [[ "$RK_WIFIBT_MODULES" =~ "RTL" ]];then
+		echo "building realtek bt drivers"
+		$KMAKE M=$RKWIFIBT_DIR/drivers/bluetooth_uart_driver
+		if [ -n "$WIFI_USB" ]; then
+			$KMAKE M=$RKWIFIBT_DIR/drivers/bluetooth_usb_driver
+		fi
 	fi
 
 	mkdir -p $TARGET_DIR/etc/ $TARGET_DIR/usr/bin/ \
@@ -345,19 +301,6 @@ build_wifibt()
 			$TARGET_DIR/lib/modules/ || true
 		cp $RKWIFIBT_DIR/firmware/infineon/*/* \
 			$TARGET_DIR/lib/firmware/ || true
-
-		#reatek
-		if ! [[ "$RK_KERNEL_VERSION_RAW" = "6.1" ]];then
-			cp $RKWIFIBT_DIR/firmware/realtek/*/* $TARGET_DIR/lib/firmware/
-			cp $RKWIFIBT_DIR/firmware/realtek/*/* \
-				$TARGET_DIR/lib/firmware/rtlbt/
-			cp $RKWIFIBT_DIR/drivers/bluetooth_uart_driver/hci_uart.ko \
-				$TARGET_DIR/lib/modules/
-			if [ -n "$WIFI_USB" ]; then
-				cp $RKWIFIBT_DIR/drivers/bluetooth_usb_driver/rtk_btusb.ko \
-					$TARGET_DIR/lib/modules/
-			fi
-		fi
 	fi
 
 	if [[ "$RK_WIFIBT_MODULES" = "ALL_AP" ]];then
@@ -367,21 +310,6 @@ build_wifibt()
 			$TARGET_DIR/lib/firmware/ || true
 		cp $RKWIFIBT_DIR/firmware/broadcom/*/bt/* \
 			$TARGET_DIR/lib/firmware/ || true
-
-		#reatek
-		if ! [[ "$RK_KERNEL_VERSION_RAW" = "6.1" ]];then
-			echo "copy realtek firmware/nvram to rootfs"
-			cp $RKWIFIBT_DIR/drivers/rtl*/*.ko $TARGET_DIR/lib/modules/
-			cp -rf $RKWIFIBT_DIR/firmware/realtek/*/* $TARGET_DIR/lib/firmware/
-			cp -rf $RKWIFIBT_DIR/firmware/realtek/*/* \
-				$TARGET_DIR/lib/firmware/rtlbt/
-			cp $RKWIFIBT_DIR/drivers/bluetooth_uart_driver/hci_uart.ko \
-				$TARGET_DIR/lib/modules/
-			if [ -n "$WIFI_USB" ]; then
-				cp $RKWIFIBT_DIR/drivers/bluetooth_usb_driver/rtk_btusb.ko \
-					$TARGET_DIR/lib/modules/
-			fi
-		fi
 	fi
 
 	if [[ "$RK_WIFIBT_MODULES" =~ "RTL" ]];then
