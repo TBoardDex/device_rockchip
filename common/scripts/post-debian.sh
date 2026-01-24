@@ -4,17 +4,17 @@ cd "$TARGET_DIR"
 
 rm -rfv sha256sum*
 
-if [ "$RK_DEBIAN_USER" != linaro ]; then
+if [ "$RK_DEBIAN_USER" != rockchip ]; then
 	message "Changing default user to $RK_DEBIAN_USER..."
 
 	if [ ! -d home/$RK_DEBIAN_USER ]; then
-		mv -v home/linaro home/$RK_DEBIAN_USER || true
+		mv -v home/rockchip home/$RK_DEBIAN_USER || true
 	fi
-	grep -rwl "linaro" rockchip-test/ etc/ boot/ 2>/dev/null | \
-		xargs sed -i "s/\<linaro\>/$RK_DEBIAN_USER/g" 2>/dev/null || true
+	grep -rwl "rockchip" rockchip-test/ etc/ boot/ 2>/dev/null | \
+		xargs sed -i "s/\<rockchip\>/$RK_DEBIAN_USER/g" 2>/dev/null || true
 fi
 
-if [ "$RK_DEBIAN_PASSWORD" != linaro ]; then
+if [ "$RK_DEBIAN_PASSWORD" != rockchip ]; then
 	message "Changing default user's password..."
 	echo "$RK_DEBIAN_USER:$RK_DEBIAN_PASSWORD" | chroot . chpasswd -m || true
 fi

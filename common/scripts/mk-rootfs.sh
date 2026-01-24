@@ -229,12 +229,12 @@ build_debian()
 	fi
 
 	cd debian
-	if [ ! -f linaro-$RK_DEBIAN_VERSION-$ARCH-$TARGET.tar.gz ]; then
-		rm -rf linaro-$RK_DEBIAN_VERSION-*.tar.gz
+	if [ ! -f rockchip-$RK_DEBIAN_VERSION-$ARCH-$TARGET.tar.gz ]; then
+		rm -rf rockchip-$RK_DEBIAN_VERSION-*.tar.gz
 		RELEASE=$RK_DEBIAN_VERSION TARGET=$TARGET ARCH=$ARCH \
 			./mk-base-debian.sh
-		ln -sf linaro-$RK_DEBIAN_VERSION-alip-*.tar.gz \
-			linaro-$RK_DEBIAN_VERSION-$ARCH-$TARGET.tar.gz
+		ln -sf rockchip-debian-$RK_DEBIAN_VERSION-*.tar.gz \
+			rockchip-$RK_DEBIAN_VERSION-$ARCH-$TARGET.tar.gz
 	fi
 
 	DEBIAN_SCRIPT=mk-rootfs-$RK_DEBIAN_VERSION.sh
@@ -251,7 +251,7 @@ build_debian()
 		warning "Building without post-rootfs stage!"
 	fi
 
-	ln -rsf "$PWD/linaro-rootfs.img" "$IMAGE_DIR/rootfs.ext4"
+	ln -rsf "$PWD/rockchip-rootfs.img" "$IMAGE_DIR/rootfs.ext4"
 
 	finish_build build_debian $@
 }
@@ -362,7 +362,7 @@ pre_build_hook()
 			cd "$RK_SDK_DIR/debian/ubuntu-build-service/"
 			cd "$RK_DEBIAN_VERSION-$TARGET-$ARCH"
 			${EDITOR:-vi} \
-				customization/package-lists/linaro.list.chroot
+				customization/package-lists/rockchip.list.chroot
 			finish_build $@
 			;;
 	esac
