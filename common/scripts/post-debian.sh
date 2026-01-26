@@ -20,6 +20,7 @@ if [ "$RK_DEBIAN_PASSWORD" != linaro ]; then
 fi
 
 if ! [ "$RK_DEBIAN_UNIFIED_IMAGE" ]; then
+	unset LIBMALI CAMERA_ENGINE RKNPU
 	case "$RK_CHIP_FAMILY-$RK_CHIP" in
 		rk312*|rk3036-*)
 			LIBMALI=utgard-400
@@ -71,20 +72,22 @@ if ! [ "$RK_DEBIAN_UNIFIED_IMAGE" ]; then
 		tar xvf rknpu2.tar || true
 	fi
 
-	PKGS=
+	PKGS=()
 	if [ "$CAMERA_ENGINE" ]; then
-		PKGS="$(ls ./* | grep "camera_engine_${CAMERA_ENGINE}_.*.deb")"
+		PKGS+=(./*camera_engine_${CAMERA_ENGINE}_*.deb)
 	fi
 	if [ "$LIBMALI" ]; then
-		PKGS="$PKGS $(ls ./* | grep "libmali-$LIBMALI-.*.deb")"
+		PKGS+=(./*libmali-${LIBMALI}-*.deb)
 	fi
-	if [ "$PKGS" ]; then
+
+	if [ ${#PKGS[@]} -gt 0 ]; then
 		message "Installing chip related packages..."
 
 		mkdir -pv var/cache/apt/archives/partial
-		PKGS="$(echo $PKGS | xargs)"
-		chroot . bash -c "apt install -fy --allow-downgrades $PKGS" \
-			|| true
+
+		if ! chroot . bash -c "apt install -fy ${PKGS[*]}"; then
+			warning "Package installation failed..."
+		fi
 
 		"$RK_TOOLS_DIR/x86_64/ldconfig" -r "$TARGET_DIR/" || true
 	fi
