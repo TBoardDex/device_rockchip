@@ -4,22 +4,13 @@ RK_SCRIPTS_DIR="${RK_SCRIPTS_DIR:-$(dirname "$(realpath "$0")")}"
 RK_SDK_DIR="${RK_SDK_DIR:-$(realpath "$RK_SCRIPTS_DIR/../../../..")}"
 RK_TOOLS_DIR="${RK_TOOLS_DIR:-$(realpath "$RK_SCRIPTS_DIR/../tools")}"
 RK_DEBIAN_ARCH="${RK_DEBIAN_ARCH:-arm64}"
-RK_DEBIAN_VERSION="${RK_DEBIAN_VERSION:-bookworm}"
 
 SUPPORTED_VERSION=$(ls $RK_SDK_DIR/debian/ubuntu-build-service/ 2>&1 | \
 	grep desktop-$RK_DEBIAN_ARCH | cut -d'-' -f1)
 
-if [ -z "$SUPPORTED_VERSION" ]; then
+if [ -z "$RK_DEBIAN_VERSION" ] || [ -z "$SUPPORTED_VERSION" ]; then
 	echo -e "\e[35m"
 	echo "Current SDK doesn't support Debian!"
-	echo -e "\e[0m"
-	exit 1
-fi
-
-if ! echo $SUPPORTED_VERSION | grep -wq $RK_DEBIAN_VERSION; then
-	echo -e "\e[35m"
-	echo "Current SDK doesn't support Debian($RK_DEBIAN_VERSION)!"
-	echo "Available Debian versions: $SUPPORTED_VERSION"
 	echo -e "\e[0m"
 	exit 1
 fi

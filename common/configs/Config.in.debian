@@ -20,27 +20,6 @@ menuconfig RK_DEBIAN
 
 if RK_DEBIAN
 
-config RK_DEBIAN_VERSION
-	string
-	default "buster" if RK_DEBIAN_BUSTER
-	default "bullseye" if RK_DEBIAN_BULLSEYE
-	default "bookworm" if RK_DEBIAN_BOOKWORM
-
-choice
-	prompt "distro"
-	default RK_DEBIAN_BOOKWORM
-
-config RK_DEBIAN_BUSTER
-	bool "buster"
-
-config RK_DEBIAN_BULLSEYE
-	bool "bullseye"
-
-config RK_DEBIAN_BOOKWORM
-	bool "bookworm"
-
-endchoice # distro
-
 config RK_DEBIAN_ARCH
 	string
 	default "armhf" if RK_DEBIAN_ARMHF

@@ -706,7 +706,13 @@ main()
 	# Load config environments
 	source "$RK_CONFIG"
 	cp "$RK_CONFIG" "$RK_LOG_DIR"
+
 	export RK_KERNEL_VERSION="$(kernel_version)"
+
+	RK_DEBIAN_VERSION="$(basename debian/ubuntu-build-service/*-desktop-*/)"
+	if [ "$RK_DEBIAN_VERSION" ]; then
+		export RK_DEBIAN_VERSION="${RK_DEBIAN_VERSION%%-*}"
+	fi
 
 	if [ -z "$INITIAL_SESSION" ]; then
 		# Inherit session environments
