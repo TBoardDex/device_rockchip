@@ -10,6 +10,35 @@ KERNEL_DTB="$4"
 RESOURCE_IMG="$5"
 RAMDISK_IMG="$6"
 
+get_reserved_memory_range()
+{
+	local dtb="$1"
+	local label="$2"
+	local node
+	local range
+	local addr
+	local size
+
+	node=$(fdtget -ts "$dtb" /__symbols__ "$label" 2>/dev/null) ||
+		return 1
+	read -r -a range <<< "$(fdtget -tx "$dtb" "$node" reg 2>/dev/null)" ||
+		return 1
+
+	case "${#range[@]}" in
+	2)
+		addr=$((0x${range[0]}))
+		size=$((0x${range[1]}))
+		;;
+	4)
+		addr=$(((0x${range[0]} << 32) | 0x${range[1]}))
+		size=$(((0x${range[2]} << 32) | 0x${range[3]}))
+		;;
+	*) return 1 ;;
+	esac
+
+	printf "0x%x 0x%x\n" "$addr" "$size"
+}
+
 if [ ! -f "$ITS" ]; then
 	echo "$ITS not exists!"
 	exit 1
@@ -18,7 +47,9 @@ fi
 TMP_ITS=$(mktemp)
 cp "$ITS" "$TMP_ITS"
 
-if [ "$RK_FASTBOOT" ]; then
+if [ "$RK_FASTBOOT" ] && \
+	{ [ -z "$RAMDISK_IMG" ] || \
+	  [ "$(realpath -q "$ITS")" = "$(realpath -q "$RK_FASTBOOT_ROOTFS_ITS")" ]; }; then
 	notice "Fastboot rework its"
 
 	if [ -z "$RAMDISK_IMG" ]; then
@@ -37,34 +68,48 @@ if [ "$RK_FASTBOOT" ]; then
 		notice "kernel_c is " $kernel_c
 	else
 		notice "kernel dts" $(realpath -q "$KERNEL_DTB")
-		DUMP_DTB_DTS=$(mktemp)
 
-		dtc -I dtb -O dts -o $DUMP_DTB_DTS $(realpath -q "$KERNEL_DTB") 2>/dev/null
-		ramdisk_c=`grep -A 3 -e ramdisk_c $DUMP_DTB_DTS | grep -w "reg" | awk -F\< '{print $2}' | awk '{print $1}'`
-		ramdisk_r=`grep -A 3 -e ramdisk_r $DUMP_DTB_DTS | grep -w "reg" | awk -F\< '{print $2}' | awk '{print $1}'`
-		ramdisk_c_size=`grep -A 3 -e ramdisk_c $DUMP_DTB_DTS | grep -w "reg" | awk -F'[<> ]' '{print $5}'`
-		ramdisk_r_size=`grep -A 3 -e ramdisk_r $DUMP_DTB_DTS | grep -w "reg" | awk -F'[<> ]' '{print $5}'`
+		if ! read -r ramdisk_r ramdisk_r_size <<< \
+			"$(get_reserved_memory_range "$KERNEL_DTB" ramdisk_r)"; then
+			error "ramdisk_r node not found in dtb!"
+			error "Please check the ramdisk_r node of ${KERNEL_DTB%.*}.dts"
+			exit 1
+		fi
 
-		rm -f "$DUMP_DTB_DTS"
+		ramdisk_img_size=$(stat -Lc "%s" "$RAMDISK_IMG")
+		if ! gzip -t "$RAMDISK_IMG"; then
+			error "$(basename "$RAMDISK_IMG") is not a valid gzip image"
+			exit 1
+		fi
 
-		sed -i -e "s~@RAMDISK_C@~$ramdisk_c~" "$TMP_ITS"
+		ramdisk_payload_size=$(gzip -dc "$RAMDISK_IMG" | wc -c)
+		if [ "$ramdisk_payload_size" -gt "$((ramdisk_r_size))" ]; then
+			error "$(basename "$RAMDISK_IMG") payload is larger than ramdisk_r"
+			error "Please increase ramdisk_r in ${KERNEL_DTB%.*}.dts"
+			exit 1
+		fi
+
 		sed -i -e "s~@RAMDISK_R@~$ramdisk_r~" "$TMP_ITS"
-		notice "ramdisk_c is " $ramdisk_c
-		notice "ramdisk_c_size is " $ramdisk_c_size
 		notice "ramdisk_r is " $ramdisk_r
 		notice "ramdisk_r_size is " $ramdisk_r_size
 
-		if [ $((ramdisk_c_size)) -lt `du -bL $RAMDISK_IMG | awk '{print $1}'` ]; then
-			error "The size of $RAMDISK_IMG is larger than $ramdisk_c_size"
+		if ! read -r ramdisk_c ramdisk_c_size <<< \
+			"$(get_reserved_memory_range "$KERNEL_DTB" ramdisk_c)"; then
+			error "$RK_CHIP_FAMILY ramdisk_c node not found in dtb!"
 			error "Please check the ramdisk_c node of ${KERNEL_DTB%.*}.dts"
 			exit 1
 		fi
 
-		if [ $((ramdisk_r_size)) -lt `du --apparent-size -sbL $RK_OUTDIR/rootfs/target 2>/dev/null | awk '{print $1}'` ]; then
-			error "The size of $RK_OUTDIR/rootfs/target is larger than $ramdisk_r_size"
-			error "Please check the ramdisk_r node of ${KERNEL_DTB%.*}.dts"
+		if [ "$ramdisk_img_size" -gt "$((ramdisk_c_size))" ]; then
+			error "$(basename "$RAMDISK_IMG") is larger than ramdisk_c"
+			error "Please increase ramdisk_c in ${KERNEL_DTB%.*}.dts"
 			exit 1
 		fi
+
+		sed -i -e "s~@RAMDISK_C@~$ramdisk_c~" "$TMP_ITS"
+		notice "ramdisk_c is " "$ramdisk_c"
+		notice "ramdisk_c_size is " "$ramdisk_c_size"
+
 	fi
 fi
 
@@ -75,8 +120,11 @@ fi
 
 sed -i -e "s~@KERNEL_DTB@~$(realpath -q "$KERNEL_DTB")~" \
 	-e "s~@KERNEL_IMG@~$(realpath -q "$KERNEL_IMG")~" \
-	-e "s~@RAMDISK_IMG@~$(realpath -q "$RAMDISK_IMG")~" \
 	-e "s~@RESOURCE_IMG@~$(realpath -q "$RESOURCE_IMG")~" "$TMP_ITS"
+
+if [ -n "$RAMDISK_IMG" ]; then
+	sed -i -e "s~@RAMDISK_IMG@~$(realpath -q "$RAMDISK_IMG")~" "$TMP_ITS"
+fi
 
 "$RK_SDK_DIR/rkbin/tools/mkimage" -f "$TMP_ITS"  -E -p 0x800 "$TARGET_IMG"
 rm -f "$TMP_ITS"
