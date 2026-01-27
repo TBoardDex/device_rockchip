@@ -2,7 +2,9 @@
 
 config RK_FASTBOOT_SUPPORTS
 	bool
-	default y if RK_CHIP_FAMILY = "rv1126b"
+	default y if RK_CHIP_FAMILY = "rv1126b" || \
+		RK_CHIP_FAMILY = "rk3576" || RK_CHIP_FAMILY = "rk3572" || \
+		RK_CHIP_FAMILY = "rk3588"
 
 comment "Fastboot is not supported for this chip"
 	depends on !RK_FASTBOOT_SUPPORTS
