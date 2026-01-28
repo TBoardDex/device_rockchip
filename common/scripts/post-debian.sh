@@ -65,6 +65,11 @@ if ! [ "$RK_DEBIAN_UNIFIED_IMAGE" ]; then
 		rv1126b-*)
 			RKNPU=1
 			;;
+		rk3572-*)
+			LIBMALI=valhall-g310
+			CAMERA_ENGINE=rkaiq_rk3572
+			RKNPU=1
+			;;
 	esac
 
 	if [ "$RKNPU" ]; then
