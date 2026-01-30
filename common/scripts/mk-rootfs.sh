@@ -21,7 +21,7 @@ build_buildroot()
 		warning "Building without post-rootfs stage!"
 	fi
 
-	if [ "$RK_SECURITY" ]; then
+	if [ "$RK_SECURITY" ] && [ ! "$RK_SECURITY_CHECK_BASE" ]; then
 		if [ "$RK_ROOTFS_TYPE" == "ubi" ]; then
 			# UBIFS DOES NOT support R/W block device,
 			# so it only support RO encrypted image.
