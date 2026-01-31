@@ -252,7 +252,8 @@ build_wifibt()
 	fi
 
 	mkdir -p $TARGET_DIR/etc/ $TARGET_DIR/usr/bin/ \
-		$TARGET_DIR/lib/modules/ $TARGET_DIR/lib/firmware/rtlbt/
+		$TARGET_DIR/lib/modules/ $TARGET_DIR/lib/firmware/rtlbt/ \
+		$TARGET_DIR/lib/firmware/brcm/
 
 	echo "create Android style dirs"
 	rm -rf "$TARGET_DIR/system"
@@ -289,9 +290,10 @@ build_wifibt()
 			"$TARGET_DIR/usr/bin/rtk_hciattach"
 	else
 		notice "Disabling BT daemon..."
+		cp $RK_SDK_DIR/kernel/drivers/bluetooth/*.ko $TARGET_DIR/lib/modules/
 		sed -i "/^start_bt()/ {
 			n
-			a\\\treturn 0 # BT is not available!
+			a\\\tinsmod_bt\\n\\treturn 0 # BT initialized by kernel.
 		}" "$TARGET_DIR/usr/bin/wifibt-init.sh"
 	fi
 
@@ -309,7 +311,7 @@ build_wifibt()
 		cp $RKWIFIBT_DIR/firmware/broadcom/*/wifi/* \
 			$TARGET_DIR/lib/firmware/ || true
 		cp $RKWIFIBT_DIR/firmware/broadcom/*/bt/* \
-			$TARGET_DIR/lib/firmware/ || true
+			$TARGET_DIR/lib/firmware/brcm/ || true
 	fi
 
 	if [[ "$RK_WIFIBT_MODULES" =~ "RTL" ]];then
@@ -366,7 +368,7 @@ build_wifibt()
 		cp $RKWIFIBT_DIR/firmware/broadcom/$RK_WIFIBT_MODULES/wifi/* \
 			$TARGET_DIR/lib/firmware/
 		cp $RKWIFIBT_DIR/firmware/broadcom/$RK_WIFIBT_MODULES/bt/* \
-			$TARGET_DIR/lib/firmware/
+			$TARGET_DIR/lib/firmware/brcm/
 		cp $RKWIFIBT_DIR/drivers/bcmdhd/*.ko $TARGET_DIR/lib/modules/
 	fi
 
