@@ -7,9 +7,16 @@ BUILDROOT_BOARD=$1
 ROOTFS_OUTPUT_DIR="${2:-$RK_SDK_DIR/output/buildroot}"
 BUILDROOT_DIR="$RK_SDK_DIR/buildroot"
 
-BUILDROOT_OUTPUT_DIR="$BUILDROOT_DIR/output/${RK_DEFCONFIG:+${RK_DEFCONFIG%_defconfig}/}$BUILDROOT_BOARD"
-BUILDROOT_CONFIG="$BUILDROOT_OUTPUT_DIR/.config"
-BUILDROOT_CONFIG_ORIG="$BUILDROOT_OUTPUT_DIR/.config.orig"
+BUILDROOT_LEGACY_OUTPUT_DIR="$BUILDROOT_DIR/output/$BUILDROOT_BOARD"
+if [ "$RK_DEFCONFIG" ]; then
+	BUILDROOT_OUTPUT_DIR="$BUILDROOT_DIR/output/${RK_DEFCONFIG%_defconfig}/$BUILDROOT_BOARD"
+
+	if [ -L "$BUILDROOT_LEGACY_OUTPUT_DIR" ]; then
+		rm -f "$BUILDROOT_LEGACY_OUTPUT_DIR"
+	fi
+else
+	BUILDROOT_OUTPUT_DIR="$BUILDROOT_LEGACY_OUTPUT_DIR"
+fi
 
 # Handle buildroot cleanup
 if [ "$2" = clean ]; then
@@ -18,6 +25,24 @@ if [ "$2" = clean ]; then
 fi
 
 "$RK_SCRIPTS_DIR/check-buildroot.sh"
+
+# Create dir links
+mkdir -p "$BUILDROOT_OUTPUT_DIR"
+if ! [ -e "$BUILDROOT_LEGACY_OUTPUT_DIR" ]; then
+	ln -rsf "$BUILDROOT_OUTPUT_DIR" "$BUILDROOT_LEGACY_OUTPUT_DIR"
+fi
+
+case "$BUILDROOT_BOARD" in
+	*_recovery) BUILDROOT_TYPE=recovery ;;
+	*_ramboot) BUILDROOT_TYPE=ramboot ;;
+	*) BUILDROOT_TYPE=rootfs ;;
+esac
+ln -rsf "$BUILDROOT_OUTPUT_DIR"	"$BUILDROOT_DIR/output/${BUILDROOT_TYPE}_latest"
+
+# Handle buildroot prepare
+if [ "$2" = prepare ]; then
+	exit
+fi
 
 # Handle buildroot make
 if [ "$2" = make ]; then
@@ -59,6 +84,9 @@ if [ "$2" = make ]; then
 	exit
 fi
 
+BUILDROOT_CONFIG="$BUILDROOT_OUTPUT_DIR/.config"
+BUILDROOT_CONFIG_ORIG="$BUILDROOT_OUTPUT_DIR/.config.orig"
+
 # Save the original .config if exists
 if [ -r "$BUILDROOT_CONFIG" ] && [ ! -r "$BUILDROOT_CONFIG_ORIG" ]; then
 	cp "$BUILDROOT_CONFIG" "$BUILDROOT_CONFIG_ORIG"
@@ -85,17 +113,11 @@ cd "${RK_LOG_DIR:-$ROOTFS_OUTPUT_DIR}"
 LOG_PREFIX="br-$(basename "$BUILDROOT_OUTPUT_DIR")"
 LOG_FILE="$(start_log "$LOG_PREFIX" 2>/dev/null || echo $PWD/$LOG_PREFIX.log)"
 ln -rsf "$LOG_FILE" br.log
+ln -rsf "$LOG_FILE" br-$BUILDROOT_TYPE.log
 
-case "$BUILDROOT_BOARD" in
-	*_recovery) ln -rsf "$LOG_FILE" br-recovery.log ;;
-	*_ramboot)
-		ln -rsf "$LOG_FILE" br-ramboot.log
-		"$RK_SCRIPTS_DIR/check-security.sh" ramboot
-		;;
-	*)
-		ln -rsf "$LOG_FILE" br-rootfs.log
-		"$RK_SCRIPTS_DIR/check-security.sh" system
-		;;
+case "$BUILDROOT_TYPE" in
+	ramboot) "$RK_SCRIPTS_DIR/check-security.sh" ramboot ;;
+	rootfs) "$RK_SCRIPTS_DIR/check-security.sh" system ;;
 esac
 
 # Buildroot doesn't like it

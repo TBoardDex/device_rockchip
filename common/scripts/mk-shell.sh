@@ -31,9 +31,10 @@ pre_build_hook()
 		buildroot-shell | bshell)
 			BUILDROOT_DIR="$RK_SDK_DIR/buildroot"
 			BUILDROOT_CFG="${2:-$RK_BUILDROOT_CFG}"
+			"$RK_SCRIPTS_DIR/mk-buildroot.sh" "$BUILDROOT_CFG" prepare
 			/bin/bash -c "cd $BUILDROOT_DIR; \
 				source scripts/envsetup.sh \
-				${BUILDROOT_CFG}_defconfig; \
+				$(realpath $BUILDROOT_DIR/output/rootfs_latest); \
 				PS1='\u@\h:\w ($BUILDROOT_CFG)\$ ' \
 				/bin/bash -norc"
 			;;
