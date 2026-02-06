@@ -120,11 +120,11 @@ fi
 if [ "$POST_OS" = recovery ]; then
 	rm -rfv mnt/udisk mnt/sdcard mnt/usb_storage mnt/external_sd udisk sdcard
 
-	fixup_device_part /dev/sda1 /mnt/udisk auto
+	fixup_device_part /dev/sda1 /mnt/udisk auto "defaults,nofail"
 	ln -sfv mnt/udisk udisk
 	ln -sfv udisk mnt/usb_storage
 
-	fixup_device_part /dev/mmcblk1p1 /mnt/sdcard auto
+	fixup_device_part /dev/mmcblk1p1 /mnt/sdcard auto "defaults,nofail"
 	ln -sfv mnt/sdcard sdcard
 	ln -sfv sdcard mnt/external_sd
 fi

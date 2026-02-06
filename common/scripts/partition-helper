@@ -301,7 +301,7 @@ rk_extra_part_fstype()
 
 rk_extra_part_mnt_opts()
 {
-	rk_extra_part_arg ${1:-1} 5 defaults
+	rk_extra_part_arg ${1:-1} 5 "defaults,nofail"
 }
 
 rk_extra_part_src()
