@@ -172,7 +172,3 @@ for hook in $RK_USB_HOOKS; do
 	message "Installing USB gadget hook: $hook"
 	install -m 0644 "$hook" "$TARGET_DIR/etc/usb-gadget.d/"
 done
-
-# TODO: Remove it
-ln -sf usb-gadget "$TARGET_DIR/usr/bin/usbdevice"
-ln -sf usb-gadget.d "$TARGET_DIR/etc/usbdevice.d"
