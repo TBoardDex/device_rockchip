@@ -23,73 +23,34 @@ if [ "$RK_DEBIAN_PASSWORD" != "$DEFAULT_PASSWORD" ]; then
 fi
 
 if ! [ "$RK_DEBIAN_UNIFIED_IMAGE" ]; then
-	unset LIBMALI CAMERA_ENGINE RKNPU
-	case "$RK_CHIP_FAMILY-$RK_CHIP" in
-		rk312*|rk3036-*)
-			LIBMALI=utgard-400
-			CAMERA_ENGINE=rkisp
-			;;
-		*-rk3288)
-			LIBMALI=midgard-t76x-*-r0p0
-			CAMERA_ENGINE=rkisp
-			;;
-		*-rk3288w)
-			LIBMALI=midgard-t76x-*-r1p0
-			CAMERA_ENGINE=rkisp
-			;;
-		rk3399*)
-			LIBMALI=midgard-t86x
-			CAMERA_ENGINE=rkisp
-			;;
-		px30-*|rk3326-*|rk3328-*|rk3528-*)
-			LIBMALI=bifrost-g31
-			CAMERA_ENGINE=rkisp
-			;;
-		rk3566_rk3568-*)
-			LIBMALI=bifrost-g52
-			CAMERA_ENGINE=rkaiq_rk3568
-			RKNPU=1
-			;;
-		rk3562-*)
-			LIBMALI=bifrost-g52
-			CAMERA_ENGINE=rkaiq_rk3562
-			RKNPU=1
-			;;
-		rk3576-*)
-			LIBMALI=bifrost-g52
-			CAMERA_ENGINE=rkaiq_rk3576
-			RKNPU=1
-			;;
-		rk3588-*)
-			LIBMALI=valhall-g610
-			CAMERA_ENGINE=rkaiq_rk3588
-			RKNPU=1
-			;;
-		rv1126b-*)
-			RKNPU=1
-			;;
-		rk3572-*)
-			LIBMALI=valhall-g310
-			CAMERA_ENGINE=rkaiq_rk3572
-			RKNPU=1
-			;;
-	esac
-
-	if [ "$RKNPU" ]; then
+	if grep -q rknpu "$RK_KERNEL_DTB"; then
 		message "Extracting NPU2 tarball..."
 		tar xvf rknpu2.tar || true
 	fi
 
 	PKGS=()
-	if [ "$CAMERA_ENGINE" ]; then
-		PKGS+=(./*camera_engine_${CAMERA_ENGINE}_*.deb)
+
+	if grep -q rkisp "$RK_KERNEL_DTB"; then
+		PKGS+=(./camera_engine_rkaiq_${RK_CHIP_FAMILY#rk3566_}_*.deb)
+
+		# HACK: Fallback to rkisp.
+		if [ ${#PKGS[@]} -eq 0 ]; then
+			PKGS+=(./camera_engine_rkisp_*.deb)
+		fi
 	fi
-	if [ "$LIBMALI" ]; then
-		PKGS+=(./*libmali-${LIBMALI}-*.deb)
+
+	# HACK: Drop unused RK3288 libmali packages.
+	rm -f libmali-midgard-t76x-*-r0p0-*.deb
+
+	GPU_CHIP="$(grep -w "$RK_CHIP_FAMILY" \
+		"$RK_SDK_DIR/external/libmali/gpu-chips.txt" | cut -d':' -f1)"
+	if [ "$GPU_CHIP" ]; then
+		PKGS+=(./libmali-${GPU_CHIP}-*.deb)
 	fi
 
 	if [ ${#PKGS[@]} -gt 0 ]; then
 		message "Installing chip related packages..."
+		message "${PKGS[*]}"
 
 		mkdir -pv var/cache/apt/archives/partial
 
