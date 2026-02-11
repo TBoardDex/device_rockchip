@@ -154,7 +154,7 @@ install_mtp
 install_ums
 install_uvc
 
-$RK_RSYNC "$OVERLAY_DIR/usr" "$OVERLAY_DIR/lib" "$TARGET_DIR/"
+$RK_RSYNC "$OVERLAY_DIR/usr" "$OVERLAY_DIR/lib" "$OVERLAY_DIR/etc" "$TARGET_DIR/"
 
 install_sysv_service "$OVERLAY_DIR/S50usb-gadget.sh" 5 4 3 2 K01 0 1 6
 install_busybox_service "$OVERLAY_DIR/S50usb-gadget.sh"
