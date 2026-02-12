@@ -925,7 +925,11 @@ usb_start()
 	done
 
 	if ! grep -q "^$USB_UDC$" $USB_GADGET_DIR/UDC; then
-		echo "$USB_UDC" > $USB_GADGET_DIR/UDC
+		# if UDC is valid, UDC should be clear firstly.
+		if [ -n "$(cat $USB_GADGET_DIR/UDC)" ]; then
+			echo none > $USB_GADGET_DIR/UDC
+		fi
+		echo $USB_UDC > $USB_GADGET_DIR/UDC
 	fi
 
 	for func in $USB_FUNCS; do
