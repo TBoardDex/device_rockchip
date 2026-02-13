@@ -362,7 +362,7 @@ pre_build_hook()
 			cd "$RK_SDK_DIR/debian/ubuntu-build-service/"
 			cd "$RK_DEBIAN_VERSION-$TARGET-$ARCH"
 			${EDITOR:-vi} \
-				customization/package-lists/rockchip.list.chroot
+				customization/package-lists/*.list.chroot
 			finish_build $@
 			;;
 	esac

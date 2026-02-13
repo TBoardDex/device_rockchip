@@ -709,10 +709,8 @@ main()
 
 	export RK_KERNEL_VERSION="$(kernel_version)"
 
-	RK_DEBIAN_VERSION="$(basename debian/ubuntu-build-service/*-desktop-*/)"
-	if [ "$RK_DEBIAN_VERSION" ]; then
-		export RK_DEBIAN_VERSION="${RK_DEBIAN_VERSION%%-*}"
-	fi
+	export RK_DEBIAN_VERSION="$(basename debian/mk-rootfs-*.sh .sh | \
+		cut -d- -f3)"
 
 	if [ -z "$INITIAL_SESSION" ]; then
 		# Inherit session environments
