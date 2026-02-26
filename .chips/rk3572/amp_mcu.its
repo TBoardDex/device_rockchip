@@ -1,0 +1,56 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+/*
+ * Copyright (c) 2024 Rockchip Electronics Co., Ltd.
+ */
+
+/dts-v1/;
+/ {
+	description = "FIT source file for rockchip AMP";
+	#address-cells = <1>;
+
+	images {
+		mcu {
+			description  = "mcu";
+			data         = /incbin/("rtt.bin");
+			type         = "standalone";
+			compression  = "none";
+			arch         = "riscv";
+			udelay       = <10000>;
+			load         = <DTB:mcu_reserved:START>; // <0x45000000>;
+			cpu          = <0>;
+			compile {
+				size         = <DTB:mcu_reserved:SIZE>; // <0x00200000>;
+				sys          = "rtt";    // "hal" or "rtt"
+				rtt_config   = "board/evb/amp_linux_defconfig"
+				core         = "mcu";
+				rtt_exec     = "prebuilts/gcc/linux-x86/riscv64/nuclei_riscv_newlibc_prebuilt_linux64_2025.02/bin/"
+				cc           = "prebuilts/gcc/linux-x86/riscv64/nuclei_riscv_newlibc_prebuilt_linux64_2025.02/bin/riscv64-unknown-elf-"
+			};
+
+			hash {
+				algo = "sha256";
+			};
+		};
+	};
+
+	share {
+		rpmsg_base      = <DTB:rpmsg_reserved:START>; // <0x45400000>;
+		rpmsg_size      = <DTB:rpmsg_reserved:SIZE+rpmsg_dma_reserved:SIZE>; // <0x00400000>;
+	};
+
+	configurations {
+		default = "conf";
+		conf {
+			description = "Rockchip AMP images";
+			rollback-index = <0x0>;
+			loadables = "mcu";
+
+			signature {
+				algo = "sha256,rsa2048";
+				padding = "pss";
+				key-name-hint = "dev";
+				sign-images = "loadables";
+			};
+		};
+	};
+};
