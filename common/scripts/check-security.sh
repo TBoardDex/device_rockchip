@@ -141,7 +141,7 @@ rk_security_check_kernel_config()
 	fi
 
 	case $1 in
-		system-encryption) BOOT_FIXED_CONFIGS="$BOOT_FIXED_CONFIGS $BOOT_OPTEE_FIXED_CONFIGS" ;& # fallthrough
+		system-encryption) BOOT_FIXED_CONFIGS="$BOOT_FIXED_CONFIGS $BOOT_OPTEE_FIXED_CONFIGS" ; config_check $2 "$BOOT_FIXED_CONFIGS" ;;
 		system-encryption-by-openssl) BOOT_FIXED_CONFIGS="$BOOT_CRYPT_BY_OPENSSL_FIXED_CONFIGS $BOOT_OPTEE_FIXED_CONFIGS" ;& # fallthrough
 		system-verity) config_check $2 "$BOOT_FIXED_CONFIGS" ;;
 		base) return 0;;
