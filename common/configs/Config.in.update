@@ -57,6 +57,10 @@ endchoice # storage type
 config RK_AB_UPDATE
 	bool "A/B update"
 
+config RK_SDCARD_UPDATE
+	bool "SDcard update"
+	select RK_RECOVERY
+
 choice
 	prompt "package-file (Packing description)"
 
@@ -92,7 +96,7 @@ endchoice # OTA package-file
 
 config RK_OTA_PACKAGE_FILE
 	string "custom package-file for OTA"
-	depends on  RK_OTA_PACKAGE_FILE_CUSTOM
+	depends on RK_OTA_PACKAGE_FILE_CUSTOM
 	default "ota-package-file"
 	help
 	  Name of custom package-file for OTA under <RK_CHIP_DIR>/.

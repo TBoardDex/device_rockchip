@@ -2,6 +2,42 @@
 
 RK_PACK_TOOL_DIR="$RK_SDK_DIR/tools/linux/Linux_Pack_Firmware/rockdev"
 
+gen_sd_parameter()
+{
+	PARAMETER="${1:-parameter.txt}"
+
+	{
+		echo "# For SD card updating (loader,misc and recovery only)"
+		echo
+
+		# Copy header fields from original parameter
+		sed -n '/^CMDLINE:/q;p' "$RK_FIRMWARE_DIR/parameter.txt" | grep .
+
+		echo -n "CMDLINE: mtdparts=rk29xxnand:"
+
+		OFFSET=0x00004000
+		for part in uboot trust misc recovery; do
+			IMAGE=${part}.img
+			if ! [ -r $IMAGE ]; then
+				if [ "$part" = trust ]; then
+					continue
+				fi
+
+				# Required for SDcard updating
+				error "$IMAGE is missing!"
+				exit 1
+			fi
+
+			SIZE=$(stat -L -c %s "$IMAGE")
+			SIZE=$(( (($SIZE + 0xFFFFF) & ~0xFFFFF) / 512 ))
+			printf "0x%08x@0x%08x(%s)," "$SIZE" "$OFFSET" "$part"
+			OFFSET=$(( "$OFFSET" + "$SIZE" ))
+		done | sed 's/,$//'
+
+		echo
+	} > "$PARAMETER"
+}
+
 gen_package_file()
 {
 	TYPE="${1:-update}"
@@ -25,8 +61,8 @@ gen_package_file()
 
 	for part in $(rk_partition_parse_names "$PARAMETER"); do
 		if echo $part | grep -q "_b$"; then
-			# Not packing *_b partition for A/B OTA
-			if echo "$TYPE" | grep -wq "ab-ota"; then
+			# Not packing *_b partition for OTA
+			if echo "$TYPE" | grep -wq "ota"; then
 				continue
 			fi
 		fi
@@ -56,10 +92,17 @@ do_build_updateimg()
 	OUT_DIR="$RK_OUTDIR/$TYPE"
 	IMAGE_DIR="$OUT_DIR/Image"
 	TARGET="$RK_FIRMWARE_DIR/$TYPE.img"
+	STORAGE="$RK_UPDATE_STORAGE"
 
 	case "$TYPE" in
-		*ota*) PKG_FILE="$RK_OTA_PACKAGE_FILE" ;;
-		*) PKG_FILE="$RK_PACKAGE_FILE" ;;
+		*ota*)
+			PKG_FILE="$RK_OTA_PACKAGE_FILE"
+			PKG_FILE_EDIT_CMD="edit-ota-package-file"
+			;;
+		*)
+			PKG_FILE="$RK_PACKAGE_FILE"
+			PKG_FILE_EDIT_CMD="edit-package-file"
+			;;
 	esac
 
 	# Make sure that the basic firmwares are ready
@@ -78,9 +121,11 @@ do_build_updateimg()
 	message "          Start packing $TYPE image"
 	message "=========================================="
 
-	if [ "$RK_AB_UPDATE" ] && \
-		! rk_partition_parse_names | grep -qE "_a\>|_b\>"; then
-		warning "RK_AB_UPDATE enabled, without having A/B partitions!"
+	if echo "$TYPE" | grep -wq "ab"; then
+		if ! rk_partition_parse_names | grep -qE "_a\>|_b\>"; then
+			error "Not having A/B partitions!"
+			exit 1
+		fi
 	fi
 
 	rm -rf "$TARGET" "$OUT_DIR"
@@ -90,6 +135,24 @@ do_build_updateimg()
 	# Prepare images
 	ln -rsf "$RK_FIRMWARE_DIR"/* .
 	rm -f update.img
+
+	if echo "$TYPE" | grep -wq "sd"; then
+		# Use blank misc image
+		rm -rf misc.img
+		truncate -s 4M misc.img
+
+		# Use generated parameter
+		rm parameter.txt
+		notice "Generating parameter.txt for $TYPE:"
+		gen_sd_parameter
+		cat parameter.txt
+
+		# Use generated package-file
+		unset PKG_FILE PKG_FILE_EDIT_CMD
+
+		# Use default storage type
+		unset STORAGE
+	fi
 
 	# Prepare package-file
 	if [ "$PKG_FILE" ]; then
@@ -108,7 +171,7 @@ do_build_updateimg()
 	notice "Packing $TARGET for $TYPE..."
 
 	if [ ! -r MiniLoaderAll.bin ]; then
-		error "MiniLoaderAll.bin is missing"
+		error "MiniLoaderAll.bin is missing!"
 		exit 1
 	fi
 
@@ -116,7 +179,7 @@ do_build_updateimg()
 	"$RK_PACK_TOOL_DIR/afptool" -pack ./ update.raw.img
 	"$RK_PACK_TOOL_DIR/rkImageMaker" -$TAG MiniLoaderAll.bin \
 		update.raw.img update.img -os_type:androidos \
-		${RK_UPDATE_STORAGE:+-storage:$RK_UPDATE_STORAGE}
+		${STORAGE:+-storage:$STORAGE}
 
 	ln -rsf "$IMAGE_DIR/package-file" "$OUT_DIR"
 	ln -rsf "$IMAGE_DIR/update.img" "$OUT_DIR"
@@ -127,11 +190,9 @@ do_build_updateimg()
 			"$RK_FIRMWARE_DIR/${TYPE/-ab/}.img"
 	fi
 
-	case "$TYPE" in
-		*ota*) EDIT_CMD="edit-ota-package-file" ;;
-		*) EDIT_CMD="edit-package-file" ;;
-	esac
-	notice "\nRun 'make $EDIT_CMD' if you want to change the package-file.\n"
+	if [ "$PKG_FILE_EDIT_CMD" ]; then
+		notice "\nRun 'make $PKG_FILE_EDIT_CMD' if you want to modify the package-file.\n"
+	fi
 }
 
 build_updateimg()
@@ -144,18 +205,30 @@ build_updateimg()
 		do_build_updateimg
 	fi
 
+	if [ "$RK_SDCARD_UPDATE" ]; then
+		build_sd_updateimg
+	fi
+
 	finish_build
 }
 
 build_ota_updateimg()
 {
-	if [ "$RK_AB_UPDATE" ]; then
-		notice "Making A/B update image for OTA..."
-		do_build_updateimg ab-ota
-	else
-		notice "Making update image for OTA..."
-		do_build_updateimg ota
-	fi
+	notice "Making update image for OTA..."
+	do_build_updateimg ota
+
+	finish_build
+}
+
+build_sd_updateimg()
+{
+	check_config RK_SDCARD_UPDATE || false
+
+	notice "Making update image for SDcard..."
+	do_build_updateimg sd
+
+	notice "Use SDDiskTool to flash update-sd.img to the SD card,"
+	notice "then copy update.img to the root of the SD card as sdupdate.img.\n"
 
 	finish_build
 }
@@ -168,6 +241,7 @@ usage_hook()
 	usage_oneline "edit-ota-package-file" "edit package-file for OTA"
 	usage_oneline "updateimg" "build update image"
 	usage_oneline "ota-updateimg" "build update image for OTA"
+	usage_oneline "sd-updateimg" "build update image for SDcard"
 }
 
 clean_hook()
@@ -226,12 +300,13 @@ pre_build_hook()
 	finish_build $@
 }
 
-POST_BUILD_CMDS="updateimg ota-updateimg"
+POST_BUILD_CMDS="updateimg ota-updateimg sd-updateimg"
 post_build_hook()
 {
 	case "$1" in
 		updateimg) build_updateimg ;;
 		ota-updateimg) build_ota_updateimg ;;
+		sd-updateimg) build_sd_updateimg ;;
 		*) usage ;;
 	esac
 }
