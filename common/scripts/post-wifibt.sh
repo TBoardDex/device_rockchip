@@ -13,7 +13,7 @@ check_bt()
 	if [ "$RK_WIFIBT_BT_DAEMON_DEFAULT" ]; then
 		KERNEL_MAJOR=${RK_KERNEL_VERSION_RAW%.*}
 		KERNEL_MINOR=${RK_KERNEL_VERSION_RAW#*.}
-		if [ "$KERNEL_MAJOR" -eq 6 ] && [ "$KERNEL_MINOR" -gt 1 ]; then
+		if [ "$(( $KERNEL_MAJOR * 100 + $KERNEL_MINOR ))" -gt 601 ]; then
 			notice "Using BT drivers for kernel >6.1"
 			return 1
 		fi
