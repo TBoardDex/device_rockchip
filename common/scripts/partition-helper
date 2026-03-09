@@ -193,14 +193,14 @@ rk_partition_to_cmdline()
 {
 	OFFSET=0
 	while read NAME SIZE; do
-		case "$SIZE" in
-			-)
-				# Latest grow part
-				echo "$NAME $OFFSET" | \
-					awk '{printf "-@0x%08x(%s:grow)",$2,$1}'
-				break ;;
-			*) SIZE=$(rk_partition_size_readable_to_sector $SIZE) ;;
-		esac
+		SIZE=$(rk_partition_size_readable_to_sector $SIZE)
+
+		# Latest grow part
+		if [ "$SIZE" = "-" ]; then
+			echo "$NAME $OFFSET" | \
+				awk '{printf "-@0x%08x(%s:grow)",$2,$1}'
+			break;
+		fi
 
 		# Visible parts
 		if [ "$NAME" != "$HDR_PART" ]; then
