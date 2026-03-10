@@ -423,7 +423,7 @@ build_hook()
 
 	KERNEL_DTS="$(find "kernel/arch/$RK_KERNEL_ARCH/boot/dts" \
 		"kernel/arch/$RK_KERNEL_ARCH/boot/dts/rockchip" \
-		-maxdepth 1 -name "$RK_KERNEL_DTS_NAME.dts")"
+		-maxdepth 1 -name "$RK_KERNEL_DTS_NAME.dts" 2>/dev/null || true)"
 	KERNEL_DTS_DIR="$(dirname "$KERNEL_DTS")"
 
 	case "$1" in
