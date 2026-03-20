@@ -289,7 +289,8 @@ build_hook()
 		set +a
 	fi
 
-	ITS_FILE="$RK_SCRIPTS_DIR/$(mktemp temp_mk_amp_XXXXXXX.its)"
+	ITS_FILE="$(mktemp /tmp/temp_mk_amp_XXXXXXX.its)"
+	trap "rm -f '$ITS_FILE'" EXIT INT TERM
 	echo "$(amp_filter_comments "$ITS_CONFIG")" > "$ITS_FILE"
 	CORE_NUMBERS=$(grep -wcE "amp[0-9]* {|mcu {|hpmcu {" $ITS_FILE)
 	echo "CORE_NUMBERS=$CORE_NUMBERS"
