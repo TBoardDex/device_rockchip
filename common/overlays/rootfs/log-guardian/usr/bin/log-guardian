@@ -24,6 +24,9 @@ log() {
 	echo "log-guardian: $@"
 }
 
+# Ensure all tmpfs filesystems are mounted
+mount -a -t tmpfs 2>/dev/null || true
+
 PID=$(cat $PID_FILE 2>/dev/null || true)
 if [ "$PID" ]; then
 	log "Stopping log-guardian ($PID)..."
