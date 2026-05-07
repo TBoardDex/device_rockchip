@@ -139,9 +139,10 @@ done
 
 log "Guarding logs in: \"$LOG_DIRS\"..."
 
+# Turn on job control to be the process group leader
+set -m
 {
 	trap 'rm -f "$PID_FILE"' EXIT QUIT TERM INT
-	echo $$ > $PID_FILE
 
 	while true; do
 		for dir in $LOG_DIRS; do
@@ -163,3 +164,5 @@ log "Guarding logs in: \"$LOG_DIRS\"..."
 		sleep $INTERVAL
 	done
 }&
+# Store the process group id
+echo $! > "$PID_FILE"
