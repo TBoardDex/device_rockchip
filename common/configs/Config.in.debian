@@ -45,7 +45,7 @@ config RK_DEBIAN_SERVER
 
 config RK_DEBIAN_MIRROR
 	string "mirror source for APT"
-	default "mirrors.ustc.edu.cn"
+	default "mirrors.tuna.tsinghua.edu.cn"
 
 config RK_DEBIAN_USER
 	string "default user"
