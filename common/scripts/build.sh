@@ -192,6 +192,12 @@ get_toolchain()
 	# RK182x uses Xuantie custom toolchain
 	if [ "$RK_CHIP_FAMILY" = "rk182x" ]; then
 		TC_VENDOR=unknown
+		# AMP bare-metal toolchain: riscv64-unknown-elf- at riscv64/ dir
+		# Linux toolchain: riscv64-unknown-linux-musl- (unchanged)
+		if [ "$TC_OS" = "embed" ]; then
+			TC_ARCH=riscv64
+			TC_OS=elf
+		fi
 	fi
 
 	TC_DIR="$RK_SDK_DIR/prebuilts/gcc/linux-x86/$TC_ARCH"
