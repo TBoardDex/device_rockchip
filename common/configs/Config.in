@@ -38,7 +38,7 @@ config RK_CHIP
 
 config RK_CHIP_RISCV64
 	bool
-	depends on RK_CHIP_FAMILY = "rk182x"
+	depends on RK_CHIP_FAMILY = "rk182x" || RK_CHIP_FAMILY = "rk1860"
 	default y
 
 config RK_CHIP_ARM32
@@ -60,6 +60,8 @@ config RK_CHIP_HAS_GPU
 		RK_CHIP_FAMILY != "rk1808" && \
 		RK_CHIP_FAMILY != "rv1126b" && \
 		RK_CHIP_FAMILY != "rv1126_rv1109" && \
+		RK_CHIP_FAMILY != "rk182x" && \
+		RK_CHIP_FAMILY != "rk1860" && \
 		RK_CHIP_FAMILY != "rk3229" && \
 		RK_CHIP_FAMILY != "rk3308" && \
 		RK_CHIP_FAMILY != "rk3358" && \
