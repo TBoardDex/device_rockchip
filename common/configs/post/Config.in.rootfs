@@ -4,7 +4,7 @@ menu "Post rootfs installs"
 
 config RK_ROOTFS_LIGHTWEIGHT
 	bool "less features for space-saving"
-	default y if RK_CHIP_FAMILY = "rk182x"
+	default y if RK_CHIP_FAMILY = "rk182x" || RK_CHIP_FAMILY = "rk1860"
 
 source "post/Config.in.overlay"
 
