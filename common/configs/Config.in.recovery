@@ -6,7 +6,7 @@ comment "Recovery depends on linux kernel"
 menuconfig RK_RECOVERY
 	bool "Recovery (based on Buildroot)"
 	depends on RK_KERNEL
-	default y if !RK_AMP && !RK_AB_UPDATE && RK_CHIP_FAMILY != "rk182x"
+	default y if !RK_AMP && !RK_AB_UPDATE && RK_CHIP_FAMILY != "rk182x" && RK_CHIP_FAMILY != "rk1860"
 
 if RK_RECOVERY
 
