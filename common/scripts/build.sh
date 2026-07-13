@@ -189,8 +189,8 @@ get_toolchain()
 		TC_VENDOR=rockchip830
 	fi
 
-	# RK182x uses Xuantie custom toolchain
-	if [ "$RK_CHIP_FAMILY" = "rk182x" ]; then
+	# RK182x/RK1860 use Xuantie custom toolchain
+	if [ "$RK_CHIP_FAMILY" = "rk182x" ] || [ "$RK_CHIP_FAMILY" = "rk1860" ]; then
 		TC_VENDOR=unknown
 		# AMP bare-metal toolchain: riscv64-unknown-elf- at riscv64/ dir
 		# Linux toolchain: riscv64-unknown-linux-musl- (unchanged)
