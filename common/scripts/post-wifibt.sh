@@ -4,24 +4,6 @@ POST_ROOTFS_ONLY=1
 
 source "${RK_POST_HELPER:-$(dirname "$(realpath "$0")")/post-helper}"
 
-check_bt()
-{
-	if [ "$RK_WIFIBT_BT_DAEMON_DISABLED" ]; then
-		return 1
-	fi
-
-	if [ "$RK_WIFIBT_BT_DAEMON_DEFAULT" ]; then
-		KERNEL_MAJOR=${RK_KERNEL_VERSION_RAW%.*}
-		KERNEL_MINOR=${RK_KERNEL_VERSION_RAW#*.}
-		if [ "$(( $KERNEL_MAJOR * 100 + $KERNEL_MINOR ))" -gt 601 ]; then
-			notice "Using BT drivers for kernel >6.1"
-			return 1
-		fi
-	fi
-
-	return 0
-}
-
 build_wifibt()
 {
 	check_config RK_KERNEL RK_WIFIBT RK_WIFIBT_MODULES || return 0
@@ -253,7 +235,7 @@ build_wifibt()
 
 	mkdir -p $TARGET_DIR/etc/ $TARGET_DIR/usr/bin/ \
 		$TARGET_DIR/lib/modules/ $TARGET_DIR/lib/firmware/rtlbt/ \
-		$TARGET_DIR/lib/firmware/brcm/
+		$TARGET_DIR/lib/firmware/brcm/ $TARGET_DIR/lib/firmware/rockchip/
 
 	echo "create Android style dirs"
 	rm -rf "$TARGET_DIR/system"
@@ -276,26 +258,13 @@ build_wifibt()
 		install -m 0755 $RKWIFIBT_DIR/bin/arm/* "$TARGET_DIR/usr/bin/"
 	fi
 
-	if check_bt; then
-		if ! grep -wq wireless-bluetooth "$RK_KERNEL_DTB"; then
-			echo -e "\e[35m"
-			echo "Missing wireless-bluetooth in $RK_KERNEL_DTS!"
-			echo -e "\e[0m"
-			exit 1
-		fi
-
-		echo "installing BT daemons"
-		ensure_tools "$TARGET_DIR/usr/bin/brcm_patchram_plus1" \
-			"$TARGET_DIR/usr/bin/dhd_priv" \
-			"$TARGET_DIR/usr/bin/rtk_hciattach"
-	else
-		notice "Disabling BT daemon..."
-		cp $RK_SDK_DIR/kernel/drivers/bluetooth/*.ko $TARGET_DIR/lib/modules/
-		sed -i "/^start_bt()/ {
-			n
-			a\\\tinsmod_bt\\n\\treturn 0 # BT initialized by kernel.
-		}" "$TARGET_DIR/usr/bin/wifibt-init.sh"
-	fi
+	echo "installing BT initialization tools and drivers"
+	ensure_tools "$TARGET_DIR/usr/bin/brcm_patchram_plus1" \
+		"$TARGET_DIR/usr/bin/dhd_priv" \
+		"$TARGET_DIR/usr/bin/rk_hciattach" \
+		"$TARGET_DIR/usr/bin/rtk_hciattach"
+	find "$RK_SDK_DIR/kernel/drivers/bluetooth" -maxdepth 1 -name '*.ko' \
+		-exec cp {} "$TARGET_DIR/lib/modules/" \;
 
 	if [[ "$RK_WIFIBT_MODULES" = "ALL_CY" ]];then
 		echo "copy infineon/realtek firmware/nvram to rootfs"
@@ -350,7 +319,7 @@ build_wifibt()
 		cp $RKWIFIBT_DIR/firmware/rockchip/$RK_WIFIBT_MODULES/wifi/* \
 			$TARGET_DIR/lib/firmware/
 		cp $RKWIFIBT_DIR/firmware/rockchip/$RK_WIFIBT_MODULES/bt/* \
-			$TARGET_DIR/lib/firmware/
+			$TARGET_DIR/lib/firmware/rockchip/
 		cp $RKWIFIBT_DIR/drivers/rk960/*.ko \
 			$TARGET_DIR/lib/modules/
 	fi
