@@ -1,8 +1,8 @@
 Prebuilt tools (static linked)
 ==============================
 
-Prebuilt from Rockchip buildroot 2025 SDK with kernel 6.1:
-705cc29581 package/memtester: update to support rv1126b
+Prebuilt from Rockchip buildroot 2026 SDK with kernel 6.1:
+e2be8c62cf configs: rockchip: mesa3d: Update configs
 
 Using rockchip_tools_{arm32,arm64,riscv64}_defconfig.
 
@@ -13,6 +13,6 @@ For building kmsgrab:
 
 External sources:
 1/ rkwifibt:
-6d52669 fix compile error
+6ecf1cc rk960: bt: update firmware and runtime init flow
 2/ rktoolkit:
-bc1d85d vendor_storage: fixed hex string begin with 00, get wrong string length when read
+5d6b578 vuart_console: add version 2.0 struct
