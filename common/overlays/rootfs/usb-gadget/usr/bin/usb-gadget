@@ -355,15 +355,19 @@ usb_do_start_daemon()
 	shift
 	ARGS=$@
 
+	PID_FILE=$TMP_DIR/$(basename $(usb_daemon_file)).pid
+
 	usb_msg "Starting daemon: $DAEMON $ARGS"
 
-	start-stop-daemon -Sqx $DAEMON -- $ARGS >> \
+	start-stop-daemon -Sq -x $DAEMON -p $PID_FILE -m -- $ARGS >> \
 		$LOG_DIR/$(basename $(usb_daemon_file)).log 2>&1 || true
 
 	# The daemon might fork itself
-	while start-stop-daemon -Kqtx $DAEMON; do
+	while [ -f "$PID_FILE" ] && start-stop-daemon -Kqt -p $PID_FILE; do
 		sleep .5
 	done
+
+	rm -f $PID_FILE
 
 	usb_msg "Exited daemon: $DAEMON $ARGS"
 }
@@ -392,10 +396,11 @@ usb_start_daemon()
 
 usb_kill_daemon()
 {
-	DAEMON="${1:-$(usb_daemon)}"
-	if [ "$DAEMON" ]; then
-		usb_msg "Killing daemon: $DAEMON"
-		start-stop-daemon -Kqox $DAEMON || true
+	PID_FILE=$TMP_DIR/$(basename $(usb_daemon_file)).pid
+	if [ -f "$PID_FILE" ]; then
+		usb_msg "Killing daemon (pidfile: $PID_FILE)"
+		start-stop-daemon -Kq -p $PID_FILE || true
+		rm -f $PID_FILE
 	fi
 }
 
@@ -407,7 +412,7 @@ usb_stop_daemon()
 
 	usb_msg "Stopping daemon: $DAEMON"
 	usb_daemon_disable
-	usb_kill_daemon $DAEMON
+	usb_kill_daemon
 }
 
 usb_load_config()
