@@ -1,0 +1,16 @@
+[Unit]
+Description=ADBD network service (TCP mode)
+After=network.target network-online.target
+Wants=network.target
+
+[Service]
+Type=forking
+PIDFile=/var/run/adbd-network.pid
+EnvironmentFile=/etc/adbd-network.conf
+ExecStart=/usr/bin/adbd-network-start
+ExecStop=/usr/bin/adbd-network-start stop
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

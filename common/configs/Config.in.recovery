@@ -87,10 +87,6 @@ config RK_RECOVERY_ADBD_PRODUCT
 	string "product"
 	default "rk3xxx"
 
-config RK_RECOVERY_ADBD_TCP_PORT
-	int "TCP port"
-	default 5555
-
 config RK_RECOVERY_ADBD_SHELL
 	string "login shell"
 	default "/bin/bash"

@@ -7,6 +7,7 @@ menuconfig RK_ROOTFS_OVERLAY
 if RK_ROOTFS_OVERLAY
 
 source "post/Config.in.usb-gadget"
+source "post/Config.in.adbd-network"
 
 choice
 	prompt "extra fonts"

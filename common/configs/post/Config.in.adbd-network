@@ -1,0 +1,17 @@
+menuconfig RK_ADBD_NETWORK
+	bool "ADBD network service (TCP)"
+	help
+	  Enable ADBD network service for TCP/IP debugging.
+	  When enabled, adbd listens on a TCP port for
+	  incoming ADB connections over the network.
+
+if RK_ADBD_NETWORK
+
+config RK_ADBD_NETWORK_TCP_PORT
+	int "TCP port"
+	default 5555
+	help
+	  TCP port for ADBD to listen on.
+
+endif
+endmenuconfig

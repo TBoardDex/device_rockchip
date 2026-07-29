@@ -1,0 +1,52 @@
+#!/bin/bash
+
+CONF_FILE=/etc/adbd-network.conf
+[ -f "$CONF_FILE" ] && . "$CONF_FILE"
+export ADB_TCP_PORT
+
+PID_FILE=/var/run/adbd-network.pid
+
+do_start()
+{
+	[ -n "$ADB_TCP_PORT" ] || return 0
+
+	if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+		return 0
+	fi
+
+	if ! mountpoint -q /dev/pts; then
+		mkdir -p /dev/pts
+		mount -t devpts -o mode=0620,ptmxmode=0000,gid=5 none /dev/pts
+	fi
+
+	/sbin/ifup --force lo 2>/dev/null || /sbin/ifup -f lo 2>/dev/null || true
+
+	/usr/bin/adbd &
+	echo $! > "$PID_FILE"
+}
+
+do_stop()
+{
+	[ -f "$PID_FILE" ] || return 0
+	read -r PID < "$PID_FILE"
+	kill "$PID" 2>/dev/null || true
+	rm -f "$PID_FILE"
+}
+
+case "${1:-start}" in
+	start)
+		do_start
+		;;
+	stop)
+		do_stop
+		;;
+	restart)
+		do_stop
+		sleep 1
+		do_start
+		;;
+	*)
+		echo "Usage: $0 [start|stop|restart]" >&2
+		exit 3
+		;;
+esac

@@ -1,0 +1,19 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:       adbd-network
+# Required-Start: $network
+# Required-Stop:  $network
+# Default-Start:  S
+# Default-Stop:   K
+# Description:    ADBD network service (TCP mode)
+### END INIT INFO
+
+case "$1" in
+	start|restart|stop) /usr/bin/adbd-network-start $1 ;;
+	*)
+		echo "Usage: [start|stop|restart]" >&2
+		exit 3
+		;;
+esac
+
+:

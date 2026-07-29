@@ -30,11 +30,6 @@ install_adbd()
 
 	ensure_tools "$TARGET_DIR/usr/bin/adbd"
 
-	if [ "$RK_RECOVERY_ADBD_TCP_PORT" -ne 0 ]; then
-		echo "export ADB_TCP_PORT=$RK_RECOVERY_ADBD_TCP_PORT" >> \
-			"$TARGET_DIR/etc/profile.d/adbd.sh"
-	fi
-
 	if [ -n "$RK_RECOVERY_ADBD_SHELL" ]; then
 		echo "export ADBD_SHELL=$RK_RECOVERY_ADBD_SHELL" >> \
 			"$TARGET_DIR/etc/profile.d/adbd.sh"
