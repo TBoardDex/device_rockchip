@@ -1,8 +1,8 @@
 Prebuilt tools (static linked)
 ==============================
 
-Prebuilt from Rockchip buildroot 2026 SDK with kernel 6.1:
-e2be8c62cf configs: rockchip: mesa3d: Update configs
+Prebuilt from Rockchip buildroot 2026 SDK with kernel 6.12:
+2fed7f8066 android-adbd: Skip USB init when TCP port is configured
 
 Using rockchip_tools_{arm32,arm64,riscv64}_defconfig.
 
