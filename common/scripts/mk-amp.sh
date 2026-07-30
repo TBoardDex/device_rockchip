@@ -7,7 +7,8 @@ RK_SCRIPTS_DIR="${RK_SCRIPTS_DIR:-$(dirname "$(realpath "$0")")}"
 
 usage_hook()
 {
-	usage_oneline "amp" "build and pack amp system"
+	usage_oneline "amp[:its:<its_file>][:os:<os_type>]" "build and pack amp system"
+	usage_oneline "amp:menuconfig" "modify menuconfig of default project for amp"
 }
 
 amp_get_value()
@@ -97,6 +98,302 @@ amp_touch_export()
 	[ -n "${!1}" ] && export "$DST"="${!1}" || true
 }
 
+amp_find_kernel_dtb()
+{
+	local dtb_file=""
+	local dts_name="${RK_KERNEL_DTS_NAME}"
+
+	if [ -z "$dts_name" ] && [ -f "$RK_SDK_DIR/output/.config" ]; then
+		dts_name="$(grep "^RK_KERNEL_DTS_NAME=" "$RK_SDK_DIR/output/.config" 2>/dev/null | cut -d'"' -f2 || true)"
+	fi
+
+	if [ -z "$dts_name" ]; then
+		error "RK_KERNEL_DTS_NAME is not set! Please configure project target first."
+		exit 1
+	fi
+
+	dtb_file="$(find "$RK_SDK_DIR/kernel"* "$RK_SDK_DIR/output" -name "${dts_name}.dtb" -not -path "*/.*" 2>/dev/null | head -n 1 || true)"
+
+	if [ -z "$dtb_file" ] || [ ! -f "$dtb_file" ]; then
+		error "Kernel DTB file '${dts_name}.dtb' not found!"
+		error "Please build the kernel first: ./build.sh kernel"
+		exit 1
+	fi
+
+	echo "$dtb_file"
+}
+
+amp_get_dtb_node_reg()
+{
+	local dtb_file="$1"
+	local node_key="$2"
+	local field="$3"
+	local res_path="/reserved-memory"
+
+	# Find actual subnode under /reserved-memory matching node_key (e.g. mcu, amp-shmem, rpmsg, amp)
+	local node_name="$(fdtget -l "$dtb_file" "$res_path" 2>/dev/null | grep -E "^${node_key}(@|_|$)" | head -n 1 || true)"
+	if [ -z "$node_name" ]; then
+		# Try strip _reserved suffix (e.g. amp_shmem_reserved -> amp-shmem)
+		local alt_key="$(echo "$node_key" | sed -e 's/_reserved//' -e 's/_/-/g')"
+		node_name="$(fdtget -l "$dtb_file" "$res_path" 2>/dev/null | grep -E "^${alt_key}(@|_|$)" | head -n 1 || true)"
+	fi
+
+	if [ -z "$node_name" ]; then
+		error "Reserved memory node for '$node_key' not found in DTB ($dtb_file)!"
+		exit 1
+	fi
+
+	local reg_vals=($(fdtget "$dtb_file" "$res_path/$node_name" reg 2>/dev/null || true))
+	if [ "${#reg_vals[@]}" -lt 4 ]; then
+		error "Failed to read reg attribute for node '$node_name' in DTB!"
+		exit 1
+	fi
+
+	local addr="${reg_vals[1]}"
+	local size="${reg_vals[3]}"
+
+	if [ "$field" = "START" ]; then
+		printf "0x%08x" "$addr"
+	elif [ "$field" = "SIZE" ]; then
+		printf "0x%08x" "$size"
+	else
+		echo "$size"
+	fi
+}
+
+amp_process_dtb_tags()
+{
+	local temp_its="$1"
+
+	if ! grep -q "DTB:" "$temp_its"; then
+		return 0
+	fi
+
+	PARSED_DTB_FILE="$(amp_find_kernel_dtb)"
+	if [ -z "$PARSED_DTB_FILE" ] || [ ! -f "$PARSED_DTB_FILE" ]; then
+		error "Kernel DTB file not found for ${RK_CHIP:-rk3572}!"
+		error "Please build the kernel first: ./build.sh kernel"
+		exit 1
+	fi
+
+	# Process combined expression DTB:node1:SIZE+node2:SIZE or DTB:node1+node2:SIZE
+	local comb_matches="$(grep -oE "DTB:[a-zA-Z0-9_-]+(:SIZE)?\+[a-zA-Z0-9_-]+:SIZE" "$temp_its" | sort -u || true)"
+	for match in $comb_matches; do
+		local part1="$(echo "$match" | cut -d':' -f2 | cut -d'+' -f1)"
+		local part2="$(echo "$match" | cut -d'+' -f2 | cut -d':' -f1)"
+		local size1="$(amp_get_dtb_node_reg "$PARSED_DTB_FILE" "$part1" "RAW_SIZE")"
+		local size2="$(amp_get_dtb_node_reg "$PARSED_DTB_FILE" "$part2" "RAW_SIZE")"
+		local total_size=$((size1 + size2))
+		local hex_size="$(printf "0x%08x" "$total_size")"
+		sed -i "s|${match}|${hex_size}|g" "$temp_its"
+	done
+
+	# Process single expression DTB:node:START or DTB:node:SIZE
+	local matches="$(grep -oE "DTB:[a-zA-Z0-9_-]+:(START|SIZE)" "$temp_its" | sort -u || true)"
+	for match in $matches; do
+		local node_key="$(echo "$match" | cut -d':' -f2)"
+		local field="$(echo "$match" | cut -d':' -f3)"
+		local hex_val="$(amp_get_dtb_node_reg "$PARSED_DTB_FILE" "$node_key" "$field")"
+		sed -i "s|${match}|${hex_val}|g" "$temp_its"
+	done
+}
+
+amp_parse_subargs()
+{
+	shift 1 || true
+	while [ $# -gt 0 ]; do
+		case "$1" in
+			menuconfig)
+				DO_MENUCONFIG=1
+				shift 1
+				;;
+			its)
+				if [ -n "$2" ]; then
+					OVERRIDE_ITS="$2"
+					shift 2
+				else
+					error "Option 'its' requires an ITS filename argument!"
+					exit 1
+				fi
+				;;
+			os)
+				if [ -n "$2" ]; then
+					OVERRIDE_OS="$2"
+					shift 2
+				else
+					error "Option 'os' requires an OS type argument (e.g. rtt, hal)!"
+					exit 1
+				fi
+				;;
+			cfg|defconfig)
+				if [ -n "$2" ]; then
+					OVERRIDE_CFG="$2"
+					shift 2
+				else
+					error "Option 'cfg' requires a defconfig path argument!"
+					exit 1
+				fi
+				;;
+			node)
+				if [ -n "$2" ]; then
+					OVERRIDE_NODE="$2"
+					shift 2
+				else
+					error "Option 'node' requires a node name argument!"
+					exit 1
+				fi
+				;;
+			*)
+				warning "Unknown amp sub-argument: $1"
+				shift 1
+				;;
+		esac
+	done
+}
+
+amp_resolve_its_path()
+{
+	local name="${1:-amp.its}"
+	if [ -f "$RK_CHIP_DIR/$name" ]; then
+		echo "$RK_CHIP_DIR/$name"
+	elif [ -f "$name" ]; then
+		echo "$name"
+	else
+		error "ITS config file '$name' not found!"
+		exit 1
+	fi
+}
+
+amp_print_build_info()
+{
+	message "=========================================="
+	message "          Start building AMP"
+	message "=========================================="
+	message "AMP Fit ITS       : ${RK_AMP_FIT_ITS:-<none>}${OVERRIDE_ITS:+ (overridden by $OVERRIDE_ITS)}"
+	message "ITS Config Path   : $ITS_CONFIG"
+	[ -z "$PARSED_DTB_FILE" ] || message "DTB Source Path   : $PARSED_DTB_FILE"
+	[ -z "$OVERRIDE_OS" ]     || message "OS Override       : $OVERRIDE_OS"
+	message "------------------------------------------"
+	[ -z "$SHMEM_BASE" ]       || message "AMP SHMEM Reserved: $SHMEM_BASE / ${SHMEM_SIZE:-<unk>}"
+	[ -z "$LINUX_RPMSG_BASE" ] || message "RPMSG Reserved    : $LINUX_RPMSG_BASE / ${LINUX_RPMSG_SIZE:-<unk>}"
+	message "------------------------------------------"
+	[ -z "$RK_AMP_RTT_TARGET" ]     || message "RTT Target (AP)   : $RK_AMP_RTT_TARGET"
+	[ -z "$RK_AMP_MCU_RTT_TARGET" ] || message "RTT Target (MCU)  : $RK_AMP_MCU_RTT_TARGET"
+	[ -z "$RK_AMP_HAL_TARGET" ]     || message "HAL Target (AP)   : $RK_AMP_HAL_TARGET"
+	[ -z "$RK_AMP_MCU_HAL_TARGET" ] || message "HAL Target (MCU)  : $RK_AMP_MCU_HAL_TARGET"
+	message "Cross Compiler    : $CROSS_COMPILE"
+	message "=========================================="
+}
+
+amp_menuconfig_env_setup()
+{
+	local core="$1"
+	local exec_path="$2"
+	local cc_prefix="$3"
+
+	if [ -n "$exec_path" ]; then
+		if [[ "$exec_path" != /* ]]; then
+			export RTT_EXEC_PATH="${RK_SDK_DIR}/${exec_path}"
+		else
+			export RTT_EXEC_PATH="${exec_path}"
+		fi
+		notice "RTT_EXEC_PATH set to: $RTT_EXEC_PATH"
+	fi
+
+	if [ -n "$cc_prefix" ]; then
+		export RTT_CC_PREFIX="$cc_prefix"
+	else
+		unset RTT_CC_PREFIX
+	fi
+}
+
+amp_menuconfig_run()
+{
+	local bsp_dir="$1"
+	local defconfig="$2"
+
+	message "=================================================="
+	message "      Entering RTOS Menuconfig for $(basename "$bsp_dir")  "
+	message "      Defconfig: ${defconfig}                     "
+	message "=================================================="
+
+	cd "${bsp_dir}" || exit 1
+	if [ -f "${defconfig}" ]; then
+		notice "Loading existing ${defconfig}..."
+		cp "${defconfig}" .config
+	fi
+
+	if [ -c /dev/tty ]; then
+		scons --menuconfig < /dev/tty > /dev/tty
+	else
+		scons --menuconfig
+	fi
+
+	if [ -f .config ]; then
+		cp .config "${defconfig}"
+		message "Successfully saved new config to ${bsp_dir}/${defconfig}"
+	else
+		warning "Menuconfig aborted or failed. No changes saved to defconfig."
+	fi
+
+	cd "${RK_SDK_DIR}" || exit 1
+}
+
+amp_menuconfig()
+{
+	local its_file="$1"
+	local override_os="$2"
+	local override_cfg="$3"
+	local override_node="$4"
+	local bsp_target=""
+	local defconfig=""
+	local exec_path=""
+	local core=""
+	local sys=""
+
+	[ -f "$its_file" ] || { error "ITS file '$its_file' not found!"; exit 1; }
+
+	local clean_its="$(amp_filter_comments "$its_file")"
+	local main_node="$override_node"
+	if [ -z "$main_node" ]; then
+		main_node="$(echo "$clean_its" | grep -wE "amp[0-9]* {|mcu {|hpmcu {" | head -n 1 | grep -oE "amp[0-9]*|mcu|hpmcu")"
+	fi
+	[ -n "$main_node" ] || { error "No valid image node found in '$its_file'!"; exit 1; }
+
+	local node_content="$(amp_get_node "$clean_its" "$main_node")"
+	sys="$(amp_get_string "$node_content" sys)"
+	[ -z "$override_os" ] || sys="$override_os"
+	core="$(amp_get_string "$node_content" core)"
+
+	if [ -n "$override_cfg" ]; then
+		defconfig="$override_cfg"
+	else
+		defconfig="$(amp_get_string "$node_content" rtt_config)"
+	fi
+
+	exec_path="$(amp_get_string "$node_content" rtt_exec)"
+	local cc_prefix="$(amp_get_string "$node_content" cc_prefix)"
+
+	if [[ "$sys" =~ ^hal ]]; then
+		error "HAL project (SYS=$sys) does not support menuconfig!"
+		exit 1
+	fi
+
+	if [ "$core" = "mcu" ]; then
+		bsp_target="${RK_AMP_MCU_RTT_TARGET:-$(grep "^RK_AMP_MCU_RTT_TARGET=" "$RK_SDK_DIR/output/.config" 2>/dev/null | cut -d'"' -f2)}"
+	else
+		bsp_target="${RK_AMP_RTT_TARGET:-$(grep "^RK_AMP_RTT_TARGET=" "$RK_SDK_DIR/output/.config" 2>/dev/null | cut -d'"' -f2)}"
+	fi
+
+	[ -n "$bsp_target" ] || { error "Failed to determine BSP_TARGET for RT-Thread!"; exit 1; }
+	local bsp_dir="$RK_RTOS_BSP_DIR/$bsp_target"
+	[ -d "$bsp_dir" ] || { error "Project directory '$bsp_dir' does not exist!"; exit 1; }
+	[ -n "$defconfig" ] || { error "Could not determine defconfig path from ITS file!"; exit 1; }
+
+	amp_menuconfig_env_setup "$core" "$exec_path" "$cc_prefix"
+	amp_menuconfig_run "$bsp_dir" "$defconfig"
+}
+
 build_hal()
 {
 	local append=
@@ -129,6 +426,25 @@ build_hal()
 	finish_build build_hal $@
 }
 
+amp_setup_rtt_env()
+{
+	local cpu="$1"
+
+	if [ -z "$RTT_EXEC_PATH" ]; then
+		if [ -n "$CC" ]; then
+			export RTT_EXEC_PATH="$(dirname "$CC")"
+		elif [ -n "$CROSS_COMPILE" ]; then
+			export RTT_EXEC_PATH="$(dirname "$CROSS_COMPILE")"
+		fi
+	fi
+
+	if [ -n "$CC_PREFIX" ]; then
+		export RTT_CC_PREFIX="$CC_PREFIX"
+	else
+		unset RTT_CC_PREFIX
+	fi
+}
+
 build_rtthread()
 {
 	local append=
@@ -151,6 +467,7 @@ build_rtthread()
 	amp_touch_export SHMEM_BASE RTT_SHMEM_BASE
 	amp_touch_export SHMEM_SIZE RTT_SHMEM_SIZE
 	amp_touch_export RTT_EXEC RTT_EXEC_PATH
+	amp_setup_rtt_env "$2"
 
 	ROOT_PART_OFFSET=$(rk_partition_start root)
 	ROOT_PART_SIZE=$(rk_partition_size root)
@@ -220,18 +537,20 @@ build_images()
 		fi
 		CUR_CPU=$(($CUR_CPU))
 
-		echo Image info: $item
-		for p in FIRMWARE_CPU_BASE DRAM_SIZE SRAM_BASE SRAM_SIZE SHMEM_BASE \
-			 SHMEM_SIZE LINUX_RPMSG_BASE LINUX_RPMSG_SIZE CUR_CPU
-		do
-			echo $(set | grep -w "^$p" && true)
-		done
+		notice "Image Target     : $item (CPU: $CUR_CPU | Load: ${FIRMWARE_CPU_BASE:-<none>} | Size: ${DRAM_SIZE:-<none>})"
 
 		SYS=$(amp_get_string "$ITS_IMAGE" sys)
+		if [ -n "$OVERRIDE_OS" ]; then
+			notice "Temporarily replacing sys for $item ($SYS -> $OVERRIDE_OS)"
+			SYS="$OVERRIDE_OS"
+		fi
+
 		CORE=$(amp_get_string "$ITS_IMAGE" core)
 
 		CC=$(amp_get_string "$ITS_IMAGE" cc)
 		[ ! -n "$CC" ] || CC="${RK_SDK_DIR}/${CC}"
+
+		CC_PREFIX=$(amp_get_string "$ITS_IMAGE" cc_prefix)
 
 		RTT_EXEC=$(amp_get_string "$ITS_IMAGE" rtt_exec)
 		[ ! -n "$RTT_EXEC" ] || RTT_EXEC="${RK_SDK_DIR}/${RTT_EXEC}"
@@ -266,15 +585,23 @@ build_images()
 BUILD_CMDS="amp"
 build_hook()
 {
-	local i
+	local DO_MENUCONFIG=0
+	local OVERRIDE_ITS=""
+	local OVERRIDE_OS=""
+	local OVERRIDE_CFG=""
+	local OVERRIDE_NODE=""
 
+	amp_parse_subargs "$@"
 	check_config RK_AMP || false
 
-	message "=========================================="
-	message "          Start building AMP"
-	message "=========================================="
+	[ -z "$OVERRIDE_ITS" ] || RK_AMP_FIT_ITS="$OVERRIDE_ITS"
+	ITS_CONFIG="$(amp_resolve_its_path "${RK_AMP_FIT_ITS:-amp.its}")"
 
-	"$RK_SCRIPTS_DIR/check-amp.sh"
+	if [ "$DO_MENUCONFIG" -eq 1 ]; then
+		amp_menuconfig "$ITS_CONFIG" "$OVERRIDE_OS" "$OVERRIDE_CFG" "$OVERRIDE_NODE"
+		finish_build amp $@
+		return 0
+	fi
 
 	if [ "$RK_AMP_RISCV" ]; then
 		export CROSS_COMPILE=$(get_toolchain AMP "$RK_AMP_ARCH" none embed)
@@ -282,6 +609,8 @@ build_hook()
 		export CROSS_COMPILE=$(get_toolchain AMP "$RK_AMP_ARCH")
 	fi
 	[ "$CROSS_COMPILE" ] || exit 1
+
+	"$RK_SCRIPTS_DIR/check-amp.sh"
 
 	if [ -f "$RK_CHIP_DIR/$RK_AMP_CFG" ]; then
 		set -a
@@ -292,8 +621,11 @@ build_hook()
 	ITS_FILE="$(mktemp /tmp/temp_mk_amp_XXXXXXX.its)"
 	trap "rm -f '$ITS_FILE'" EXIT INT TERM
 	echo "$(amp_filter_comments "$ITS_CONFIG")" > "$ITS_FILE"
+
+	PARSED_DTB_FILE=""
+	amp_process_dtb_tags "$ITS_FILE"
+
 	CORE_NUMBERS=$(grep -wcE "amp[0-9]* {|mcu {|hpmcu {" $ITS_FILE)
-	echo "CORE_NUMBERS=$CORE_NUMBERS"
 
 	EXT_SHARE=$(amp_get_node "$(cat $ITS_FILE)" share)
 	if [ "$EXT_SHARE" ]; then
@@ -311,6 +643,8 @@ build_hook()
 			export LINUX_RPMSG_SIZE=$(amp_get_value "$EXT_SHARE" "rpmsg_size")
 		fi
 	fi
+
+	amp_print_build_info
 
 	ITS_IMAGES=$(grep -wE "amp[0-9]* {|mcu {|hpmcu {" $ITS_FILE | grep -oE "amp[0-9]*|mcu")
 	build_images "$ITS_IMAGES"
