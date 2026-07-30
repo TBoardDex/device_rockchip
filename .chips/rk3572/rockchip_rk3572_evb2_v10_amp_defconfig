@@ -1,0 +1,11 @@
+RK_ROOTFS=y
+RK_UBOOT_CFG_FRAGMENTS="rk3572-amp"
+RK_AMP=y
+RK_AMP_HAL_TARGET="rk3572-64"
+RK_AMP_RTT_TARGET="${RK_CHIP_FAMILY}-64"
+RK_AMP_CFG="amp_rk3572_evb2_v10_amp_cfg"
+RK_AMP_FIT_ITS="amp_mcu.its"
+RK_KERNEL_CFG_FRAGMENTS="rockchip_amp.config"
+RK_KERNEL_DTS_NAME="rk3572-evb2-v10-linux-amp"
+RK_RECOVERY=y
+RK_PARAMETER="parameter-amp.txt"
