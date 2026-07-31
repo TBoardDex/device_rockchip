@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Common helpers for release scripts
+
+# Make sure that we are sourced and called from release scripts.
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+	echo "$(realpath "$0") is not supposed to be executed directly"
+	exit 1
+fi
+
+choose_chip()
+{
+	mapfile -t CHIP_ARRAY < <(ls "$RK_CHIPS_DIR")
+	CHIP_ARRAY_LEN=${#CHIP_ARRAY[@]}
+	echo "Pick a chip:"
+	echo ""
+
+	for i in $(seq 1 "$CHIP_ARRAY_LEN"); do
+		echo "$i. ${CHIP_ARRAY[$((i - 1))]}"
+	done
+
+	local INDEX
+	read -r -p "Which would you like? [1]: " INDEX
+	INDEX=${INDEX:-1}
+	if ! [[ "$INDEX" =~ ^[0-9]+$ ]] || \
+		[ "$INDEX" -lt 1 ] || [ "$INDEX" -gt "$CHIP_ARRAY_LEN" ]; then
+		echo "Invalid selection, defaulting to 1"
+		INDEX=1
+	fi
+	CHIP="${CHIP_ARRAY[$((INDEX - 1))]}"
+}
