@@ -1,8 +1,17 @@
 Hook scripts for building
 =========================
 
+These hooks drive the build pipeline stages: init, pre-build, build, and
+post-build. Each hook script defines the commands it handles via the
+`<STAGE>_CMDS` variables and implements the corresponding `<stage>_hook()`
+functions. See `example.sh.in` for details.
+
 build-helper: Common helper functions
 
 example.sh.in: Example of hook script
 
 <priority>-<hook>.sh: Hook script for building
+
+The `<priority>` numeric prefix (00-99) controls the execution order.
+Hooks from the chip directory (`.chip/build-hooks/`) run before the common
+ones. Run `./build.sh -h` to list the targets provided by the hooks.

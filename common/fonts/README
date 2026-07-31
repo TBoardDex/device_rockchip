@@ -1,10 +1,12 @@
 Prebuilt fonts
 ==============
 
-Prebuilt from Rockchip buildroot 2021 SDK:
+Fonts installed into the root filesystem for console/GUI rendering.
+
+Prebuilt from Rockchip Buildroot 2021 SDK:
 4e2f5a2c9ae gdb: Bump to buildroot upstream
 
-Using rockchip_rk3588_defconfig with addition configs:
+Using rockchip_rk3588_defconfig with additional configs:
 BR2_PACKAGE_FONTCONFIG=y
 BR2_PACKAGE_DEJAVU=y
 BR2_PACKAGE_LIBERATION=y

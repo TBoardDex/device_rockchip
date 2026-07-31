@@ -1,8 +1,12 @@
-Prebuilt tools (static linked)
-==============================
+Prebuilt tools (statically linked)
+==================================
 
-qemu-*-static: Qemu tools extracted from qemu-user-static_8.0.3+dfsg-4_amd64.deb
+Host-side tools used during the build.
 
-ldconfig:
-Based on Yocto's ldconfig-native_2.12.1, static linked with:
+qemu-*-static: Qemu user-mode emulators, used to run target binaries
+(e.g. for cross-rootfs chroot) on an x86_64 host. Extracted from
+qemu-user-static_8.0.3+dfsg-4_amd64.deb
+
+ldconfig: Used to generate the target's dynamic linker cache. Based on
+Yocto's ldconfig-native_2.12.1, statically linked with:
 gcc ldconfig.c -std=gnu99 chroot_canon.c xmalloc.c xstrdup.c cache.c readlib.c -I. -o ldconfig -static

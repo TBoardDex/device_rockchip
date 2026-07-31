@@ -1,9 +1,12 @@
-input-event-daemon (static linked)
+input-event-daemon (statically linked)
+======================================
 
-Prebuilt from Rockchip buildroot 2021 SDK:
+Handles power-key events: short press to suspend, long press to shutdown.
+
+Prebuilt from Rockchip Buildroot 2021 SDK:
 78e74bf5127 input-event-daemon: Ignore BTN_TOUCH
 
-Using rockchip_rk3036_defconfig with addition configs:
+Using rockchip_rk3036_defconfig with additional configs:
 BR2_GCC_VERSION_11_X=y
 
 BR2_PACKAGE_INPUT_EVENT_DAEMON=y

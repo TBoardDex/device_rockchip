@@ -1,8 +1,16 @@
 Hook scripts for post-build
 ===========================
 
+These hooks are run after the root filesystem is built, via
+`./build.sh post-rootfs <rootfs dir>`. Each hook receives the target rootfs
+directory as its first argument.
+
 post-helper: Common helper functions
 
 example.sh.in: Example of hook script
 
 <priority>-<hook>.sh: Hook script for post-build
+
+The `<priority>` numeric prefix (00-99) controls the execution order.
+Hooks from the chip directory (`.chip/post-hooks/`) run before the common
+ones.

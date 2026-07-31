@@ -1,5 +1,8 @@
 Source dirs for extra partitions
-=============================
+================================
 
 Set the relative path of the source dirs in the SDK's
-RK_EXTRA_PARTITION_<n>_SRC config for packing into the related partition image.
+`RK_EXTRA_PARTITION_<n>_SRC` config for packing into the related partition
+image.
+
+Run `./build.sh extra-parts` to pack the extra partition images.

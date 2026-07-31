@@ -1,8 +1,11 @@
 Misc files
 ==========
 
-apply-all.sh: Script to apply all saved SDK patches
+apply-all.sh: Script to apply all saved SDK patches. Run it with the SDK
+root as the argument.
 
-busybox-reboot: Wrapper for busybox reboot commands
+busybox-reboot: Wrapper for busybox reboot commands. Installed in the
+rootfs as `shutdown`/`halt`/`poweroff`/`reboot` to add support for the
+`--halt`, `--poweroff` and `--reboot` options that busybox lacks.
 
-kmsgrab.c: Tool for grabbing display buffer from DRM
+kmsgrab.c: Tool for grabbing display buffer from DRM.

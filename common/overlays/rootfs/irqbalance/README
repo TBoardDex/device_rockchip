@@ -1,9 +1,12 @@
-irqbalance (static linked)
+irqbalance (statically linked)
+==============================
 
-Prebuilt from Rockchip buildroot 2021 SDK:
+Balances hardware interrupts across CPUs to improve performance.
+
+Prebuilt from Rockchip Buildroot 2021 SDK:
 b92dd41c2b7 pcre2: Support static
 
-Using rockchip_rk3036_defconfig with addition configs:
+Using rockchip_rk3036_defconfig with additional configs:
 BR2_GCC_VERSION_11_X=y
 
 BR2_PACKAGE_UTIL_LINUX=y

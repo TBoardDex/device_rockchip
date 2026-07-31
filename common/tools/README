@@ -1,10 +1,10 @@
-Prebuilt tools (static linked)
-==============================
+Prebuilt tools (statically linked)
+==================================
+
+Debug/utility tools installed into the root filesystem (`/usr/bin`) when
+enabled by the SDK config.
 
 x86_64: Tools for amd64 host(PC)
-
 aarch64: Tools for arm64 target devices
-
 armhf: Tools for arm32 and arm64 target devices
-
 riscv64: Tools for riscv64 target devices

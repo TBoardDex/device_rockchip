@@ -1,9 +1,12 @@
-frecon (static linked)
+frecon (statically linked)
+==========================
 
-Prebuilt from Rockchip buildroot 2021 SDK:
+A fast framebuffer console/terminal emulator running on the Linux console.
+
+Prebuilt from Rockchip Buildroot 2021 SDK:
 62b414915b frecon: Support setting preferred mode
 
-Using rockchip_rk3036_defconfig with addition configs:
+Using rockchip_rk3036_defconfig with additional configs:
 BR2_GCC_VERSION_11_X=y
 
 BR2_PACKAGE_EUDEV=y

@@ -1,16 +1,23 @@
 Overlay dirs
 ============
 
-1. The common/*/* will be automatically installed.
+This directory contains overlay packages that are installed into the target
+images during the build.
 
-2. The rootfs/*/* will be automatically installed into the root filesystem.
+1. The `common/*/*` will be automatically installed.
 
-3. The <OS>/*/* will be automatically installed into the target OS (including recovery, etc.).
+2. The `rootfs/*/*` will be automatically installed into the root filesystem.
 
-4. Set RK_ROOTFS_EXTRA_OVERLAY_DIRS to specify custom rootfs overlay directories.
+3. The `<OS>/*/*` (e.g. `debian`, `buildroot`, `yocto`, `recovery`) will be
+   automatically installed into the target OS.
 
-5. Unset RK_ROOTFS_OVERLAY to disable rootfs overlays.
+4. Set `RK_ROOTFS_EXTRA_OVERLAY_DIRS` to specify custom rootfs overlay
+   directories.
 
-6. Unset RK_OVERLAY to disable all overlays.
+5. Unset `RK_ROOTFS_OVERLAY` to disable rootfs overlays.
 
-If an install.sh script exists in the overlay directory, it will be executed instead of the default rsync installation.
+6. Unset `RK_OVERLAY` to disable all overlays.
+
+If an `install.sh` script exists in the overlay directory, it will be executed
+instead of the default rsync installation. The target rootfs directory is
+passed to it as the first argument.

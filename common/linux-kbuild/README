@@ -1,6 +1,17 @@
-Rockchip prebuilt kbuild (static linked) and scripts
+Rockchip prebuilt kbuild (statically linked) and scripts
+=========================================================
 
-Debian package files come from specific tag in:
+Host-side kbuild tools (`scripts/` and `tools/objtool/`) used when building
+the Linux kernel on the target device.
+
+Layout:
+  aarch64/  kbuild tools for aarch64 targets
+  armhf/    kbuild tools for armhf targets
+  mk-kbuild.sh
+            Script to rebuild the tools from a kernel source tree
+
+To rebuild, the kernel source must contain the Debian packaging files. Debian
+package files come from a specific tag in:
 https://salsa.debian.org/kernel-team/linux
 
-Prebuilt in Debian bookworm armhf/aarch64 rootfs.
+Prebuilt from a Debian bookworm armhf/aarch64 rootfs.
