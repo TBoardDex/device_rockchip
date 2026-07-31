@@ -1,0 +1,26 @@
+RK_BUILDROOT_BASE_CFG="rk3572_spi_nand_thunderboot"
+RK_ROOTFS_EROFS=y
+RK_ROOTFS_COMPRESSED_GZ=y
+RK_EXTRA_PARTITIONS_UBI=y
+RK_EXTRA_PARTITION_1_UBIFS=y
+RK_EXTRA_PARTITION_2_UBIFS=y
+# RK_ROOTFS_ASYNC_COMMIT is not set
+# RK_ROOTFS_INPUT_EVENT_DAEMON is not set
+# RK_ROOTFS_IRQBALANCE is not set
+# RK_ROOTFS_FSTRIM is not set
+# RK_ROOTFS_LOG_GUARDIAN is not set
+# RK_ROOTFS_GENERATE_LOGS is not set
+# RK_ROOTFS_PREBUILT_TOOLS is not set
+# RK_ROOTFS_PREFER_PREBUILT_TOOLS is not set
+RK_ROOTFS_INSTALL_MODULES=y
+# RK_ROOTFS_DEBUG_INFO is not set
+# RK_WIFIBT is not set
+RK_UBOOT_CFG="rk3572-spi-nand-tb"
+RK_UBOOT_SPL=y
+RK_KERNEL_CFG_FRAGMENTS="rk3572_linux_thunderboot.config rk3572_linux_spi_nand_thunderboot.config"
+RK_KERNEL_DTS_NAME="rk3572-evb1-v10-spi-nand-thunderboot"
+RK_BOOT_FIT_ITS_NAME="tb-boot.its"
+# RK_RECOVERY is not set
+RK_PARAMETER="parameter-spi-nand-tb.txt"
+RK_FASTBOOT=y
+RK_FASTBOOT_ROOTFS_ITS_NAME="tb-rootfs.its"
