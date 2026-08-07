@@ -1,0 +1,42 @@
+/*
+ * Copyright (C) 2026 Rockchip Electronics Co., Ltd
+ *
+ * SPDX-License-Identifier: GPL-2.0
+ */
+
+/dts-v1/;
+/ {
+	description = "FIT source file for Linux";
+	#address-cells = <1>;
+
+	images {
+		ramdisk {
+			data = /incbin/("@RAMDISK_IMG@");
+			compression = "gzip";
+			type = "ramdisk";
+			arch = "arm64";
+			os = "linux";
+			preload = <1>;
+			comp = <@RAMDISK_C@>;
+			load  = <@RAMDISK_R@>;
+			hash {
+				algo = "sha256";
+			};
+		};
+	};
+
+	configurations {
+		default = "conf";
+		conf {
+			description = "Fit ramdisk";
+			rollback-index = <0x0>;
+			ramdisk = "ramdisk";
+			signature {
+				algo = "sha256,rsa2048";
+				padding = "pss";
+				key-name-hint = "dev";
+				sign-images = "ramdisk";
+			};
+		};
+	};
+};
