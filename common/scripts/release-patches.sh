@@ -4,7 +4,7 @@
 
 [ -d .git ] || exit 1
 
-PATCH_DIR="$(realpath "${1:-$PWD}")"
+PATCH_DIR="$(realpath -m "${1:-$PWD}")"
 BASE_COMMIT=$(git log --pretty="%H" -1 "${3:-HEAD}" --)
 
 # Refuse to wipe the repository itself or any of its parent directories
