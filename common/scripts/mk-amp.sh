@@ -582,26 +582,16 @@ build_images()
 	done
 }
 
-BUILD_CMDS="amp"
-build_hook()
-{
-	local DO_MENUCONFIG=0
-	local OVERRIDE_ITS=""
-	local OVERRIDE_OS=""
-	local OVERRIDE_CFG=""
-	local OVERRIDE_NODE=""
+BUILD_CMDS="amp amp_all"
 
-	amp_parse_subargs "$@"
-	check_config RK_AMP || false
+build_single_amp()
+{
+	local OVERRIDE_ITS="$1"
+	local OVERRIDE_OS="$2"
+	local TARGET_IMG_NAME="$3"
 
 	[ -z "$OVERRIDE_ITS" ] || RK_AMP_FIT_ITS="$OVERRIDE_ITS"
 	ITS_CONFIG="$(amp_resolve_its_path "${RK_AMP_FIT_ITS:-amp.its}")"
-
-	if [ "$DO_MENUCONFIG" -eq 1 ]; then
-		amp_menuconfig "$ITS_CONFIG" "$OVERRIDE_OS" "$OVERRIDE_CFG" "$OVERRIDE_NODE"
-		finish_build amp $@
-		return 0
-	fi
 
 	if [ "$RK_AMP_RISCV" ]; then
 		export CROSS_COMPILE=$(get_toolchain AMP "$RK_AMP_ARCH" none embed)
@@ -654,9 +644,91 @@ build_hook()
 	sed -i '/share {/,/}/d' amp.its
 	sed -i '/compile {/,/}/d' amp.its
 
-	$RK_RTOS_BSP_DIR/tools/mkimage -f amp.its -E -p 0xe00 $RK_FIRMWARE_DIR/amp.img
+	local AMP_OUT_DIR="$RK_FIRMWARE_DIR/amp_images"
+	mkdir -p "$AMP_OUT_DIR"
+
+	if [ -z "$TARGET_IMG_NAME" ]; then
+		local cur_its="$(basename "$ITS_CONFIG")"
+		local cur_os="$OVERRIDE_OS"
+		if [ "$cur_its" = "amp_linux.its" ]; then
+			cur_os="${cur_os:-rtt}"
+			TARGET_IMG_NAME="amp_ap_${cur_os}.img"
+		elif [ "$cur_its" = "amp_mcu.its" ]; then
+			cur_os="${cur_os:-rtt}"
+			TARGET_IMG_NAME="amp_mcu_${cur_os}.img"
+		else
+			TARGET_IMG_NAME="amp_mcu_rtt.img"
+		fi
+	fi
+
+	$RK_RTOS_BSP_DIR/tools/mkimage -f amp.its -E -p 0xe00 "$AMP_OUT_DIR/$TARGET_IMG_NAME"
+	notice "Generated AMP firmware: $AMP_OUT_DIR/$TARGET_IMG_NAME"
+	ln -rsf "$AMP_OUT_DIR/$TARGET_IMG_NAME" "$AMP_OUT_DIR/amp.img"
+	ln -rsf "$AMP_OUT_DIR/$TARGET_IMG_NAME" "$RK_FIRMWARE_DIR/amp.img"
+	notice "Updated default symlink: $RK_FIRMWARE_DIR/amp.img -> amp_images/$TARGET_IMG_NAME"
 
 	rm $ITS_FILE -f
+}
+
+build_amp_all()
+{
+	message "=================================================="
+	message "      Building All 4 AMP Firmware Images         "
+	message "=================================================="
+
+	local AMP_OUT_DIR="$RK_FIRMWARE_DIR/amp_images"
+	mkdir -p "$AMP_OUT_DIR"
+
+	message ">>> [1/4] Building amp_ap_hal.img (Linux + AP HAL)"
+	build_single_amp "amp_linux.its" "hal" "amp_ap_hal.img"
+
+	message ">>> [2/4] Building amp_ap_rtt.img (Linux + AP RTT)"
+	build_single_amp "amp_linux.its" "rtt" "amp_ap_rtt.img"
+
+	message ">>> [3/4] Building amp_mcu_hal.img (Linux + MCU HAL)"
+	build_single_amp "amp_mcu.its" "hal" "amp_mcu_hal.img"
+
+	message ">>> [4/4] Building amp_mcu_rtt.img (Linux + MCU RTT - Default)"
+	build_single_amp "amp_mcu.its" "rtt" "amp_mcu_rtt.img"
+
+	ln -rsf "$AMP_OUT_DIR/amp_mcu_rtt.img" "$AMP_OUT_DIR/amp.img"
+	ln -rsf "$AMP_OUT_DIR/amp_mcu_rtt.img" "$RK_FIRMWARE_DIR/amp.img"
+	message "=================================================="
+	message "All 4 AMP firmware images built successfully into '$AMP_OUT_DIR':"
+	message "  - $AMP_OUT_DIR/amp_ap_hal.img"
+	message "  - $AMP_OUT_DIR/amp_ap_rtt.img"
+	message "  - $AMP_OUT_DIR/amp_mcu_hal.img"
+	message "  - $AMP_OUT_DIR/amp_mcu_rtt.img"
+	message "Default symlink: $RK_FIRMWARE_DIR/amp.img -> amp_images/amp_mcu_rtt.img"
+	message "=================================================="
+}
+
+build_hook()
+{
+	local DO_MENUCONFIG=0
+	local OVERRIDE_ITS=""
+	local OVERRIDE_OS=""
+	local OVERRIDE_CFG=""
+	local OVERRIDE_NODE=""
+
+	amp_parse_subargs "$@"
+	check_config RK_AMP || false
+
+	if [ "$1" = "amp_all" ]; then
+		build_amp_all
+		finish_build amp_all $@
+		return 0
+	fi
+
+	if [ "$DO_MENUCONFIG" -eq 1 ]; then
+		[ -z "$OVERRIDE_ITS" ] || RK_AMP_FIT_ITS="$OVERRIDE_ITS"
+		ITS_CONFIG="$(amp_resolve_its_path "${RK_AMP_FIT_ITS:-amp.its}")"
+		amp_menuconfig "$ITS_CONFIG" "$OVERRIDE_OS" "$OVERRIDE_CFG" "$OVERRIDE_NODE"
+		finish_build amp $@
+		return 0
+	fi
+
+	build_single_amp "$OVERRIDE_ITS" "$OVERRIDE_OS" ""
 	finish_build amp $@
 }
 
