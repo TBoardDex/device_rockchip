@@ -952,7 +952,7 @@ usb_stop()
 {
 	usb_set_disconnected
 
-	if [ "$UDC" ] && [ "$(cat $USB_GADGET_DIR/UDC)" ]; then
+	if [ "$USB_UDC" ] && [ "$(cat $USB_GADGET_DIR/UDC)" ]; then
 		echo > $USB_GADGET_DIR/UDC
 	fi
 
