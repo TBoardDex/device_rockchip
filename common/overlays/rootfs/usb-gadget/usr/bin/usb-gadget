@@ -1061,7 +1061,8 @@ usb_service()
 
 		# Poll and handle requests
 		echo > $USB_CMD_FILE
-		tail -f $USB_CMD_FILE | while true; do
+		# Follow by path to survive command file rotation
+		tail -F $USB_CMD_FILE | while true; do
 			# Error and EOF
 			if ! read -r ACTION || [ -z "$ACTION" ]; then
 				continue
@@ -1116,7 +1117,8 @@ case "$ACTION" in
 		# Send request to the service
 		usb_msg "Sending $ACTION request to service..."
 		usb_msg "Check $LOG_FILE for $USB_SERVICE_NAME log..."
-		echo $ACTION >> $USB_CMD_FILE
+		echo $ACTION >> $USB_CMD_FILE || \
+			usb_msg "Failed to append $ACTION request"
 
 		# Sync service status
 		if [ "$ACTION" = stop ]; then
