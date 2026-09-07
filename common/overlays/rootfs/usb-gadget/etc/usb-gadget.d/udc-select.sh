@@ -138,7 +138,13 @@ udc_main()
 	udc_build_map
 	udc_resolve
 
-	if [ "${BASH_SOURCE[0]}" != "$0" ]; then
+	# POSIX-safe source/exec dispatch. This hook declares #!/bin/bash, but
+	# this rootfs ships no real bash: /bin/bash is a busybox symlink
+	# (BR2_PACKAGE_BASH is not set), so the script runs under busybox ash,
+	# which does not know the bash-only ${BASH_SOURCE[0]} and aborted
+	# `usb-gadget start` with "bad substitution". Compare the basename of
+	# $0 instead: usb-gadget when sourced, udc-select.sh when run directly.
+	if [ "$(basename "$0")" != "udc-select.sh" ]; then
 		USB_UDC=$UDC_SELECT
 	else
 		echo "UDC is $UDC_SELECT"
