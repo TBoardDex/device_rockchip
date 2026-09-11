@@ -267,7 +267,7 @@ init_hook()
 
 	load_config $BASE_CFG
 	if ! check_config $BASE_CFG &>/dev/null; then
-		sed -i '/$BASE_CFG/d' "$RK_CONFIG"
+		sed -i "/$BASE_CFG/d" "$RK_CONFIG"
 		echo "${BASE_CFG}_CUSTOM=y" >> "$RK_CONFIG"
 		echo "$BASE_CFG=\"$PKG_FILE\"" >> "$RK_CONFIG"
 		"$RK_SCRIPTS_DIR/mk-config.sh" olddefconfig &>/dev/null
