@@ -39,15 +39,15 @@ build_wifibt()
 	WIFI_SDIO=`grep "CONFIG_MMC=y" kernel/.config` || true
 	WIFI_PCIE=`grep "CONFIG_PCIE_DW_ROCKCHIP=y" kernel/.config` || true
 	WIFI_RFKILL=`grep "CONFIG_RFKILL=y" kernel/.config` || true
-	if [ -z "WIFI_SDIO" ]; then
-		echo "=== WARNNING CONFIG_MMC not set !!! ==="
+	if [ -z "$WIFI_SDIO" ]; then
+		echo "=== WARNING CONFIG_MMC not set !!! ==="
 	fi
-	if [ -z "WIFI_RFKILL" ]; then
-		echo "=== WARNNING CONFIG_USB not set !!! ==="
+	if [ -z "$WIFI_RFKILL" ]; then
+		echo "=== WARNING CONFIG_RFKILL not set !!! ==="
 	fi
 	if [[ "$RK_WIFIBT_MODULES" =~ "U" ]];then
 		if [ -z "$WIFI_USB" ]; then
-			echo "=== WARNNING CONFIG_USB not set so ABORT!!! ==="
+			echo "=== WARNING CONFIG_USB not set so ABORT!!! ==="
 			exit 0
 		fi
 	fi
