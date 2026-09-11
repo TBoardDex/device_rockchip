@@ -295,7 +295,7 @@ pre_build_hook()
 		gen_package_file template \
 			"$RK_CHIP_DIR/$RK_PARAMETER" "$PKG_FILE"
 	fi
-	eval ${EDITOR:-vi} "$PKG_FILE"
+	${EDITOR:-vi} "$PKG_FILE"
 
 	finish_build $@
 }
