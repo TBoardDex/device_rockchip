@@ -134,8 +134,7 @@ rk_security_setup_system_encryption()
 
 	sudo -S losetup $loopdevice "$security_system" < $UBOOT/keys/root_passwd
 	sudo -S dmsetup create $mappername --table "0 $sectors crypt $cipher $key 0 $loopdevice 0 1 allow_discards" < $UBOOT/keys/root_passwd
-	sudo -S dd if="$target_image" of=/dev/mapper/$mappername conv=fsync < $UBOOT/keys/root_passwd
-	if sync; then
+	if sudo -S dd if="$target_image" of=/dev/mapper/$mappername conv=fsync < $UBOOT/keys/root_passwd; then
 		cnt=1
 		while true; do
 			if [ -b "/dev/mapper/$mappername" ]; then
