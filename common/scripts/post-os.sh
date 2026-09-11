@@ -7,6 +7,7 @@ cd "$TARGET_DIR"
 OS_SCRIPT="$RK_SCRIPTS_DIR/post-$POST_OS.sh"
 if [ -x "$OS_SCRIPT" ]; then
 	notice "Running $(basename "$OS_SCRIPT") for $TARGET_DIR..."
+	export TARGET_DIR
 	"$OS_SCRIPT"
 fi
 
