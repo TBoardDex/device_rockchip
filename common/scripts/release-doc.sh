@@ -43,7 +43,7 @@ $(git log -1 --format="%h %s")
 EOF
 
 git add -f .
-git stash &>/dev/null
+git stash &>/dev/null || true
 
 # Drop other docs
 for f in *; do
@@ -57,19 +57,19 @@ rmdir "$SOC_DIR" 2>/dev/null || true
 if ! git branch | grep -wq "$CHIP"; then
 	# Create new branch
 	git branch -D "$CHIP" &>/dev/null || true
-	git checkout --orphan "$CHIP" &>/dev/null
-	git reset &>/dev/null
+	git checkout --orphan "$CHIP" &>/dev/null || true
+	git reset &>/dev/null || true
 else
-	git checkout "$CHIP" &>/dev/null
-	git checkout "$ORIG_COMMIT" . &>/dev/null
+	git checkout "$CHIP" &>/dev/null || true
+	git checkout "$ORIG_COMMIT" . &>/dev/null || true
 fi
 
 # Commit files
 git add .
-git commit --allow-empty -s -F "$COMMIT_MSG" &>/dev/null
+git commit --allow-empty -s -F "$COMMIT_MSG" &>/dev/null || true
 rm -f "$COMMIT_MSG"
-git checkout -B "$CHIP" &>/dev/null
+git checkout -B "$CHIP" &>/dev/null || true
 
 # Recover
-git checkout "$ORIG_COMMIT" &>/dev/null
+git checkout "$ORIG_COMMIT" &>/dev/null || true
 cd "$RK_SDK_DIR"
