@@ -258,7 +258,7 @@ rk_extra_part_cfg()
 {
 	[ "$RK_EXTRA_PARTITION_STR" ] || return 0
 
-	RK_EXTRA_PARTITION_ARRAY=( $(echo ${RK_EXTRA_PARTITION_STR//@/ }) )
+	IFS=' ' read -ra RK_EXTRA_PARTITION_ARRAY <<< "${RK_EXTRA_PARTITION_STR//@/ }"
 	PART_IDX=$(( ${1:-1} - 1 ))
 	echo "${RK_EXTRA_PARTITION_ARRAY[$PART_IDX]}"
 }
@@ -274,9 +274,9 @@ rk_extra_part_dev()
 {
 	DEV=$(rk_extra_part_arg ${1:-1} 1)
 	case "${DEV:-auto}" in
-		/*|*=*) echo $DEV ;;
-		auto) echo PARTLABEL=$(rk_extra_part_name $@) ;;
-		*) echo PARTLABEL=$DEV ;;
+		/*|*=*) printf '%s\n' "$DEV" ;;
+		auto) printf 'PARTLABEL=%s\n' "$(rk_extra_part_name $@)" ;;
+		*) printf 'PARTLABEL=%s\n' "$DEV" ;;
 	esac
 }
 
