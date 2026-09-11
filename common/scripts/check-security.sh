@@ -48,7 +48,7 @@ rk_security_check_keys()
 	if [ ! -d "$UBOOT/keys" ]; then
 		echo "ERROR: No root keys(u-boot/keys) found in u-boot"
 		echo "       Create it by ./build.sh security-createkeys or move your key to it"
-		exit -1
+		exit 1
 	fi
 
 	if echo "$1" | grep system ; then
@@ -56,14 +56,14 @@ rk_security_check_keys()
 			echo "ERROR: No root passwd(u-boot/keys/root_passwd) found in u-boot"
 			echo "       echo your root key for sudo to u-boot/keys/root_passwd"
 			echo "       some operations need supper user permission when create encrypt image"
-			exit -1
+			exit 1
 		fi
 
 		if { [ "$1" = "system-encryption" ] || [ "$1" = "system-encryption-by-openssl" ]; } && \
 			[ ! -f "$UBOOT/keys/system_enc_key" ]; then
 			echo "ERROR: No enc key(u-boot/keys/system_enc_key) found in u-boot"
 			echo "       Create it by ./build.sh security-createkeys or move your key to it"
-			exit -1
+			exit 1
 		fi
 	fi
 }
@@ -103,7 +103,7 @@ config_check()
 			echo "---------------------------------------"
 			echo "$2" | xargs -n1
 			echo "---------------------------------------"
-			exit -1;
+			exit 1
 		fi
 	done
 	return 0
@@ -114,7 +114,7 @@ rk_security_match_overlay()
 	result=$(cat "$2" | grep "$3" || echo "No found")
 	if [ "$result" = "No found" ]; then
 		echo -e "\e[41;1;37mSecurity: No found BR2_ROOTFS_OVERLAY+=\"board/rockchip/common/$3/\" in $1 config\e[0m"
-		exit -1
+		exit 1
 	fi
 }
 
@@ -127,7 +127,7 @@ rk_security_check_system()
 			fi
 			;;
 		base) return 0;;
-		*) exit -1;;
+		*) exit 1
 	esac
 }
 
@@ -145,7 +145,7 @@ rk_security_check_kernel_config()
 		system-encryption-by-openssl) BOOT_FIXED_CONFIGS="$BOOT_CRYPT_BY_OPENSSL_FIXED_CONFIGS $BOOT_OPTEE_FIXED_CONFIGS" ;& # fallthrough
 		system-verity) config_check $2 "$BOOT_FIXED_CONFIGS" ;;
 		base) return 0;;
-		*) exit -1;;
+		*) exit 1
 	esac
 }
 
@@ -173,7 +173,7 @@ rk_security_check_kernel_dts()
 
 		rm -f $tmp_file
 		test "$2" = "$dtsfile" || rm $dtsfile
-		exit -1
+		exit 1
 	fi
 
 	status=$(cat $tmp_file | grep -a status || true)
@@ -181,7 +181,7 @@ rk_security_check_kernel_dts()
 		rm -f $tmp_file
 		test "$2" = "$dtsfile" || rm $dtsfile
 		echo -e "\e[41;1;37mOptee Found, but disabled!!!\e[0m"
-		exit -1
+		exit 1
 	fi
 
 	rm -f $tmp_file
@@ -194,7 +194,7 @@ rk_security_check_kernel()
 	shift
 	case $append in
 		config|dts) rk_security_check_kernel_$append $@;;
-		*) exit -1;;
+		*) exit 1
 	esac
 }
 
@@ -207,7 +207,7 @@ rk_security_check_ramboot()
 
 	if [ ! -f "$1" ]; then
 		echo -e "\e[41;1;37m$1 is not found\e[0m"
-		exit -1
+		exit 1
 	fi
 
 	echo "check ramdisk config"
