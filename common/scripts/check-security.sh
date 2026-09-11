@@ -59,8 +59,8 @@ rk_security_check_keys()
 			exit -1
 		fi
 
-		if [ "$1" = "system-encryption" ] || [ "$1" = "system-encryption-by-openssl" ] && \
-			[ ! -f $UBOOT/keys/system_enc_key ]; then
+		if { [ "$1" = "system-encryption" ] || [ "$1" = "system-encryption-by-openssl" ]; } && \
+			[ ! -f "$UBOOT/keys/system_enc_key" ]; then
 			echo "ERROR: No enc key(u-boot/keys/system_enc_key) found in u-boot"
 			echo "       Create it by ./build.sh security-createkeys or move your key to it"
 			exit -1
