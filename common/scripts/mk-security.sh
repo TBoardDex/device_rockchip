@@ -148,7 +148,7 @@ rk_security_setup_system_encryption()
 					echo "Please remove mapper manually"
 					echo "    sudo dmsetup remove $mappername"
 					echo "    sudo losetup -d $loopdevice"
-					return -1;
+					return 1
 				fi
 			else
 				echo "Removed mapper"
@@ -174,7 +174,7 @@ rk_security_setup_system_encryption_by_openssl()
 	key_path=$UBOOT/keys/system_enc_key
 	if [ ! -f "$key_path" ]; then
 		echo "key file not found"
-		exit -1
+		exit 1
 	fi
 
 	split -b 1M -d -a 3 $target_image $outdir/rootfs_part_
@@ -196,7 +196,7 @@ rk_security_setup_system()
 		system-encryption) shift; rk_security_setup_system_encryption $@ ;;
 		system-encryption-by-openssl) shift; rk_security_setup_system_encryption_by_openssl $@ ;;
 		base) ;;
-		*) exit -1;;
+		*) exit 1;;
 	esac
 }
 
@@ -219,15 +219,15 @@ rk_security_setup_ramboot_prebuild()
 		system-encryption-by-openssl) echo encryption-by-openssl ;;
 		system-verity) echo verity ;;
 		base) return ;;
-		*) exit -1;;
+		*) exit 1;;
 	esac
 
 	if [ ! -f "$init_in" ]; then
 		echo -e "\e[41;1;37minit_in is missed\e[0m"
-		exit -1
+		exit 1
 	elif [ "$check_method" != "system-encryption-by-openssl" ] && [ ! -f "$security_file" ]; then
 		echo -e "\e[41;1;37msecurity_file is missed\e[0m"
-		exit -1
+		exit 1
 	fi
 
 	init_file="$(dirname $init_in)/init"
@@ -347,7 +347,7 @@ build_security_system()
 		image=$(readlink -f $(pwd)/$1)
 		if [ ! -f "$image" ]; then
 			error "No found $image"
-			return -1
+			return 1
 		fi
 
 		"$RK_SCRIPTS_DIR/mk-security.sh" system $RK_SECURITY_CHECK_METHOD $image
@@ -378,7 +378,7 @@ build_security_ramboot()
 		image=$(readlink -f $(pwd)/$1)
 		if [ ! -f "$image" ]; then
 			error "No found $image"
-			return -1
+			return 1
 		fi
 		security_info=$(dirname "$image")/security.info
 	fi
