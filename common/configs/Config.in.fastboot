@@ -21,6 +21,9 @@ config RK_FASTBOOT_ROOTFS_ITS_NAME
 	string "rootfs(ramdisk) fit its file"
 	depends on RK_USE_FIT_IMG
 	default "fastboot-rootfs.its"
+	help
+	  ITS file under <RK_CHIP_DIR>/ for packing the ramdisk
+	  rootfs image.
 
 config RK_FASTBOOT_ROOTFS_ITS
 	string

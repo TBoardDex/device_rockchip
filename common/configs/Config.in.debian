@@ -42,10 +42,14 @@ config RK_DEBIAN_SERVER
 	bool "server (without desktop)"
 	select RK_ROOTFS_FRECON
 	select RK_ROOTFS_FRECON_VT1
+	help
+	  Install a minimal server system without desktop.
 
 config RK_DEBIAN_MIRROR
 	string "mirror source for APT"
 	default "mirrors.tuna.tsinghua.edu.cn"
+	help
+	  Mirror site used by APT when installing packages.
 
 config RK_DEBIAN_USER
 	string "default user"
@@ -58,9 +62,14 @@ config RK_DEBIAN_PASSWORD
 config RK_DEBIAN_LINUX_HEADERS
 	bool "install linux-headers"
 	default y
+	help
+	  Install the matching linux-headers package into rootfs.
 
 config RK_DEBIAN_UNIFIED_IMAGE
 	bool "unified rootfs compatible with all chips"
+	help
+	  Skip chip-specific post processing (NPU/camera packages)
+	  to keep one rootfs image bootable on all chips.
 
 endif # Debian
 endmenuconfig # Debian

@@ -7,6 +7,9 @@ menuconfig RK_AMP
 	bool "AMP (Asymmetric Multi-Processing System)"
 	depends on RK_LOADER
 	select RK_UBOOT_SPL
+	help
+	  Run RTOS/HAL firmware on some CPU cores alongside Linux,
+	  packed into one FIT firmware image.
 
 if RK_AMP
 
@@ -36,27 +39,42 @@ endchoice # AMP arch
 config RK_AMP_HAL_TARGET
 	string "HAL target"
 	default RK_CHIP_FAMILY
+	help
+	  HAL firmware build target (baremetal HAL library).
 
 config RK_AMP_RTT_TARGET
 	string "RT-Thread target"
 	default "${RK_CHIP_FAMILY}-32"
+	help
+	  RT-Thread firmware build target.
 
 config RK_AMP_MCU_HAL_TARGET
 	string "MCU HAL target"
 	default "${RK_CHIP_FAMILY}-mcu"
+	help
+	  HAL firmware build target for the MCU core.
 
 config RK_AMP_MCU_RTT_TARGET
 	string "MCU RT-Thread target"
 	default "${RK_CHIP_FAMILY}-mcu"
+	help
+	  RT-Thread firmware build target for the MCU core.
 
 config RK_AMP_CFG
 	string "config file"
+	help
+	  Shell config file under <RK_CHIP_DIR>/ sourced by AMP build.
 
 config RK_AMP_FIT_ITS
 	string "FIT ITS file"
+	help
+	  ITS file (default: amp.its) for packing the AMP FIT image.
 
 config RK_AMP_RTT_ROOT_DATA
 	string "root resource path"
+	help
+	  Data dir (relative to RT-Thread target) used as the
+	  RT-Thread root filesystem.
 
 endif # AMP
 endmenuconfig # AMP

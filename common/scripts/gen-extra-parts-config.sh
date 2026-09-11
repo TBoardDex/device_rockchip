@@ -18,18 +18,26 @@ if RK_UBI && RK_EXTRA_PARTITION_NUM > 0
 config RK_UBI_MINIO_SIZE
 	hex "UBI minimum I/O unit size (B)"
 	default "0x800"
+	help
+	  Minimum I/O unit size of the flash, used by mkfs.ubifs/ubinize.
 
 config RK_UBI_PEB_SIZE
 	hex "UBI physical eraseblock (PEB) size (B)"
 	default "0x20000"
+	help
+	  Physical eraseblock size of the flash, used by mkfs.ubifs/ubinize.
 
 config RK_UBI_SUBPAGE_SIZE
 	hex "UBI sub-page size (B)"
 	default "0x800"
+	help
+	  Sub-page size of the flash, used by mkfs.ubifs.
 
 config RK_FLASH_SIZE
 	int "size of flash storage (M)"
 	default "1024"
+	help
+	  Total flash size in MB, used by ubinize to layout volumes.
 
 endif # ubi
 
@@ -37,6 +45,8 @@ config RK_EXTRA_PARTITION_NUM
 	int "number of extra partitions"
 	range 0 $RK_EXTRA_PARTITION_MAX_NUM
 	default $RK_EXTRA_PARTITION_NUM
+	help
+	  Number of extra partitions after rootfs, e.g. oem/userdata.
 EOF
 
 unset RK_EXTRA_PARTITIONS
@@ -125,9 +135,13 @@ endchoice # fstype
 config RK_EXTRA_PARTITION_${i}_MNT_OPTS
 	string "mount options"
 	default "defaults"
+	help
+	  Mount options passed to mount.
 
 config RK_EXTRA_PARTITION_${i}_MKFS_OPTS
 	string "mkfs options"
+	help
+	  Extra options passed to mkfs.<fstype> when creating the image.
 
 config RK_EXTRA_PARTITION_${i}_SIZE
 	string "image size (size(M|K)|auto(0)|max)"

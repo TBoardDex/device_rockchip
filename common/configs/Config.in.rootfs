@@ -41,16 +41,24 @@ endchoice # default rootfs
 
 config RK_ROOTFS_CONSOLE_LOGIN
 	bool "require login on serial console"
+	help
+	  Require user login on serial console instead of
+	  auto-login as root.
 
 config RK_ROOTFS_INITRD
 	bool "init ramfs/ramdisk"
 	# Based on kernel/init/do_mounts_rd.c identify_ramdisk_image()
 	depends on RK_ROOTFS_EXT2 || RK_ROOTFS_SQUASHFS || RK_ROOTFS_ROMFS || \
 		RK_ROOTFS_CPIO || RK_ROOTFS_CPIO_GZ
+	help
+	  Pack the rootfs as a ramdisk loaded together with the
+	  kernel image at boot.
 
 config RK_ROOTFS_RO
 	bool "readonly"
 	depends on !RK_ROOTFS_INITRD && !RK_ROOTFS_SQUASHFS && !RK_ROOTFS_EROFS
+	help
+	  Mount the rootfs read-only.
 
 config RK_ROOTFS_TYPE
 	string

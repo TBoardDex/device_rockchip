@@ -7,6 +7,9 @@ menuconfig RK_RECOVERY
 	bool "Recovery (based on Buildroot)"
 	depends on RK_KERNEL
 	default y if !RK_AMP && !RK_AB_UPDATE && RK_CHIP_FAMILY != "rk182x" && RK_CHIP_FAMILY != "rk1860"
+	help
+	  Build a standalone recovery system used for firmware
+	  update/OTA.
 
 if RK_RECOVERY
 
@@ -52,6 +55,9 @@ config RK_RECOVERY_FIT_ITS_NAME
 	string "its script for FIT recovery image"
 	default "zboot4recovery.its" if RK_BOOT_COMPRESSED
 	default "boot4recovery.its"
+	help
+	  ITS file under <RK_CHIP_DIR>/ for packing the FIT
+	  recovery image.
 
 config RK_RECOVERY_FIT_ITS
 	string
@@ -64,6 +70,8 @@ config RK_RECOVERY_CONSOLE_LOG
 
 menuconfig RK_RECOVERY_ADBD
 	bool "Android Debug Bridge Daemon (adbd)"
+	help
+	  Enable adbd over USB in the recovery system.
 
 if RK_RECOVERY_ADBD
 
@@ -93,15 +101,21 @@ config RK_RECOVERY_ADBD_SHELL
 
 menuconfig RK_RECOVERY_ADBD_SECURE
 	bool "access control"
+	help
+	  Require authentication for adb access.
 
 if RK_RECOVERY_ADBD_SECURE
 
 config RK_RECOVERY_ADBD_PASSWORD
 	string "password"
+	help
+	  Password for adb authentication.
 
 config RK_RECOVERY_ADBD_KEYS
 	string "Android public keys"
 	default "~/.android/adbkey.pub" if RK_RECOVERY_ADBD_PASSWORD = ""
+	help
+	  Android public key file(s) allowed for adb authentication.
 
 endif # secure
 endmenuconfig # secure

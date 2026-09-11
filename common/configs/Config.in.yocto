@@ -26,6 +26,8 @@ choice
 
 config RK_YOCTO_CFG_DEFAULT
 	bool "auto generated"
+	help
+	  Generate the yocto local config from SDK settings below.
 
 config RK_YOCTO_CFG_CUSTOM
 	bool "custom"
@@ -96,6 +98,8 @@ config RK_YOCTO_EXTRA_CFG
 config RK_YOCTO_USBMOUNT
 	bool "usbmount (Mount Udisk and SDcard)"
 	default y
+	help
+	  Auto mount USB disks and SD cards on hotplug.
 
 endif # Yocto
 endmenuconfig # Yocto

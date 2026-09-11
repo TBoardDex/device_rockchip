@@ -24,6 +24,8 @@ choice
 
 config RK_UPDATE_STORAGE_DEFAULT
 	bool "default"
+	help
+	  Storage type decided by the image pack tool.
 
 config RK_UPDATE_STORAGE_FLASH
 	bool "flash"
@@ -56,16 +58,23 @@ endchoice # storage type
 
 config RK_AB_UPDATE
 	bool "A/B update"
+	help
+	  Seamless update with dual slots (partitions suffixed
+	  with _a/_b).
 
 config RK_SDCARD_UPDATE
 	bool "SDcard update"
 	select RK_RECOVERY
+	help
+	  Pack firmware into an SD-card bootable update image.
 
 choice
 	prompt "package-file (Packing description)"
 
 config RK_PACKAGE_FILE_DEFAULT
 	bool "auto generated"
+	help
+	  Generate the package-file automatically during packing.
 
 config RK_PACKAGE_FILE_CUSTOM
 	bool "custom"
@@ -86,6 +95,8 @@ choice
 
 config RK_OTA_PACKAGE_FILE_DEFAULT
 	bool "auto generated"
+	help
+	  Generate the OTA package-file automatically during packing.
 
 config RK_OTA_PACKAGE_FILE_CUSTOM
 	bool "custom"

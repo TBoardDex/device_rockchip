@@ -13,6 +13,9 @@ menuconfig RK_MISC
 	bool "Pack misc image (for recovery, security, A/B, etc.)"
 	depends on RK_KERNEL
 	default y if RK_RECOVERY || RK_SECURITY_CHECK_SYSTEM_VERITY
+	help
+	  Pack misc.img, which passes boot arguments between bootloader
+	  and kernel/recovery, e.g. recovery commands, A/B slot info.
 
 if RK_MISC
 
@@ -63,5 +66,8 @@ config RK_USE_FIT_IMG
 		RK_CHIP_FAMILY != "rk3326" && RK_CHIP_FAMILY != "rk3328" && \
 		RK_CHIP_FAMILY != "rk3358" && RK_CHIP_FAMILY != "rk3399" && \
 		RK_CHIP_FAMILY != "rk3399pro"
+	help
+	  Pack boot/recovery images as FIT images (uImage format),
+	  instead of Android-style boot images.
 
 endmenu # Firmware

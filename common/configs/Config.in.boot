@@ -19,6 +19,9 @@ config RK_BOOT_COMPRESSED
 		RK_CHIP_FAMILY = "rk312x" || RK_CHIP_FAMILY = "rk3229" || \
 		RK_CHIP_FAMILY = "rk3288" || RK_CHIP_FAMILY = "rk3308" || \
 		RK_CHIP_FAMILY = "rk3326" || RK_CHIP_FAMILY = "rk3358"
+	help
+	  Use compressed kernel image (zImage/Image.lz4) in the
+	  Android-style boot image, aka zboot.
 
 if RK_USE_FIT_IMG
 
@@ -29,6 +32,8 @@ config RK_BOOT_FIT_ITS_NAME
 		RK_CHIP_FAMILY = "rv1126_rv1109"
 	default "zboot.its" if RK_BOOT_COMPRESSED
 	default "boot.its"
+	help
+	  ITS file under <RK_CHIP_DIR>/ for packing the FIT boot image.
 
 config RK_BOOT_FIT_ITS
 	string

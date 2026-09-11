@@ -9,23 +9,37 @@ config RK_OVERLAY
 	bool "overlays for rootfs, recovery, etc."
 	depends on RK_KERNEL
 	default y
+	help
+	  Apply device-specific overlays on top of rootfs/recovery.
 
 choice
 	prompt "patches saving"
 	default RK_SAVE_TRACKED
+	help
+	  Which changes should be saved into patches when running
+	  'make savedefconfig'.
 
 config RK_SAVE_COMMITTED
 	bool "save committed changes only"
+	help
+	  Only save the committed changes between commits.
 
 config RK_SAVE_TRACKED
 	bool "save changes of tracked files"
+	help
+	  Save changes of tracked files, including uncommitted ones.
 
 config RK_SAVE_ALL
 	bool "save all changes"
+	help
+	  Save changes of tracked and untracked files.
 
 endchoice # patches saving
 
 config RK_EXTRA_CONFIGS
 	string "extra custom configs"
+	help
+	  Space separated configs exported to the build environment,
+	  e.g. "enable-xxxx disable-xxxx".
 
 endmenu # Others

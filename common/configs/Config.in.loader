@@ -19,13 +19,21 @@ config RK_UBOOT_CFG
 		RK_CHIP_FAMILY = "rk3288" || RK_CHIP_FAMILY = "rk3588" || \
 		RK_CHIP_FAMILY = "rv1126b"
 	default RK_CHIP
+	help
+	  U-Boot defconfig name (without '_defconfig' suffix).
 
 config RK_UBOOT_CFG_FRAGMENTS
 	string "defconfig fragments (without .config suffix)"
+	help
+	  Config fragments (space separated) merged into
+	  the U-Boot defconfig.
 
 config RK_UBOOT_OPTS
 	string "compile options"
 	default "--sz-uboot 1024 2 --sz-trust 1024 2" if RK_CHIP_FAMILY = "rk312x"
+	help
+	  Extra options passed to U-Boot make, e.g. loader/trust
+	  size settings.
 
 config RK_UBOOT_INI
 	string "loader ini config overriding"
