@@ -686,7 +686,7 @@ main()
 
 	# Drop old logs
 	cd "$RK_LOG_BASE_DIR"
-	rm -rf $(ls -t | sed '1,10d')
+	ls -1t | tail -n +11 | xargs -r rm -rf --
 	cd "$RK_SDK_DIR"
 
 	# Save initial envionments
