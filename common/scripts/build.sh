@@ -493,7 +493,8 @@ parse_scripts()
 		{
 			TEMP_FILE=$(mktemp -u)
 
-			for c in $(ls "$RK_CHIPS_DIR"); do
+			for c in "$RK_CHIPS_DIR"/*; do
+				c=$(basename "$c")
 				usage_makefile_oneline "$c" "choose $c"
 			done > $TEMP_FILE
 
