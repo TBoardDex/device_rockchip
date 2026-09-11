@@ -26,13 +26,14 @@ static void zconfprint(const char *err, ...);
 static void zconf_error(const char *err, ...);
 static bool zconf_endtoken(const struct kconf_id *id, int starttoken, int endtoken);
 static const char *zconf_tokenname(int token);
+static const char *zconf_entry_name(struct menu *menu);
 
 struct symbol *symbol_hash[SYMBOL_HASHSIZE];
 
 static struct menu *current_menu, *current_entry;
 
 %}
-%expect 32
+%expect 31
 
 %union
 {
@@ -401,7 +402,7 @@ menu: T_MENU prompt T_EOL
 	printd(DEBUG_PARSE, "%s:%d:menu\n", zconf_curname(), zconf_lineno());
 };
 
-menu_entry: menu visibility_list depends_list
+menu_entry: menu menu_option_list
 {
 	$$ = menu_add_menu();
 };
@@ -415,6 +416,15 @@ menu_end: end
 };
 
 menu_stmt: menu_entry menu_block menu_end
+;
+
+menu_option_list:
+	  /* empty */
+	| menu_option_list visible
+	| menu_option_list depends
+	| menu_option_list help
+	| menu_option_list T_EOL
+	| menu_option_list option_error
 ;
 
 menu_block:
@@ -456,13 +466,13 @@ help: help_start T_HELPTEXT
 	if (current_entry->help) {
 		free(current_entry->help);
 		zconfprint("warning: '%s' defined with more than one help text -- only the last one will be used",
-			   current_entry->sym->name ?: "<choice>");
+			   zconf_entry_name(current_entry));
 	}
 
 	/* Is the help text empty or all whitespace? */
 	if ($2[strspn($2, " \f\n\r\t\v")] == '\0')
 		zconfprint("warning: '%s' defined with blank help text",
-			   current_entry->sym->name ?: "<choice>");
+			   zconf_entry_name(current_entry));
 
 	current_entry->help = $2;
 };
@@ -483,12 +493,6 @@ depends: T_DEPENDS T_ON expr T_EOL
 };
 
 /* visibility option */
-
-visibility_list:
-	  /* empty */
-	| visibility_list visible
-	| visibility_list T_EOL
-;
 
 visible: T_VISIBLE if_expr
 {
@@ -596,6 +600,15 @@ static const char *zconf_tokenname(int token)
 	case T_VISIBLE:		return "visible";
 	}
 	return "<token>";
+}
+
+static const char *zconf_entry_name(struct menu *menu)
+{
+	if (menu->sym && menu->sym->name)
+		return menu->sym->name;
+	if (menu->prompt && menu->prompt->text)
+		return menu->prompt->text;
+	return "<choice>";
 }
 
 static bool zconf_endtoken(const struct kconf_id *id, int starttoken, int endtoken)

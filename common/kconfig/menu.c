@@ -869,7 +869,7 @@ void menu_get_ext_help(struct menu *menu, struct gstr *help)
 	const char *help_text = nohelp_text;
 
 	if (menu_has_help(menu)) {
-		if (sym->name)
+		if (sym && sym->name)
 			str_printf(help, "%s%s:\n\n", CONFIG_, sym->name);
 		help_text = menu_get_help(menu);
 	}

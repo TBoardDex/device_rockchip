@@ -741,7 +741,7 @@ static void conf(struct menu *menu, struct menu *active_menu)
 			}
 			break;
 		case 2:
-			if (sym)
+			if (sym || (submenu && menu_has_help(submenu)))
 				show_help(submenu);
 			else {
 				reset_subtitle();
