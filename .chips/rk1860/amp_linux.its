@@ -1,0 +1,57 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+/*
+ * Copyright (c) 2026 Rockchip Electronics Co., Ltd.
+ */
+
+/dts-v1/;
+/ {
+	description = "FIT source file for rockchip AMP";
+	#address-cells = <1>;
+
+	images {
+		amp3 {
+			description  = "rtos-core3";
+			data         = /incbin/("rtt3.bin");
+			type         = "firmware";
+			compression  = "none";
+			arch         = "riscv";  // "arm64" or "arm" or "riscv"
+			cpu          = <0x003>;  // hartid
+			pass-fdt     = <1>;      // 0: U-Boot don't pass fdt addr; 1: pass
+			load         = <0x3004800000>;
+			size         = <0x01400000>;
+			udelay       = <10000>;
+			hash {
+				algo = "sha256";
+			};
+		};
+	};
+
+	configurations {
+		default = "conf";
+		conf {
+			description = "Rockchip AMP images";
+			rollback-index = <0x0>;
+			loadables = "amp3";
+
+			signature {
+				algo = "sha256,rsa2048";
+				padding = "pss";
+				key-name-hint = "dev";
+				sign-images = "loadables";
+			};
+
+                        /* - run linux on cpu0
+                         * - it is brought up by amp(that run on U-Boot)
+                         * - it is boot entry depends on U-Boot
+                         */
+                        linux {
+                                description  = "linux-os";
+                                arch         = "riscv";
+                                cpu          = <0x000>;
+                                load         = <0x3000600000>;
+                                udelay       = <0>;
+                        };
+		};
+	};
+};
+
