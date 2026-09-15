@@ -1,0 +1,7 @@
+RK_ROOTFS=y
+RK_AMP=y
+RK_AMP_HAL_TARGET="rk1860"
+RK_AMP_RTT_TARGET="rk1860"
+RK_AMP_FIT_ITS="amp_linux.its"
+RK_KERNEL_DTS_NAME="rk1860-evb1-v10"
+RK_PARAMETER="parameter-amp.txt"
