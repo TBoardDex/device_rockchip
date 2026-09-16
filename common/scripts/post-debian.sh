@@ -12,7 +12,7 @@ if [ "$DEFAULT_USER" ] && [ "$RK_DEBIAN_USER" != "$DEFAULT_USER" ]; then
 		mv -v home/$DEFAULT_USER home/$RK_DEBIAN_USER || true
 	fi
 	grep -rwl "$DEFAULT_USER" etc/ 2>/dev/null | \
-		xargs sed -i "s/\<$DEFAULT_USER\>/$RK_DEBIAN_USER/g" \
+		xargs sed -i "s|\<$DEFAULT_USER\>|${RK_DEBIAN_USER//&/\\&}|g" \
 		2>/dev/null || true
 fi
 
