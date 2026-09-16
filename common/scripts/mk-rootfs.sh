@@ -242,7 +242,7 @@ build_debian()
 
 	if [ "$RK_DEBIAN_MIRROR" ]; then
 		notice "Using mirror source $RK_DEBIAN_MIRROR in $DEBIAN_SCRIPT..."
-		sed -i "s#\(http://\)[^/]*#\1$RK_DEBIAN_MIRROR#" "$DEBIAN_SCRIPT"
+		sed -i "s|\(http://\)[^/]*|\1${RK_DEBIAN_MIRROR//&/\\&}|" "$DEBIAN_SCRIPT"
 	fi
 
 	VERSION=debug ARCH=$ARCH ./$DEBIAN_SCRIPT
