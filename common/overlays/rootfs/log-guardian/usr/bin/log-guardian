@@ -28,15 +28,6 @@ log() {
 # Ensure all tmpfs filesystems are mounted
 mount -a -t tmpfs 2>/dev/null || true
 
-# Stop existing guardian process group
-PID=$(cat $PID_FILE 2>/dev/null || true)
-if [ -n "$PID" ]; then
-	log "Stopping existing log-guardian (PID: $PID)..."
-	kill -TERM -- -"$PID" 2>/dev/null || true
-	kill -9 -- -"$PID" 2>/dev/null || true
-fi
-rm -f "$PID_FILE"
-
 for opt in "$@"; do
 	case "$opt" in
 		--interval=*) INTERVAL="${opt#--interval=}" ;;
@@ -47,9 +38,28 @@ for opt in "$@"; do
 			MIN_AVAIL_SIZE="${opt#--min-avail-size=}"
 			;;
 		--log-dirs=*) LOG_DIRS="${opt#--log-dirs=}" ;;
-		*) exit 0 ;;
+		--quit)
+			PID=$(cat $PID_FILE 2>/dev/null || true)
+			if [ -n "$PID" ]; then
+				log "Stopping log-guardian (PID: $PID)..."
+				kill -TERM -- -"$PID" 2>/dev/null || true
+				kill -9 -- -"$PID" 2>/dev/null || true
+			fi
+			rm -f "$PID_FILE"
+			exit 0
+			;;
+		*) echo "Unknown option: $opt" >&2; exit 1 ;;
 	esac
 done
+
+# Stop existing guardian process group (replaced by a fresh instance below)
+PID=$(cat $PID_FILE 2>/dev/null || true)
+if [ -n "$PID" ]; then
+	log "Stopping existing log-guardian (PID: $PID)..."
+	kill -TERM -- -"$PID" 2>/dev/null || true
+	kill -9 -- -"$PID" 2>/dev/null || true
+fi
+rm -f "$PID_FILE"
 
 # Convert human-readable sizes to bytes
 convert_to_bytes() {
