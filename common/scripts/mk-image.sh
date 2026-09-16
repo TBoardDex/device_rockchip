@@ -96,13 +96,13 @@ copy_to_ntfs()
         find $SRC_DIR -maxdepth $DEPTH -mindepth $DEPTH -type d|grep -q "" \
             || break
         find $SRC_DIR -maxdepth $DEPTH -mindepth $DEPTH -type d \
-            -exec sh -c 'ntfscp $TARGET "$1" "${1#$SRC_DIR}"' sh {} \; || \
+            -exec sh -c 'ntfscp "$3" "$1" "${1#$2}"' sh {} "$TARGET" "$SRC_DIR" \; || \
             fatal "Detected non-buildroot ntfscp(doesn't support dir copy)"
                     DEPTH=$(($DEPTH + 1))
     done
 
     find $SRC_DIR -type f \
-        -exec sh -c 'ntfscp $TARGET "$1" "${1#$SRC_DIR}"' sh {} \; || \
+        -exec sh -c 'ntfscp "$3" "$1" "${1#$2}"' sh {} "$TARGET" "$SRC_DIR" \; || \
             fatal "Failed to do ntfscp!"
 }
 
