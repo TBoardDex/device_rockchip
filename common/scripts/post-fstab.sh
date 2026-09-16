@@ -44,11 +44,15 @@ fixup_root()
 	MOUNT_OPTS="defaults"
 	PASS="1"
 
-	ROOTFS_ARRAY=($(grep "[[:space:]]/[[:space:]]" "$FSTAB" || true))
+	ROOTFS_ARRAY=()
+	while IFS= read -r line; do
+		ROOTFS_ARRAY+=("$line")
+	done < <(grep "[[:space:]]/[[:space:]]" "$FSTAB" || true)
 	if [ ${#ROOTFS_ARRAY[@]} -ne 0 ]; then
-		SRC="${ROOTFS_ARRAY[0]}"
-		MOUNT_OPTS="${ROOTFS_ARRAY[3]}"
-		PASS="${ROOTFS_ARRAY[5]}"
+		read -ra ROOTFS_FIELDS <<< "${ROOTFS_ARRAY[-1]}"
+		SRC="${ROOTFS_FIELDS[0]}"
+		MOUNT_OPTS="${ROOTFS_FIELDS[3]}"
+		PASS="${ROOTFS_FIELDS[5]}"
 	fi
 
 	if [ "$RK_ROOTFS_RO" ] && \
