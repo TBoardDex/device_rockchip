@@ -33,6 +33,7 @@ $RK_RSYNC "$OVERLAY_DIR/usr" "$TARGET_DIR/"
 SCRIPT=$(ls "$OVERLAY_DIR" | grep ${DISK_HELPER_TYPE}all.sh)
 
 install_busybox_service "$OVERLAY_DIR/$SCRIPT"
+install_sysv_service "$OVERLAY_DIR/$SCRIPT" S
 
 if [ "$DISK_HELPER_TYPE" = mount ]; then
 	if [ "$RK_DISK_AUTO_FORMAT" ]; then
@@ -51,5 +52,4 @@ if [ "$DISK_HELPER_TYPE" = mount ]; then
 	exit 0
 fi
 
-install_sysv_service "$OVERLAY_DIR/$SCRIPT" S
 install_systemd_service "$OVERLAY_DIR/$DISK_HELPER_TYPE-all.service"
