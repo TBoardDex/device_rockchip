@@ -95,9 +95,11 @@ install_systemd_service()
 	WANTED_BY="$(grep "^WantedBy=" "$SRC" | cut -d'=' -f2)"
 	[ "$WANTED_BY" ] || return 0
 
-	WANTS_DIR="$TARGET_DIR/etc/systemd/system/$WANTED_BY.wants"
-	mkdir -p "$WANTS_DIR"
-	ln -rsf "$SERVICE_DIR/$SERVICE" "$WANTS_DIR/$SERVICE"
+	for wb in $WANTED_BY; do
+		WANTS_DIR="$TARGET_DIR/etc/systemd/system/${wb}.wants"
+		mkdir -p "$WANTS_DIR"
+		ln -rsf "$SERVICE_DIR/$SERVICE" "$WANTS_DIR/$SERVICE"
+	done
 }
 
 set +a
