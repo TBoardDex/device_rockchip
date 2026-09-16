@@ -51,7 +51,7 @@ install_adbd()
 
 	[ "$RK_RECOVERY_ADBD_KEYS" ] || return 0
 
-	sudo -u "#$RK_OWNER_UID" sh -c "cat $RK_RECOVERY_ADBD_KEYS" > \
+	sudo -u "#$RK_OWNER_UID" sh -c 'cat -- "$1"' _ "$RK_RECOVERY_ADBD_KEYS" > \
 		"$TARGET_DIR/adb_keys"
 }
 
