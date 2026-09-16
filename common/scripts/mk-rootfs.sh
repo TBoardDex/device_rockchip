@@ -1,5 +1,30 @@
 #!/bin/bash -e
 
+pack_ubi_image()
+{
+	local image="$1"
+	local output="$2"
+	local min_io_size="$3"
+	local peb_size="$4"
+	local subpage_size="$5"
+	local ubinize_cfg="$6"
+
+	mkdir -p "$(dirname "$output")"
+	cat > "$ubinize_cfg" <<-EOF
+	[rootfs]
+	mode=ubi
+	vol_id=0
+	vol_type=dynamic
+	vol_name=rootfs
+	vol_alignment=1
+	vol_flags=autoresize
+	image=$image
+	EOF
+
+	ubinize -o "$output" -m "$min_io_size" -p "$peb_size" \
+		-s "$subpage_size" "$ubinize_cfg"
+}
+
 build_buildroot()
 {
 	check_config RK_BUILDROOT || false
@@ -34,22 +59,16 @@ build_buildroot()
 			$RK_SECURITY_CHECK_METHOD $IMAGE_DIR/$ROOTFS
 
 		if [ "$RK_ROOTFS_TYPE" == "ubi" ]; then
-			# Force to using dynamic to faster bootup.
-			mkdir -p ${RK_OUTDIR}/security
-			sed -e "s;BR2_ROOTFS_UBI_PATH;${IMAGE_DIR}/security_system.img;" \
-			    -e "s;UBI_VOL_TYPE;dynamic;" \
-			    ${RK_SDK_DIR}/buildroot/fs/ubi/ubinize.cfg > \
-				${RK_OUTDIR}/security/ubinize.cfg
-
-			# Repack ubifs, source variables from buildroot configuration
+			# Wrap the encrypted image with Buildroot UBI geometry.
 			(
 				eval $(cat "$RK_SDK_DIR/buildroot/output/$RK_BUILDROOT_CFG/.config" | \
 				       grep ^BR2_TARGET_ROOTFS_UBI_)
-				ubinize -o ${RK_OUTDIR}/security/security-system.ubi \
-					-m ${BR2_TARGET_ROOTFS_UBI_MINIOSIZE} \
-					-p ${BR2_TARGET_ROOTFS_UBI_PEBSIZE} \
-					-s ${BR2_TARGET_ROOTFS_UBI_SUBSIZE} \
-					${RK_OUTDIR}/security/ubinize.cfg
+				pack_ubi_image "$IMAGE_DIR/security_system.img" \
+					"$RK_OUTDIR/security/security-system.ubi" \
+					"$BR2_TARGET_ROOTFS_UBI_MINIOSIZE" \
+					"$BR2_TARGET_ROOTFS_UBI_PEBSIZE" \
+					"$BR2_TARGET_ROOTFS_UBI_SUBSIZE" \
+					"$RK_OUTDIR/security/ubinize.cfg"
 			)
 		fi
 	fi
@@ -199,7 +218,19 @@ build_yocto()
 	LANG=en_US.UTF-8 LANGUAGE=en_US.en LC_ALL=en_US.UTF-8 \
 		bitbake core-image-minimal -C rootfs
 
-	ln -rsf "$PWD/latest/rootfs.img" "$IMAGE_DIR/rootfs.ext4"
+	if [ "$RK_ROOTFS_TYPE" = ubi ]; then
+		ROOTFS_SQUASHFS="$PWD/latest/rootfs.img"
+
+		ln -rsf "$ROOTFS_SQUASHFS" "$IMAGE_DIR/rootfs.squashfs"
+		pack_ubi_image "$ROOTFS_SQUASHFS" "$IMAGE_DIR/rootfs.ubi" \
+			"${RK_UBI_MINIO_SIZE:-0x800}" \
+			"${RK_UBI_PEB_SIZE:-0x20000}" \
+			"${RK_UBI_SUBPAGE_SIZE:-0x800}" \
+			"$IMAGE_DIR/rootfs-ubinize.cfg"
+	else
+		ln -rsf "$PWD/latest/rootfs.img" \
+			"$IMAGE_DIR/rootfs.$RK_ROOTFS_TYPE"
+	fi
 
 	if [ -r "$RK_LOG_DIR/post-rootfs.log" ]; then
 		cat "$RK_LOG_DIR/post-rootfs.log"

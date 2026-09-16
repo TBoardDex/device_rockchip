@@ -79,23 +79,25 @@ choice
 config RK_ROOTFS_EXT4
 	bool "ext4"
 
+config RK_ROOTFS_SQUASHFS
+	bool "squashfs"
+	depends on RK_ROOTFS_SYSTEM_YOCTO || RK_ROOTFS_SYSTEM_BUILDROOT
+
+config RK_ROOTFS_UBI
+	bool "ubi"
+	depends on RK_ROOTFS_SYSTEM_YOCTO || RK_ROOTFS_SYSTEM_BUILDROOT
+	select RK_UBI
+
 if RK_ROOTFS_SYSTEM_BUILDROOT
 
 config RK_ROOTFS_EXT2
 	bool "ext2"
-
-config RK_ROOTFS_SQUASHFS
-	bool "squashfs"
 
 config RK_ROOTFS_BTRFS
 	bool "btrfs"
 
 config RK_ROOTFS_F2FS
 	bool "f2fs"
-
-config RK_ROOTFS_UBI
-	bool "ubi"
-	select RK_UBI
 
 config RK_ROOTFS_EROFS
 	bool "erofs"
