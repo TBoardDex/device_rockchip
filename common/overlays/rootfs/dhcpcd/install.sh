@@ -20,8 +20,8 @@ if [ "$POST_INIT_SYSTEMD" ]; then
 	fi
 fi
 
-if [ "$POST_INIT_SYSV$POST_INIT_BUSYBOX" ]; then
-	if ! grep -wq "/sbin/dhcpcd" "$TARGET_DIR/etc/init.d" 2>/dev/null; then
+	if [ "$POST_INIT_SYSV" ] || [ "$POST_INIT_BUSYBOX" ]; then
+	if ! grep -rq "/sbin/dhcpcd" "$TARGET_DIR/etc/init.d/" 2>/dev/null; then
 		message "Installing dhcpcd service..."
 		install_sysv_service "$OVERLAY_DIR/S41dhcpcd" S
 		install_busybox_service "$OVERLAY_DIR/S41dhcpcd"
