@@ -10,7 +10,7 @@ OVERLAY_DIR="$(dirname "$(realpath "$0")")"
 message "Installing bootanim service..."
 
 $RK_RSYNC "$OVERLAY_DIR/usr" "$TARGET_DIR/"
-sed -i "s/^\(TIMEOUT=\).*/\1$RK_ROOTFS_BOOTANIM_TIMEOUT/" \
+sed -i "s#^\(TIMEOUT=\).*#\1$RK_ROOTFS_BOOTANIM_TIMEOUT#" \
 	"$TARGET_DIR/usr/bin/bootanim"
 
 install_sysv_service "$OVERLAY_DIR/S31bootanim.sh" S
