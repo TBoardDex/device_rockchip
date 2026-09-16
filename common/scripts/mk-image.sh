@@ -85,7 +85,7 @@ esac
 
 echo $SIZE_KB | grep -vq [^0-9] || usage "Invalid size: $SIZE_KB"
 
-TEMP=$(mktemp -u)
+TEMP=$(mktemp -d)
 
 [ -d "$SRC_DIR" ] || usage "No such src dir: $SRC_DIR"
 
