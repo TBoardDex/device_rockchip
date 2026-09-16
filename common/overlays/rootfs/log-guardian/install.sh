@@ -11,8 +11,8 @@ message "Installing log-guardian service..."
 
 $RK_RSYNC "$OVERLAY_DIR/usr" "$TARGET_DIR/"
 
-sed -i -e "s/^\(INTERVAL=\).*/\1\"$RK_ROOTFS_LOG_GUARDIAN_INTERVAL\"/" \
-	-e "s/^\(MIN_AVAIL_SIZE=\).*/\1\"$RK_ROOTFS_LOG_GUARDIAN_MIN_SIZE\"/" \
+sed -i -e "s#^\(INTERVAL=\).*#\1\"$RK_ROOTFS_LOG_GUARDIAN_INTERVAL\"#" \
+	-e "s#^\(MIN_AVAIL_SIZE=\).*#\1\"$RK_ROOTFS_LOG_GUARDIAN_MIN_SIZE\"#" \
 	-e "s#^\(LOG_DIRS=\)\"\/.*#\1\"$RK_ROOTFS_LOG_GUARDIAN_LOG_DIRS\"#" \
 	"$TARGET_DIR/usr/bin/log-guardian"
 
