@@ -21,7 +21,9 @@ if [ "$RK_OWNER_UID" -ne 0 ]; then
 fi
 
 if [ -d home ]; then
-	for u in $(ls home/); do
+	for u in home/*; do
+		[ -d "$u" ] || continue
+		u=${u#home/}
 		ID=$(grep "^$u:" etc/passwd | cut -d':' -f3 || true)
 		[ "$ID" ] || continue
 		message "Fixing up /home/$u for uid=$ID($u)..."
