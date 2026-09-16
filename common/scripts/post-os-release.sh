@@ -10,7 +10,10 @@ fixup_os_release()
 	shift
 
 	sed -i "/^$KEY=/d" "$OS_RELEASE"
-	echo "$KEY=\"$@\"" >> "$OS_RELEASE"
+	VALUE="$*"
+	VALUE="${VALUE//\\/\\\\}"
+	VALUE="${VALUE//\"/\\\"}"
+	printf '%s="%s"\n' "$KEY" "$VALUE" >> "$OS_RELEASE"
 }
 
 message "Adding information to /etc/os-release..."
