@@ -26,6 +26,9 @@
 				sys      = "rtt";
 				core     = "ap";
 				rtt_config = "board/evb1/defconfig";
+				rtt_exec     = "prebuilts/gcc/linux-x86/arm/gcc-arm-none-eabi-10-2020-q4-major-x86_64-linux/bin/"
+				cc           = "prebuilts/gcc/linux-x86/arm/gcc-arm-none-eabi-10-2020-q4-major-x86_64-linux/bin/arm-none-eabi-"
+				cc_prefix    = "arm-none-eabi-";
 			};
 			udelay       = <10000>;
 			hash {
