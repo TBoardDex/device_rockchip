@@ -61,7 +61,7 @@ post_build_hook()
 			-exec chown -ch 0:0 {} \\;" >> "$FAKEROOT_SCRIPT"
 
 		# The mk-image.sh expects ubi-<type> to pack ubi image.
-		if [ "$RK_UBI" ]; then
+		if [ "$RK_EXTRA_PARTITIONS_UBI" ]; then
 			FS_TYPE="ubi-$FS_TYPE"
 		fi
 

@@ -13,7 +13,21 @@ comment "Extra partitions depends on rootfs system"
 menu "Extra partitions (oem, userdata, etc.)"
 	depends on RK_ROOTFS
 
-if RK_UBI && RK_EXTRA_PARTITION_NUM > 0
+config RK_EXTRA_PARTITION_NUM
+	int "number of extra partitions"
+	range 0 $RK_EXTRA_PARTITION_MAX_NUM
+	default $RK_EXTRA_PARTITION_NUM
+	help
+	  Number of extra partitions after rootfs, e.g. oem/userdata.
+
+menuconfig RK_EXTRA_PARTITIONS_UBI
+	bool "use UBI for extra partitions"
+	depends on RK_EXTRA_PARTITION_NUM > 0
+	default y if RK_ROOTFS_UBI
+	help
+	  Pack extra partitions as UBI volumes.
+
+if RK_EXTRA_PARTITIONS_UBI
 
 config RK_UBI_MINIO_SIZE
 	hex "UBI minimum I/O unit size (B)"
@@ -39,14 +53,7 @@ config RK_FLASH_SIZE
 	help
 	  Total flash size in MB, used by ubinize to layout volumes.
 
-endif # ubi
-
-config RK_EXTRA_PARTITION_NUM
-	int "number of extra partitions"
-	range 0 $RK_EXTRA_PARTITION_MAX_NUM
-	default $RK_EXTRA_PARTITION_NUM
-	help
-	  Number of extra partitions after rootfs, e.g. oem/userdata.
+endif # extra partitions ubi
 EOF
 
 unset RK_EXTRA_PARTITIONS
@@ -101,7 +108,7 @@ choice
 
 config RK_EXTRA_PARTITION_${i}_UBIFS
 	bool "ubifs"
-	depends on RK_UBI
+	depends on RK_EXTRA_PARTITIONS_UBI
 
 config RK_EXTRA_PARTITION_${i}_EXT4
 	bool "ext4"
