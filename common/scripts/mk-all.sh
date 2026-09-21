@@ -1,8 +1,8 @@
 #!/bin/bash -e
 
-BOARD=$(echo ${RK_KERNEL_DTS_NAME:-$(echo "$RK_DEFCONFIG" | \
-	sed -n "s/.*\($RK_CHIP.*\)_defconfig/\1/p")} | \
-	tr '[:lower:]' '[:upper:]')
+BOARD=$(echo "$RK_DEFCONFIG" | sed -n "s/^rockchip_\(.*\)_defconfig$/\1/p")
+[ -n "$BOARD" ] || BOARD="${RK_KERNEL_DTS_NAME:-unknown}"
+BOARD=$(echo "$BOARD" | tr '[:lower:]' '[:upper:]')
 
 build_all()
 {
