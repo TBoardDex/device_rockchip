@@ -4,7 +4,7 @@ Prebuilt tools (statically linked)
 Debug/utility tools for arm64 targets.
 
 Prebuilt from Rockchip Buildroot 2026 SDK with kernel 6.12:
-2fed7f8066 android-adbd: Skip USB init when TCP port is configured
+90bd4166 tools: Update memtester
 
 Using rockchip_tools_{arm32,arm64,riscv64}_defconfig.
 
