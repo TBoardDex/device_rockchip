@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+RK_SCRIPTS_DIR="${RK_SCRIPTS_DIR:-$(dirname "$(realpath "$0")")}"
+
 if ! echo "$RK_EXTRA_PARTITION_STR" | grep -q ":ext[234]:"; then
 	exit 0
 fi

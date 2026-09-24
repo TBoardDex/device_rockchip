@@ -29,9 +29,10 @@ gen_sd_parameter()
 			fi
 
 			SIZE=$(stat -L -c %s "$IMAGE")
-			SIZE=$(( (($SIZE + 0xFFFFF) & ~0xFFFFF) / 512 ))
+			# Round SIZE up to 1MB boundary, then convert bytes to sectors (512B)
+			SIZE=$(( ((SIZE + 0xFFFFF) / 0x100000) * 0x800 ))
 			printf "0x%08x@0x%08x(%s)," "$SIZE" "$OFFSET" "$part"
-			OFFSET=$(( "$OFFSET" + "$SIZE" ))
+			OFFSET=$(( OFFSET + SIZE ))
 		done | sed 's/,$//'
 
 		echo

@@ -492,20 +492,20 @@ parse_scripts()
 		[ "$(find "$RK_SCRIPTS_DIR" "$RK_CHIP_DIR" "$RK_CHIP_DIR/" \
 			-cnewer "$RK_MAKE_USAGE" 2>/dev/null)" ]; then
 		{
-			TEMP_FILE=$(mktemp -u)
+			TEMP_FILE=$(mktemp)
 
 			for c in "$RK_CHIPS_DIR"/*; do
 				c=$(basename "$c")
 				usage_makefile_oneline "$c" "choose $c"
-			done > $TEMP_FILE
+			done > "$TEMP_FILE"
 
-			run_build_hooks make-usage >> $TEMP_FILE
+			run_build_hooks make-usage >> "$TEMP_FILE"
 
 			usage_clean | \
 				while read LINE; do
 					usage_makefile_oneline $LINE
-				done >> $TEMP_FILE
-			mv $TEMP_FILE "$RK_MAKE_USAGE"
+				done >> "$TEMP_FILE"
+			mv "$TEMP_FILE" "$RK_MAKE_USAGE"
 		}&
 	fi
 
@@ -513,12 +513,12 @@ parse_scripts()
 		[ "$(find "$RK_SCRIPTS_DIR" "$RK_CHIP_DIR" "$RK_CHIP_DIR/" \
 			-cnewer "$RK_PARSED_CMDS" 2>/dev/null)" ]; then
 		{
-			TEMP_FILE=$(mktemp -u)
+			TEMP_FILE=$(mktemp)
 			{
 				echo "#!/bin/bash"
 				run_build_hooks parse-cmds
-			} > $TEMP_FILE
-			mv $TEMP_FILE "$RK_PARSED_CMDS"
+			} > "$TEMP_FILE"
+			mv "$TEMP_FILE" "$RK_PARSED_CMDS"
 		}&
 	fi
 
@@ -556,7 +556,7 @@ main()
 
 	# Save intial envionments
 	unset INITIAL_SESSION
-	INITIAL_ENV=$(mktemp -u)
+	INITIAL_ENV=$(mktemp)
 	env > "$INITIAL_ENV"
 
 	[ "$RK_SESSION" ] || INITIAL_SESSION=1

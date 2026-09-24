@@ -53,21 +53,21 @@ if [ "$RK_FASTBOOT" ] && \
 	notice "Fastboot rework its"
 
 	if [ -z "$RAMDISK_IMG" ]; then
-		kernel_r=`cat $TMP_ITS | grep entry | sed -E 's/.*entry = <(0x[0-9a-fA-F]+)>;.*/\1/'`
+		kernel_r=$(grep entry "$TMP_ITS" | sed -E 's/.*entry = <(0x[0-9a-fA-F]+)>;.*/\1/')
 		KERNEL_GZ=$(mktemp)
-		cat $KERNEL_IMG | gzip -n -f -9 > $KERNEL_GZ
-		kernel_align_1mb_size=`stat -c %s $KERNEL_IMG | \
-			     xargs -I{} bash -c 'echo $(( ( ({} + 1048575) / 1048576 ) * 1048576 ))' | \
-			     xargs printf "0x%x"`
+		gzip -n -f -9 < "$KERNEL_IMG" > "$KERNEL_GZ"
+		kernel_img_size=$(stat -c %s "$KERNEL_IMG")
+		printf -v kernel_align_1mb_size "0x%x" \
+			$(( ((kernel_img_size + 1048575) / 1048576) * 1048576 ))
 		kernel_c=$((kernel_r+kernel_align_1mb_size))
 		printf -v kernel_c "0x%x" "$kernel_c"
 
 		sed -i -e "s~@KERNEL_C@~$kernel_c~" \
 			-e "s~@KERNEL_IMG@~$(realpath -q "$KERNEL_GZ")~" "$TMP_ITS"
-		notice "kernel_r is " $kernel_r
-		notice "kernel_c is " $kernel_c
+		notice "kernel_r is $kernel_r"
+		notice "kernel_c is $kernel_c"
 	else
-		notice "kernel dts" $(realpath -q "$KERNEL_DTB")
+		notice "kernel dts $(realpath -q "$KERNEL_DTB")"
 
 		if ! read -r ramdisk_r ramdisk_r_size <<< \
 			"$(get_reserved_memory_range "$KERNEL_DTB" ramdisk_r)"; then
@@ -90,8 +90,8 @@ if [ "$RK_FASTBOOT" ] && \
 		fi
 
 		sed -i -e "s~@RAMDISK_R@~$ramdisk_r~" "$TMP_ITS"
-		notice "ramdisk_r is " $ramdisk_r
-		notice "ramdisk_r_size is " $ramdisk_r_size
+		notice "ramdisk_r is $ramdisk_r"
+		notice "ramdisk_r_size is $ramdisk_r_size"
 
 		if ! read -r ramdisk_c ramdisk_c_size <<< \
 			"$(get_reserved_memory_range "$KERNEL_DTB" ramdisk_c)"; then
