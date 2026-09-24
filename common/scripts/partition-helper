@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Make sure that we are sourced and called inside of RK build scripts.
-if [ "$BASH_SOURCE" = "$0" -o -z "$RK_SESSION" ];then
-	echo "$(realpath $0) is not supposed to be executed directly"
+if [ "$BASH_SOURCE" = "$0" ] || [ -z "$RK_SESSION" ]; then
+	echo "$(realpath "$0") is not supposed to be executed directly"
 	exit 1
 fi
 
@@ -306,9 +306,9 @@ rk_extra_part_mnt_opts()
 
 rk_extra_part_src()
 {
-	PART_NAME="$(rk_extra_part_name $1)"
-	for src in $(rk_extra_part_arg ${1:-1} 6 | tr ',' ' '); do
-		if [ -z "$src" -o "$src" = empty ]; then
+	PART_NAME="$(rk_extra_part_name "$1")"
+	for src in $(rk_extra_part_arg "${1:-1}" 6 | tr ',' ' '); do
+		if [ -z "$src" ] || [ "$src" = empty ]; then
 			return 0
 		elif echo "$src" | grep -q "^/"; then
 			echo "$src"
@@ -363,12 +363,12 @@ rk_extra_part_img()
 # Prepare extra part's files and fakeroot script
 rk_extra_part_prepare()
 {
-	PART_NAME="$(rk_extra_part_name $1)"
-	OUTDIR="$(rk_extra_part_outdir $1)"
-	DST="$(rk_extra_part_img $1)"
-	MOUNT_DIR="$(rk_extra_part_mount_dir $1)"
-	FAKEROOT_SCRIPT="$(rk_extra_part_fakeroot_script $1)"
-	SRCS="$(rk_extra_part_src $1)"
+	PART_NAME="$(rk_extra_part_name "$1")"
+	OUTDIR="$(rk_extra_part_outdir "$1")"
+	DST="$(rk_extra_part_img "$1")"
+	MOUNT_DIR="$(rk_extra_part_mount_dir "$1")"
+	FAKEROOT_SCRIPT="$(rk_extra_part_fakeroot_script "$1")"
+	SRCS="$(rk_extra_part_src "$1")"
 
 	notice "Preparing partiton $PART_NAME"
 
@@ -382,14 +382,18 @@ rk_extra_part_prepare()
 
 	for src in $MOUNT_DIR $SRCS; do
 		[ -d "$src" ] || continue
-		[ "$(ls "$src/")" ] || continue
+		# Skip empty source dirs without parsing ls output.
+		set -- "$src"/*
+		[ -e "$1" ] || continue
 
 		message "Merging $src into $OUTDIR"
 		rsync -a "$src/" "$OUTDIR"
-		for f in $(ls "$OUTDIR" | grep "\.fs$" || true); do
-			message "Merging $src/$f into $FAKEROOT_SCRIPT"
-			cat "$OUTDIR/$f" >> "$FAKEROOT_SCRIPT"
-			rm -f "$OUTDIR/$f"
+		# Iterate over files ending in .fs without parsing ls output.
+		for f in "$OUTDIR"/*.fs; do
+			[ -e "$f" ] || continue
+			message "Merging $f into $FAKEROOT_SCRIPT"
+			cat "$f" >> "$FAKEROOT_SCRIPT"
+			rm -f "$f"
 		done
 	done
 }
