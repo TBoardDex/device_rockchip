@@ -20,7 +20,7 @@ del_part()
 
 fixup_part()
 {
-	del_part $@
+	del_part "$@"
 
 	SRC="$1"
 	MOUNTPOINT="$2"
@@ -65,7 +65,7 @@ fixup_root()
 
 fixup_basic_part()
 {
-	message "Fixing up basic partition: $@"
+	message "Fixing up basic partition: $*"
 
 	FS_TYPE="$1"
 	MOUNTPOINT="$2"
@@ -76,7 +76,7 @@ fixup_basic_part()
 
 fixup_device_part()
 {
-	message "Fixing up device partition: $@"
+	message "Fixing up device partition: $*"
 
 	DEV="$1"
 
