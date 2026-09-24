@@ -7,19 +7,19 @@ RK_PARAMETER="${RK_PARAMETER:-parameter.txt}"
 
 cd "$RK_SDK_DIR"
 
-[ -r "kernel/.config" -a -r "$RK_CHIP_DIR/$RK_PARAMETER" ] || exit 0
+[ -r "kernel/.config" ] && [ -r "$RK_CHIP_DIR/$RK_PARAMETER" ] || exit 0
 grep -q "^CMDLINE:.*:grow)$" "$RK_CHIP_DIR/$RK_PARAMETER" || exit 0
 
 DM_VERITY=$(grep "^CONFIG_DM_VERITY=y$" kernel/.config || true)
 GROW_ALIGN_CFG="$(grep "^GROW_ALIGN:" "$RK_CHIP_DIR/$RK_PARAMETER" || true)"
-GROW_ALIGN_VAL="$(echo $GROW_ALIGN_CFG | cut -d':' -f2- | xargs || true)"
+GROW_ALIGN_VAL="$(echo "$GROW_ALIGN_CFG" | cut -d':' -f2- | xargs || true)"
 
-if [ "$DM_VERITY" -a "$GROW_ALIGN_VAL" = "1" ]; then
+if [ "$DM_VERITY" ] && [ "$GROW_ALIGN_VAL" = "1" ]; then
 	# DM verity + grow align
 	exit 0
 fi
 
-if [ -z "$DM_VERITY" -a "$GROW_ALIGN_CFG" -a "$GROW_ALIGN_VAL" != "1" ]; then
+if [ -z "$DM_VERITY" ] && [ -n "$GROW_ALIGN_CFG" ] && [ "$GROW_ALIGN_VAL" != "1" ]; then
 	# !DM verity + !grow align
 	exit 0
 fi

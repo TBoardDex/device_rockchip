@@ -6,7 +6,7 @@ LOCALE="$TARGET_DIR/etc/default/locale"
 
 [ -z "$RK_ROOTFS_LOCALE_ORIGINAL" ] || exit 0
 
-if [ "$RK_ROOTFS_LOCALE_DEFAULT" -a "$POST_OS" = debian ]; then
+if [ -n "$RK_ROOTFS_LOCALE_DEFAULT" ] && [ "$POST_OS" = debian ]; then
 	notice "Keep original locale for debian by default"
 	exit 0
 fi

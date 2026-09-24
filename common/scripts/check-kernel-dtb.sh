@@ -3,7 +3,7 @@
 RK_SCRIPTS_DIR="${RK_SCRIPTS_DIR:-$(dirname "$(realpath "$0")")}"
 RK_SDK_DIR="${RK_SDK_DIR:-$RK_SCRIPTS_DIR/../../../..}"
 
-[ "$RK_KERNEL_DTS" -a "$RK_KERNEL_DTB" -a -r "$RK_KERNEL_DTB" ] || exit 0
+[ -n "$RK_KERNEL_DTS" ] && [ -n "$RK_KERNEL_DTB" ] && [ -r "$RK_KERNEL_DTB" ] || exit 0
 
 cd "$RK_SDK_DIR"
 

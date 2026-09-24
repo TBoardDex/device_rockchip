@@ -4,7 +4,7 @@ source "${RK_POST_HELPER:-$(dirname "$(realpath "$0")")/post-helper}"
 
 [ -z "$RK_ROOTFS_HOSTNAME_ORIGINAL" ] || exit 0
 
-if [ "$RK_ROOTFS_HOSTNAME_DEFAULT" -a "$POST_OS" = debian ]; then
+if [ -n "$RK_ROOTFS_HOSTNAME_DEFAULT" ] && [ "$POST_OS" = debian ]; then
 	notice "Keep original hostname for debian by default"
 	exit 0
 fi
