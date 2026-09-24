@@ -5,7 +5,7 @@ if [ -z "$BASH_SOURCE" ]; then
 	case "${@:-shell}" in
 		shell) ./build.sh shell ;;
 		*)
-			./build.sh $@
+			./build.sh "$@"
 			bash
 			;;
 	esac
@@ -93,7 +93,7 @@ usage_makefile_oneline()
 
 finish_build()
 {
-	notice "Running $(basename "${BASH_SOURCE[1]}") - ${@:-${FUNCNAME[1]}} succeeded."
+	notice "Running $(basename "${BASH_SOURCE[1]}") - ${*:-${FUNCNAME[1]}} succeeded."
 	cd "$RK_SDK_DIR"
 }
 
@@ -101,7 +101,7 @@ load_config()
 {
 	[ -r "$RK_CONFIG" ] || return 0
 
-	for var in $@; do
+	for var in "$@"; do
 		export "$(grep "^$var=" "$RK_CONFIG" | tr -d '"' || true)" \
 			&>/dev/null || true
 	done
@@ -110,7 +110,7 @@ load_config()
 check_config()
 {
 	unset missing
-	for var in $@; do
+	for var in "$@"; do
 		eval [ -z \"\$$var\" ] || continue
 
 		missing="$missing $var"
@@ -316,7 +316,7 @@ option_check()
 	CMDS="$1"
 	shift
 
-	for opt in $@; do
+	for opt in "$@"; do
 		for cmd in $CMDS; do
 			# NOTE: There might be patterns in commands
 			if echo "${opt%%:*}" | grep -qE "^$cmd$"; then
@@ -398,7 +398,7 @@ run_build_hooks()
 
 	LOG_FILE="$(start_log "$1")"
 
-	echo -e "# run hook: $@\n" >> "$LOG_FILE"
+	echo -e "# run hook: $*\n" >> "$LOG_FILE"
 	run_hooks "$RK_BUILD_HOOK_DIR" "$@" 2>&1 | tee -a "$LOG_FILE"
 	HOOK_RET=${PIPESTATUS[0]}
 	if [ $HOOK_RET -ne 0 ]; then
@@ -412,7 +412,7 @@ run_post_hooks()
 {
 	LOG_FILE="$(start_log post-rootfs)"
 
-	echo -e "# run hook: $@\n" >> "$LOG_FILE"
+	echo -e "# run hook: $*\n" >> "$LOG_FILE"
 	run_hooks "$RK_POST_HOOK_DIR" "$@" 2>&1 | tee -a "$LOG_FILE"
 	HOOK_RET=${PIPESTATUS[0]}
 	if [ $HOOK_RET -ne 0 ]; then
@@ -546,7 +546,7 @@ main()
 {
 	# Early handler of Makefile options
 	case "$@" in
-		make-*) makefile_options $@ ;;
+		make-*) makefile_options "$@" ;;
 	esac
 
 	[ -z "$DEBUG" ] || set -x
@@ -844,7 +844,7 @@ main()
 
 if [ "$0" != "$BASH_SOURCE" ]; then
 	# Sourced, executing it directly
-	"$BASH_SOURCE" ${@:-shell}
+	"$BASH_SOURCE" "${@:-shell}"
 elif [ "$0" == "$BASH_SOURCE" ]; then
 	# Executed directly
 	main "${@%%:}"
