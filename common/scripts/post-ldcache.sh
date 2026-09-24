@@ -9,7 +9,7 @@ if ! grep -q glibc-ld.so.cache "$TARGET_DIR"/lib/ld-linux* &>/dev/null; then
 	exit 0
 fi
 
-message "Creating ld.so.cache for $TARGET ..."
+message "Creating ld.so.cache for $TARGET_DIR ..."
 
 if [ -d "$TARGET_DIR/etc/ld.so.conf.d" ] && \
 	[ ! -f "$TARGET_DIR/etc/ld.so.conf" ]; then

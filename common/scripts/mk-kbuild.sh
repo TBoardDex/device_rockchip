@@ -23,9 +23,9 @@ if [ ! -d debian/ ]; then
 	exit 1
 fi
 
-env -u ABINAME -u ARCH -u FEATURESET -u FLAVOUR -u VERSION -u LOCALVERSION >/dev/null
+unset ABINAME ARCH FEATURESET FLAVOUR VERSION LOCALVERSION
 
-KERNAL_ARCH=${1:-$KERNAL_ARCH}
+KERNEL_ARCH="${1:-$KERNEL_ARCH}"
 KVER3=$(grep -A 2 "^VERSION = " Makefile | cut -d' ' -f 3 | paste -sd'.')
 KVER2=$(grep -A 1 "^VERSION = " Makefile | cut -d' ' -f 3 | paste -sd'.')
 GVER=$(git log --oneline -1 | cut -d' ' -f1)

@@ -132,7 +132,7 @@ build_recovery_kernel()
 	RECOVERY_KERNEL_DIR="$RK_OUTDIR/recovery-kernel"
 	RECOVERY_KERNEL_IMG="${RK_KERNEL_IMG#kernel/}"
 	RECOVERY_KERNEL_DTS_NAME="${RK_KERNEL_RECOVERY_DTS_NAME:-$RK_KERNEL_DTS_NAME}"
-	REOVERY_KERNEL_DTB="${KERNEL_DTS_DIR#kernel/}/$RECOVERY_KERNEL_DTS_NAME.dtb"
+	RECOVERY_KERNEL_DTB="${KERNEL_DTS_DIR#kernel/}/$RECOVERY_KERNEL_DTS_NAME.dtb"
 
 	if [ -L "$RECOVERY_KERNEL_DIR" ]; then
 		run_command rm -rf "$RECOVERY_KERNEL_DIR"
@@ -171,7 +171,7 @@ build_recovery_kernel()
 
 	run_command ln -rsf "$RECOVERY_KERNEL_IMG" \
 		"$RK_OUTDIR/recovery-kernel.img"
-	run_command ln -rsf "$REOVERY_KERNEL_DTB" \
+	run_command ln -rsf "$RECOVERY_KERNEL_DTB" \
 		"$RK_OUTDIR/recovery-kernel.dtb"
 	run_command scripts/resource_tool "$RK_OUTDIR/recovery-kernel.dtb" \
 		logo.bmp logo_kernel.bmp

@@ -77,10 +77,10 @@ if [ "$2" = make ]; then
 
 	if [ "$1" ]; then
 		shift
-		message "Buildroot make: $TARGET $@"
+		message "Buildroot make: $TARGET $*"
 	fi
 
-	make -C "$BUILDROOT_DIR" O="$BUILDROOT_OUTPUT_DIR" $TARGET $@
+	make -C "$BUILDROOT_DIR" O="$BUILDROOT_OUTPUT_DIR" ${TARGET:+"$TARGET"} "$@"
 	exit
 fi
 

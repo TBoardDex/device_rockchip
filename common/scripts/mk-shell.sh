@@ -16,7 +16,7 @@ pre_build_hook()
 {
 	warning "Doing this is dangerous and for developing only."
 	# No error handling in develop shell.
-	set +e; trap ERR
+	set +e; trap - ERR
 
 	case "${1:-shell}" in
 		yocto-shell | yshell)
