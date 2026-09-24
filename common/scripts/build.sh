@@ -44,15 +44,14 @@ set -a
 
 rk_log()
 {
-	LOG_COLOR="$1"
+	local color=$1 nl=
 	shift
 	if [ "$1" = "-n" ]; then
 		shift
-		LOG_FLAG="-ne"
 	else
-		LOG_FLAG="-e"
+		nl=$'\n'
 	fi
-	echo $LOG_FLAG "\e[${LOG_COLOR}m$@\e[0m"
+	printf '\e[%sm%s\e[0m%s' "$color" "$*" "$nl"
 }
 
 message()
@@ -87,7 +86,9 @@ usage_oneline()
 
 usage_makefile_oneline()
 {
-	printf "  %-22s - %s\n" "$(echo "$1" | grep -o "^[^[^:^ ]*")" "${*:2}"
+	printf "  %-22s - %s\n" \
+		"$(echo "$1" | grep -o '^[^\[ :]*')" \
+		"${*:2}"
 }
 
 finish_build()
@@ -123,13 +124,13 @@ check_config()
 
 kernel_version_raw()
 {
-	[ -d kernel ] || return 0
+	[ -d "$RK_SDK_DIR/kernel" ] || return 0
 
 	VERSION_KEYS="VERSION PATCHLEVEL"
 	VERSION=""
 
 	for k in $VERSION_KEYS; do
-		v=$(grep "^$k = " kernel/Makefile | cut -d' ' -f3)
+		v=$(grep "^$k = " "$RK_SDK_DIR/kernel/Makefile" | cut -d' ' -f3)
 		VERSION=${VERSION:+${VERSION}.}$v
 	done
 	echo $VERSION
@@ -137,9 +138,9 @@ kernel_version_raw()
 
 kernel_version()
 {
-	[ -d kernel ] || return 0
+	[ -d "$RK_SDK_DIR/kernel" ] || return 0
 
-	KERNEL_DIR="$(basename "$(realpath kernel)")"
+	KERNEL_DIR="$(basename "$(realpath "$RK_SDK_DIR/kernel")")"
 	case "$KERNEL_DIR" in
 		kernel-*)
 			echo ${KERNEL_DIR#kernel-}
@@ -297,7 +298,7 @@ err_handler()
 		return 0
 	fi
 
-	fatal "ERROR: Running $BASH_SOURCE - ${2:-${FUNCNAME[1]}} failed!"
+	fatal "ERROR: Running $0 - ${2:-${FUNCNAME[1]}} failed!"
 	fatal "ERROR: exit code $ret from line ${BASH_LINENO[0]}:"
 	fatal "    ${3:-$BASH_COMMAND}"
 	fatal "ERROR: call stack:"
@@ -611,22 +612,27 @@ main()
 	[ -f README.md ] || ln -rsf "$RK_COMMON_DIR/README.md" .
 	[ -d common ] || ln -rsf "$RK_COMMON_DIR" .
 
-	# TODO: Remove it in the repo manifest.xml
-	rm -f envsetup.sh
-
 	OPTIONS="${@:-$RK_DEFAULT_TARGET}"
 
 	# Special handle for chip and defconfig
 	# e.g. ./build.sh rk3588:rockchip_defconfig
+	TRANSFORMED=
 	for opt in $OPTIONS; do
-		if [ -d "$RK_CHIPS_DIR/${opt%%:*}" ]; then
-			OPTIONS=$(echo "$OPTIONS" | xargs -n 1 | \
-				sed "s/^$opt$/chip:$opt/" | xargs)
-		elif echo "$opt" | grep -q "^[0-9a-z_]*_defconfig$"; then
-			OPTIONS=$(echo "$OPTIONS" | xargs -n 1 | \
-				sed "s/^$opt$/defconfig:$opt/" | xargs)
-		fi
+		case "$opt" in
+			chip:*|defconfig:*|chip|defconfig)
+				TRANSFORMED="$TRANSFORMED $opt" ;;
+			*)
+				if [ -d "$RK_CHIPS_DIR/$opt" ]; then
+					TRANSFORMED="$TRANSFORMED chip:$opt"
+				elif echo "$opt" | grep -q "^[0-9a-z_]*_defconfig$"; then
+					TRANSFORMED="$TRANSFORMED defconfig:$opt"
+				else
+					TRANSFORMED="$TRANSFORMED $opt"
+				fi
+				;;
+		esac
 	done
+	OPTIONS=$TRANSFORMED
 
 	# Parse supported commands
 	parse_scripts
@@ -686,9 +692,12 @@ main()
 	fi
 
 	# Drop old logs
-	cd "$RK_LOG_BASE_DIR"
-	ls -1t | tail -n +11 | xargs -r rm -rf --
-	cd "$RK_SDK_DIR"
+	find "$RK_LOG_BASE_DIR" -mindepth 1 -maxdepth 1 -type d \
+		-printf '%T@\t%p\0' 2>/dev/null | \
+		sort -zn | \
+		head -z -n -10 | \
+		cut -z -f2- | \
+		xargs -0r rm -rf --
 
 	# Save initial envionments
 	if [ "$INITIAL_SESSION" ]; then
@@ -771,8 +780,9 @@ main()
 	case "$OPTIONS" in
 		cleanall)
 			run_build_hooks clean
-			rm -rf "$RK_OUTDIR" "$RK_SDK_DIR/rockdev" \
-				"$RK_SDK_DIR/buildroot/output"
+			rm -rf "$RK_OUTDIR" "$RK_SDK_DIR/rockdev"
+			[ -d "$RK_SDK_DIR/buildroot/output" ] && \
+				find "$RK_SDK_DIR/buildroot/output" -mindepth 1 -delete
 			finish_build cleanall
 			exit 0 ;;
 		clean-*)
