@@ -1,5 +1,5 @@
 #!/bin/bash
-# Usage: ./gen-part-config.sh <max extra partition num> <default extra partition num>
+# Usage: ./gen-extra-parts-config.sh <max extra partition num> <default extra partition num>
 
 RK_EXTRA_PARTITION_MAX_NUM=${1:-5}
 RK_EXTRA_PARTITION_NUM=${2:-2}
