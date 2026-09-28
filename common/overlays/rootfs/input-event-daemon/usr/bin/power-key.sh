@@ -92,6 +92,14 @@ case "$EVENT" in
 
 		start-stop-daemon -K -q -p $PID_FILE && short_press
 		;;
+	cancel)
+		# The power key was consumed as a modifier of a composite: its
+		# release will never arrive. Abort the pending long press
+		# without triggering any power action.
+		sleep .5
+
+		start-stop-daemon -K -q -p $PID_FILE || true
+		;;
 	short-press)
 		short_press
 		;;
