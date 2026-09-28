@@ -632,7 +632,8 @@ main()
 				;;
 		esac
 	done
-	OPTIONS=$TRANSFORMED
+	# Strip the leading space added by the transform above
+	OPTIONS="${TRANSFORMED# }"
 
 	# Parse supported commands
 	parse_scripts
