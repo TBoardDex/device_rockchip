@@ -12,6 +12,7 @@ comment "Fastboot is not supported for this chip"
 menuconfig RK_FASTBOOT
 	bool "Fastboot(To optimize device boot speed)"
 	depends on RK_FASTBOOT_SUPPORTS
+	depends on RK_USE_FIT_IMG
 	select RK_ROOTFS_EROFS
 	select RK_ROOTFS_COMPRESSED_GZ
 	help
