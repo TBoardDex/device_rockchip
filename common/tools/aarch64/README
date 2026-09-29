@@ -4,7 +4,7 @@ Prebuilt tools (statically linked)
 Debug/utility tools for arm64 targets.
 
 Prebuilt from Rockchip Buildroot 2026 SDK with kernel 6.12:
-90bd4166 tools: Update memtester
+d1e7e61013 android-adb: fix pubkey leak and clean up build
 
 Using rockchip_tools_{arm32,arm64,riscv64}_defconfig.
 
