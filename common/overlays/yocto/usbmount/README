@@ -3,5 +3,5 @@ usbmount (https://wiki.debian.org/usbmount)
 
 Automatically mounts and unmounts removable USB storage devices.
 
-Prebuilt from Rockchip Buildroot 2024 SDK (rockchip_rk3588_defconfig):
-7252fb6c93c usbmount: Use SUBSYSTEMS for reliable USB detection
+Prebuilt from Rockchip Buildroot 2026 SDK (rockchip_tools_arm64_defconfig):
+029e9a2fc12 usbmount: fix lock timeout and unmount checks
