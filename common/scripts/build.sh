@@ -36,7 +36,7 @@ usage()
 	echo "Default option is '$RK_DEFAULT_TARGET'."
 
 	rm -f "$INITIAL_ENV"
-	exit 0
+	exit "${1:-0}"
 }
 
 # Export global functions
@@ -651,7 +651,10 @@ main()
 				grep -wq clean_hook \
 					"$RK_SCRIPTS_DIR/mk-$MODULE.sh" \
 					"$RK_CHIP_SCRIPTS_DIR/mk-$MODULE.sh" \
-					2>/dev/null || usage
+					2>/dev/null || {
+					error "ERROR: invalid clean option: $opt"
+					usage 1
+				}
 				;&
 			shell | buildroot-shell | bshell | cleanall)
 				# Check single options
@@ -680,7 +683,7 @@ main()
 				;;
 		esac
 
-		usage
+		usage 1
 	done
 
 	# Prepare log dirs
