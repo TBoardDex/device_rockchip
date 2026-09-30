@@ -622,7 +622,7 @@ main()
 			chip:*|defconfig:*|chip|defconfig)
 				TRANSFORMED="$TRANSFORMED $opt" ;;
 			*)
-				if [ -d "$RK_CHIPS_DIR/$opt" ]; then
+				if [ -d "$RK_CHIPS_DIR/${opt%%:*}" ]; then
 					TRANSFORMED="$TRANSFORMED chip:$opt"
 				elif echo "$opt" | grep -q "^[0-9a-z_]*_defconfig$"; then
 					TRANSFORMED="$TRANSFORMED defconfig:$opt"
