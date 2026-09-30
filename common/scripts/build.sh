@@ -696,7 +696,9 @@ main()
 	fi
 
 	# Drop old logs
-	find "$RK_LOG_BASE_DIR" -mindepth 1 -maxdepth 1 -type d \
+	# NOTE: $RK_LOG_BASE_DIR is a symlink to $RK_SESSION_DIR, which find
+	# would not follow, so scan the real directory instead.
+	find "$RK_SESSION_DIR" -mindepth 1 -maxdepth 1 -type d \
 		-printf '%T@\t%p\0' 2>/dev/null | \
 		sort -zn | \
 		head -z -n -10 | \
