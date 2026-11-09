@@ -4,9 +4,20 @@ RK_SCRIPTS_DIR="${RK_SCRIPTS_DIR:-$(dirname "$(realpath "$0")")}"
 RK_SDK_DIR="${RK_SDK_DIR:-$(realpath "$RK_SCRIPTS_DIR/../../../..")}"
 RK_TOOLS_DIR="${RK_TOOLS_DIR:-$(realpath "$RK_SCRIPTS_DIR/../tools")}"
 RK_DEBIAN_ARCH="${RK_DEBIAN_ARCH:-arm64}"
-RK_DEBIAN_VERSION="${RK_DEBIAN_VERSION:-bookworm}"
+RK_DEBIAN_VERSION="${RK_DEBIAN_VERSION:-bullseye}"
 
-if ! ls $RK_SDK_DIR/debian/ubuntu-build-service/$RK_DEBIAN_VERSION-desktop-$RK_DEBIAN_ARCH >/dev/null 2>&1; then
+# This SDK provides Debian 11 only.
+case "$RK_DEBIAN_VERSION" in
+	bullseye) ;;
+	*)
+		echo "Unsupported Debian release: $RK_DEBIAN_VERSION (use bullseye)" >&2
+		exit 1
+		;;
+esac
+
+RK_DEBIAN_SRC_DIR="${RK_DEBIAN_SRC_DIR:-$RK_SDK_DIR/debian11}"
+
+if ! ls $RK_DEBIAN_SRC_DIR/ubuntu-build-service/$RK_DEBIAN_VERSION-desktop-$RK_DEBIAN_ARCH >/dev/null 2>&1; then
 	echo -e "\e[35m"
 	echo "Current SDK doesn't support Debian($RK_DEBIAN_VERSION) for $RK_DEBIAN_ARCH"
 	echo "Please try other Debian version."

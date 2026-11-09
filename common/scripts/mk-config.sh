@@ -25,12 +25,51 @@ switch_defconfig()
 rockchip_defconfigs()
 {
 	cd "$RK_CHIP_DIR"
-	ls rockchip_defconfig 2>/dev/null || true
-	ls *_defconfig | grep -v rockchip_defconfig || true
+	local CONFIG SEEN=" "
+	local PREFERRED=(
+		rockchip_defconfig
+		tboard-r5a_rk3588s_ubuntu_server_defconfig
+		tboard-r5a_rk3588s_ubuntu_gnome_defconfig
+		tboard-r5a_rk3588s_debian_xfce_defconfig
+	)
+	local CANDIDATES=("${PREFERRED[@]}" rockchip_defconfig *_defconfig)
+	if [ -f sdk-defconfigs ]; then
+		mapfile -t CANDIDATES < sdk-defconfigs
+	fi
+	for CONFIG in "${CANDIDATES[@]}"; do
+		[ -f "$CONFIG" ] || continue
+		[[ "$SEEN" != *" $CONFIG "* ]] || continue
+		printf '%s\n' "$CONFIG"
+		SEEN+="$CONFIG "
+	done
+}
+
+defconfig_description()
+{
+	case "$1" in
+		rockchip_defconfig)
+			if [ "$RK_CHIP_DIR/$1" -ef \
+				"$RK_CHIP_DIR/tboard-r5a_rk3588s_debian_xfce_defconfig" ]; then
+				echo "Default: Debian 11 Bullseye (Xfce), ARM64"
+			fi
+			;;
+		tboard-r5a_rk3588s_ubuntu_server_defconfig)
+			echo "Ubuntu 22.04 Server" ;;
+		tboard-r5a_rk3588s_ubuntu_gnome_defconfig)
+			echo "Ubuntu 22.04 GNOME Desktop" ;;
+		tboard-r5a_rk3588s_debian_xfce_defconfig)
+			echo "Debian 11 Bullseye (Xfce), ARM64" ;;
+	esac
 }
 
 choose_defconfig()
 {
+	# Exact defconfig names take precedence over menus.
+	if [ -n "$1" ] && [ -f "$RK_CHIP_DIR/$1" ]; then
+		switch_defconfig "$1"
+		return
+	fi
+
 	DEFCONFIG_ARRAY=( $(rockchip_defconfigs | grep "$1" || true) )
 
 	DEFCONFIG_ARRAY_LEN=${#DEFCONFIG_ARRAY[@]}
@@ -48,8 +87,12 @@ choose_defconfig()
 			else
 				message "Pick a defconfig:\n"
 
-				echo ${DEFCONFIG_ARRAY[@]} | xargs -n 1 | \
-					sed "=" | sed "N;s/\n/. /"
+				local I DESCRIPTION
+				for I in "${!DEFCONFIG_ARRAY[@]}"; do
+					DESCRIPTION=$(defconfig_description "${DEFCONFIG_ARRAY[$I]}")
+					printf '%d. %s%s\n' "$((I + 1))" \
+						"${DEFCONFIG_ARRAY[$I]}" "${DESCRIPTION:+ ($DESCRIPTION)}"
+				done
 
 				local INDEX
 				read -p "Which would you like? [1]: " INDEX
@@ -154,7 +197,7 @@ usage_hook()
 	usage_oneline "defconfig[:<config>]" "choose defconfig"
 	usage_oneline " *_defconfig" "switch to specified defconfig"
 	echo "    available defconfigs:"
-	ls "$RK_CHIP_DIR/" 2>/dev/null | grep "defconfig$" | sed "s/^/    /"
+	(rockchip_defconfigs) | sed "s/^/    /"
 	usage_oneline " olddefconfig" "resolve any unresolved symbols in .config"
 	usage_oneline " savedefconfig" "save current config to defconfig"
 	usage_oneline " menuconfig" "interactive curses-based configurator"

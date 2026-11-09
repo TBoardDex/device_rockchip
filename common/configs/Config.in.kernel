@@ -10,9 +10,6 @@ menuconfig RK_KERNEL
 
 if RK_KERNEL
 
-config RK_KERNEL_PREFERRED
-	string "preferred version, e.g. 5.10"
-
 config RK_KERNEL_ARCH
 	string
 	default "arm" if RK_KERNEL_ARM32

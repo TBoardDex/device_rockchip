@@ -30,7 +30,9 @@ then
 	$UPGRADETOOL di -uboot $UBOOT
 	$UPGRADETOOL di -trust $TRUST
 	$UPGRADETOOL di -b $BOOT
-	$UPGRADETOOL di -r $RECOVERY
+	if grep -qE '^CMDLINE:.*\(recovery(:[^)]*)?\)' "$PARAMETER"; then
+		$UPGRADETOOL di -r $RECOVERY
+	fi
 	$UPGRADETOOL di -m $MISC
 	$UPGRADETOOL di -oem $OEM
 	$UPGRADETOOL di -userdata $USERDATA

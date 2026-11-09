@@ -1,0 +1,76 @@
+#
+
+menuconfig RK_UBUNTU
+	bool "Ubuntu (arm64)"
+	depends on RK_KERNEL_ARM64
+	default y if RK_CHIP_FAMILY = "rk3588"
+	help
+	  Build an Ubuntu 22.04 Server or GNOME Desktop rootfs using debootstrap.
+	  Keep the Rockchip kernel, device tree and bootloader.
+
+if RK_UBUNTU
+
+# Keep the existing jammy marker for the versioned board defconfigs.
+config RK_UBUNTU_JAMMY
+	bool
+	default y
+
+choice
+	prompt "Ubuntu edition"
+	default RK_UBUNTU_SERVER
+
+config RK_UBUNTU_SERVER
+	bool "Server (no desktop)"
+
+config RK_UBUNTU_DESKTOP
+	bool "Desktop (GNOME + GDM3)"
+	help
+	  Install the Ubuntu GNOME session and GDM3 using Xorg.
+	  Choose Mali GLES2 acceleration or Mesa software rendering below.
+	  Keep the Rockchip kernel and require password login.
+
+endchoice
+
+if RK_UBUNTU_DESKTOP
+
+choice
+	prompt "Ubuntu desktop renderer"
+	default RK_UBUNTU_GPU_MALI
+
+config RK_UBUNTU_GPU_MALI
+	bool "Mali (G610 EGL/GLES2)"
+	help
+	  Install the release-specific Rockchip Xorg and Mali packages.
+	  Use X11 EGL/GLES2 for GDM and GNOME Shell; validate on the board.
+
+config RK_UBUNTU_GPU_SOFTWARE
+	bool "Software (Mesa llvmpipe)"
+	help
+	  Use the Ubuntu Xorg and Mesa software renderer for recovery.
+
+endchoice
+
+config RK_UBUNTU_DESKTOP_GPU
+	string
+	default "software" if RK_UBUNTU_GPU_SOFTWARE
+	default "mali"
+
+endif # Desktop
+
+config RK_UBUNTU_FLAVOR
+	string
+	default "desktop" if RK_UBUNTU_DESKTOP
+	default "server"
+
+config RK_UBUNTU_VERSION
+	string
+	default "jammy"
+
+config RK_UBUNTU_MIRROR
+	string "Ubuntu ports mirror URL"
+	default "https://ports.ubuntu.com/ubuntu-ports"
+	help
+	  Full URL of a signed Ubuntu ports archive, including ubuntu-ports.
+
+endif # Ubuntu
+endmenuconfig # Ubuntu

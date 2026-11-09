@@ -24,5 +24,8 @@ case "$POST_OS" in
 	yocto) BUILD_INFO="$BUILD_INFO - ${RK_YOCTO_MACHINE:-$RK_YOCTO_CFG}" ;;
 esac
 
-fixup_os_release ID_LIKE "$POST_OS"
+# Ubuntu's ID_LIKE=debian is used by distribution detection tools.
+if [ "$POST_OS" != ubuntu ]; then
+	fixup_os_release ID_LIKE "$POST_OS"
+fi
 fixup_os_release RK_BUILD_INFO "$BUILD_INFO"

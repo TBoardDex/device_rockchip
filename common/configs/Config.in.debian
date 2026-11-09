@@ -21,24 +21,21 @@ if RK_DEBIAN
 
 config RK_DEBIAN_VERSION
 	string
-	default "buster" if RK_DEBIAN_BUSTER
-	default "bullseye" if RK_DEBIAN_BULLSEYE
-	default "bookworm" if RK_DEBIAN_BOOKWORM
+	default "bullseye"
 
-choice
-	prompt "distro"
-	default RK_DEBIAN_BULLSEYE
-
-config RK_DEBIAN_BUSTER
-	bool "buster"
-
+# Keep the existing marker used by the Debian 11 board defconfigs.
 config RK_DEBIAN_BULLSEYE
-	bool "bullseye"
+	bool
+	default y
 
-config RK_DEBIAN_BOOKWORM
-	bool "bookworm"
+# Debian builds use the Xfce desktop only.
+config RK_DEBIAN_XFCE
+	bool
+	default y
 
-endchoice # distro
+config RK_DEBIAN_FLAVOR
+	string
+	default "xfce"
 
 config RK_DEBIAN_ARCH
 	string

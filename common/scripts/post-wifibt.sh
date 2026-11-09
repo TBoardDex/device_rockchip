@@ -13,10 +13,21 @@ build_wifibt()
 	message "          Start building wifi/BT ($RK_WIFIBT_MODULES)"
 	message "=========================================="
 
-	RKWIFIBT_DIR="$RK_SDK_DIR/external/rkwifibt"
+	RKWIFIBT_DIR="$RK_WIFIBT_RESOURCE_DIR"
+	local distro_resources=
+	case "$POST_OS:$RK_WIFIBT_MODULES" in
+		debian:AIC8800* | ubuntu:AIC8800*)
+			distro_resources=1
+			[ -d "$RKWIFIBT_DIR/scripts" ] && [ -d "$RK_AIC_FIRMWARE_DIR" ] || {
+				error "Missing $POST_OS Wi-Fi scripts or AIC8800 firmware"
+				return 1
+			}
+			;;
+	esac
 
 	echo -e "\e[36m"
-	if find "$RKWIFIBT_DIR"/* -not -user $RK_OWNER_UID | grep ""; then
+	if [ -z "$distro_resources" ] && \
+		find "$RKWIFIBT_DIR"/* -not -user $RK_OWNER_UID | grep ""; then
 		error "Found files owned by other users!"
 		error "$RKWIFIBT_DIR is dirty for building!"
 		error "Please clear it:"
@@ -52,6 +63,15 @@ build_wifibt()
 		fi
 	fi
 	echo "kernel config: $WIFI_USB $WIFI_SDIO $WIFI_RFKILL"
+
+	if [[ "$RK_WIFIBT_MODULES" = AIC8800* ]]; then
+		if ! grep -qx 'CONFIG_AIC_WLAN_SUPPORT=m' kernel/.config; then
+			error "Enable CONFIG_AIC_WLAN_SUPPORT=m for AIC8800 SDIO"
+			return 1
+		fi
+		echo "building AIC8800 SDIO drivers"
+		$KMAKE M="$RK_SDK_DIR/kernel/drivers/net/wireless/aic8800" modules
+	fi
 
 	if [[ "$RK_WIFIBT_MODULES" =~ "ALL_AP" ]];then
 		echo "building bcmdhd sdio"
@@ -250,7 +270,7 @@ build_wifibt()
 		$KMAKE M=$RKWIFIBT_DIR/drivers/rtl8852be modules
 	fi
 
-	if ! [[ "$RK_KERNEL_VERSION_RAW" = "6.1" ]];then
+	if ! [[ "$RK_KERNEL_VERSION_RAW" = "6.1" || "$RK_WIFIBT_MODULES" = AIC8800* ]];then
 		echo "building realtek bt drivers"
 		$KMAKE M=$RKWIFIBT_DIR/drivers/bluetooth_uart_driver
 		if [ -n "$WIFI_USB" ]; then
@@ -269,19 +289,41 @@ build_wifibt()
 	ln -rsf "$TARGET_DIR/system" "$TARGET_DIR/vendor"
 
 	echo "installing tools and scripts"
-	ensure_tools "$TARGET_DIR/usr/bin/brcm_patchram_plus1" \
-		"$TARGET_DIR/usr/bin/dhd_priv" \
-		"$TARGET_DIR/usr/bin/rtk_hciattach"
+	if [ -z "$distro_resources" ]; then
+		ensure_tools "$TARGET_DIR/usr/bin/brcm_patchram_plus1" \
+			"$TARGET_DIR/usr/bin/dhd_priv" \
+			"$TARGET_DIR/usr/bin/rtk_hciattach"
+	else
+		install -D -m 0644 "$RKWIFIBT_DIR/LICENSE" \
+			"$TARGET_DIR/usr/share/doc/tboard-wifibt/copyright"
+		# The attach helper uses only Python's standard library, with no
+		# Android libraries or target compiler required in the rootfs.
+		[ -x "$TARGET_DIR/usr/bin/python3" ] || {
+			error "Install python3 in $POST_OS before the AIC8800 Bluetooth hook"
+			return 1
+		}
+		install -D -m 0644 "$RKWIFIBT_DIR/LICENSE.aic-bluetooth" \
+			"$TARGET_DIR/usr/share/doc/tboard-aic8800-bluetooth/copyright"
+		install -D -m 0644 "$RKWIFIBT_DIR/aic8800-bluetooth.conf" \
+			"$TARGET_DIR/etc/aic8800-bluetooth.conf"
+		install_systemd_service "$RKWIFIBT_DIR/aic8800-bluetooth.service"
+	fi
 
 	install -m 0655 $RKWIFIBT_DIR/conf/* "$TARGET_DIR/etc/"
 	install -m 0755 $RKWIFIBT_DIR/scripts/* "$TARGET_DIR/usr/bin/"
+	if [ "$distro_resources" ]; then
+		# Verify the target's Python stdlib (including termios), without
+		# opening a UART or requiring any Bluetooth hardware on the host.
+		chroot "$TARGET_DIR" /usr/bin/python3 -B /usr/bin/aic8800-bt-attach \
+			--check-config --config /etc/aic8800-bluetooth.conf
+	fi
 	rm -f "$TARGET_DIR/usr/bin/wifibt-sleep-hook.sh"
 	for b in bt-tty wifibt-info wifibt-vendor wifibt-id wifibt-bus \
 		wifibt-chip wifibt-module; do
 		ln -sf wifibt-util.sh "$TARGET_DIR/usr/bin/$b"
 	done
 
-	if [ "$RK_ROOTFS_PREBUILT_TOOLS" ]; then
+	if [ "$RK_ROOTFS_PREBUILT_TOOLS" ] && [ -z "$distro_resources" ]; then
 		echo "installing prebuilt debug tools"
 		install -m 0755 $RKWIFIBT_DIR/bin/arm/* "$TARGET_DIR/usr/bin/"
 	fi
@@ -373,6 +415,21 @@ build_wifibt()
 		cp $RKWIFIBT_DIR/firmware/broadcom/$RK_WIFIBT_MODULES/bt/* \
 			$TARGET_DIR/lib/firmware/
 		cp $RKWIFIBT_DIR/drivers/bcmdhd/*.ko $TARGET_DIR/lib/modules/
+	fi
+
+	if [[ "$RK_WIFIBT_MODULES" = AIC8800* ]]; then
+		local aic_driver="$RK_SDK_DIR/kernel/drivers/net/wireless/aic8800"
+		mkdir -p "$TARGET_DIR/lib/firmware/aic8800"
+		install -m 0644 "$aic_driver/aic8800_bsp/aic8800_bsp.ko" \
+			"$aic_driver/aic8800_fdrv/aic8800_fdrv.ko" "$TARGET_DIR/lib/modules/"
+		# Filenames are distinct across the supported SDIO chip families.
+		if [ "$distro_resources" ]; then
+			install -m 0644 "$RK_AIC_FIRMWARE_DIR"/* \
+				"$TARGET_DIR/lib/firmware/aic8800/"
+		else
+			install -m 0644 "$RKWIFIBT_DIR"/firmware/aicsemi/*/* \
+				"$TARGET_DIR/lib/firmware/aic8800/"
+		fi
 	fi
 
 	# Install boot services

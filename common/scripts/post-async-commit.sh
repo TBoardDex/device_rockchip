@@ -15,10 +15,10 @@ rm -f etc/init.d/S*_commit.sh \
 cd "$RK_SDK_DIR"
 
 mkdir -p "$TARGET_DIR/usr/bin"
-install -m 0755 external/rkscript/async-commit "$TARGET_DIR/usr/bin/"
+install -m 0755 "$RK_RKSCRIPT_DIR"/async-commit "$TARGET_DIR/usr/bin/"
 
 ensure_tools "$TARGET_DIR/usr/bin/modetest"
 
-install_sysv_service external/rkscript/S*async-commit.sh S
-install_busybox_service external/rkscript/S*async-commit.sh
-install_systemd_service external/rkscript/async-commit.service
+install_sysv_service "$RK_RKSCRIPT_DIR"/S*async-commit.sh S
+install_busybox_service "$RK_RKSCRIPT_DIR"/S*async-commit.sh
+install_systemd_service "$RK_RKSCRIPT_DIR"/async-commit.service

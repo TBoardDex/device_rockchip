@@ -316,7 +316,10 @@ do_run_hooks()
 		# Ignore unrelated hooks
 		hook_check "$hook" "$@" || continue
 
-		if ! "$hook" "$@"; then
+		if "$hook" "$@"; then
+			:
+		else
+			# Capture the hook's status, not the status of a negated command.
 			HOOK_RET=$?
 			err_handler $HOOK_RET \
 				"${FUNCNAME[0]} $*" "$hook $*"

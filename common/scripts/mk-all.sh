@@ -4,6 +4,54 @@ BOARD=$(echo ${RK_KERNEL_DTS_NAME:-$(echo "$RK_DEFCONFIG" | \
 	sed -n "s/.*\($RK_CHIP.*\)_defconfig/\1/p")} | \
 	tr '[:lower:]' '[:upper:]')
 
+archive_images()
+(
+	local SYSTEM="${RK_ROOTFS_SYSTEM:-buildroot}" STYLE VERSION
+	case "$SYSTEM" in
+		debian)
+			VERSION="${RK_DEBIAN_VERSION:-bullseye}"
+			case "$VERSION" in
+				bullseye) VERSION=11 ;;
+			esac
+			SYSTEM="debian$VERSION"
+			STYLE=Xfce
+			;;
+		ubuntu)
+			VERSION="${RK_UBUNTU_VERSION:-jammy}"
+			case "$VERSION" in
+				jammy) VERSION=22.04 ;;
+			esac
+			SYSTEM="ubuntu$VERSION"
+			case "${RK_UBUNTU_FLAVOR:-server}" in
+				desktop) STYLE=GNOME ;;
+				*) STYLE=Server ;;
+			esac
+			;;
+		yocto) STYLE="${RK_YOCTO_DISPLAY_PLATFORM:-default}" ;;
+		*) STYLE=default ;;
+	esac
+
+	local IMAGE_BASE="$RK_SDK_DIR/IMAGE"
+	local IMAGE_NAME="$SYSTEM-$STYLE-$(TZ=Asia/Shanghai date +%Y%m%d%H%M)"
+	local IMAGE_DIR="$IMAGE_BASE/$IMAGE_NAME" IMAGE_STAGE INDEX=2
+	mkdir -p "$IMAGE_BASE"
+	IMAGE_STAGE=$(mktemp -d "$IMAGE_BASE/.archive.XXXXXXXX")
+	trap 'rm -rf -- "$IMAGE_STAGE"' EXIT
+	trap 'exit 130' INT
+	trap 'exit 143' TERM
+	# Publish only complete copies. Failed or interrupted copies are removed.
+	cp -aL --reflink=auto --sparse=always "$RK_ROCKDEV_DIR/." \
+		"$IMAGE_STAGE/" || exit $?
+	# Keep earlier archives when builds finish within the same minute.
+	while [ -e "$IMAGE_DIR" ] || [ -L "$IMAGE_DIR" ]; do
+		IMAGE_DIR="$IMAGE_BASE/$IMAGE_NAME-$INDEX"
+		INDEX=$((INDEX + 1))
+	done
+	mv -T "$IMAGE_STAGE" "$IMAGE_DIR" || exit $?
+	trap - EXIT
+	notice "Images archived to $IMAGE_DIR"
+)
+
 build_all()
 {
 	message "=========================================="
@@ -26,6 +74,7 @@ build_all()
 	[ -z "$RK_AMP" ] || "$RK_SCRIPTS_DIR/mk-amp.sh"
 
 	"$RK_SCRIPTS_DIR/mk-firmware.sh"
+	archive_images
 
 	finish_build
 }
@@ -41,6 +90,13 @@ build_release()
 	case "$(readlink "$RK_OUTDIR/rootfs")" in
 		buildroot) RELEASE_DIR="$RELEASE_BASE_DIR/BUILDROOT" ;;
 		debian) RELEASE_DIR="$RELEASE_BASE_DIR/DEBIAN" ;;
+		debian-bullseye-xfce | debian-xfce)
+			RELEASE_DIR="$RELEASE_BASE_DIR/DEBIAN-XFCE" ;;
+		ubuntu) RELEASE_DIR="$RELEASE_BASE_DIR/UBUNTU" ;;
+		ubuntu-server) RELEASE_DIR="$RELEASE_BASE_DIR/UBUNTU-SERVER" ;;
+		ubuntu-desktop) RELEASE_DIR="$RELEASE_BASE_DIR/UBUNTU-DESKTOP" ;;
+		ubuntu-jammy-server) RELEASE_DIR="$RELEASE_BASE_DIR/UBUNTU-JAMMY-SERVER" ;;
+		ubuntu-jammy-desktop) RELEASE_DIR="$RELEASE_BASE_DIR/UBUNTU-JAMMY-DESKTOP" ;;
 		yocto) RELEASE_DIR="$RELEASE_BASE_DIR/YOCTO" ;;
 		*) RELEASE_DIR="$RELEASE_BASE_DIR" ;;
 	esac

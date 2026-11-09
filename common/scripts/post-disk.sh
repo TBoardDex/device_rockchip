@@ -17,7 +17,7 @@ cd "$RK_SDK_DIR"
 
 mkdir -p "$TARGET_DIR/usr/bin"
 
-install -m 0755 external/rkscript/disk-helper "$TARGET_DIR/usr/bin/"
+install -m 0755 "$RK_RKSCRIPT_DIR"/disk-helper "$TARGET_DIR/usr/bin/"
 
 if [ "$RK_DISK_HELPERS_MOUNTALL" ]; then
 	DISK_HELPER_TYPE=mount
@@ -33,12 +33,12 @@ fi
 
 message "Installing $DISK_HELPER_TYPE service..."
 
-install -m 0755 external/rkscript/$DISK_HELPER_TYPE-helper \
+install -m 0755 "$RK_RKSCRIPT_DIR"/$DISK_HELPER_TYPE-helper \
 	"$TARGET_DIR/usr/bin/"
 
-SCRIPT=$(ls external/rkscript/ | grep ${DISK_HELPER_TYPE}all.sh)
+SCRIPT=$(ls "$RK_RKSCRIPT_DIR"/ | grep ${DISK_HELPER_TYPE}all.sh)
 
-install_busybox_service external/rkscript/$SCRIPT
+install_busybox_service "$RK_RKSCRIPT_DIR"/$SCRIPT
 
 if [ "$DISK_HELPER_TYPE" = mount ]; then
 	if [ "$RK_DISK_AUTO_FORMAT" ]; then
@@ -57,5 +57,5 @@ if [ "$DISK_HELPER_TYPE" = mount ]; then
 	exit 0
 fi
 
-install_sysv_service external/rkscript/$SCRIPT S
-install_systemd_service external/rkscript/$DISK_HELPER_TYPE-all.service
+install_sysv_service "$RK_RKSCRIPT_DIR"/$SCRIPT S
+install_systemd_service "$RK_RKSCRIPT_DIR"/$DISK_HELPER_TYPE-all.service

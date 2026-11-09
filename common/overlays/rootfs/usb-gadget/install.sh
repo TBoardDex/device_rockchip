@@ -160,16 +160,16 @@ install_ums
 install_uvc
 
 mkdir -p "$TARGET_DIR/lib/udev/rules.d"
-install -m 0644 external/rkscript/61-usbdevice.rules \
+install -m 0644 "$RK_RKSCRIPT_DIR"/61-usbdevice.rules \
 	"$TARGET_DIR/lib/udev/rules.d/"
 
-install -m 0755 external/rkscript/usbdevice "$TARGET_DIR/usr/bin/"
+install -m 0755 "$RK_RKSCRIPT_DIR"/usbdevice "$TARGET_DIR/usr/bin/"
 
 message "Installing USB services..."
 
-install_sysv_service external/rkscript/S*usbdevice.sh 5 4 3 2 K01 0 1 6
-install_busybox_service external/rkscript/S*usbdevice.sh
-install_systemd_service external/rkscript/usbdevice.service
+install_sysv_service "$RK_RKSCRIPT_DIR"/S*usbdevice.sh 5 4 3 2 K01 0 1 6
+install_busybox_service "$RK_RKSCRIPT_DIR"/S*usbdevice.sh
+install_systemd_service "$RK_RKSCRIPT_DIR"/usbdevice.service
 
 mkdir -p "$TARGET_DIR/etc/usbdevice.d"
 for hook in $RK_USB_HOOKS; do

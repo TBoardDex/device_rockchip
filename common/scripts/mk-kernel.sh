@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-KERNELS=$(ls | grep kernel- || true)
-
 do_make_kernel_config()
 {
 	KERNEL_CONFIGS_DIR="$RK_SDK_DIR/kernel/arch/$RK_KERNEL_ARCH/configs"
@@ -302,10 +300,6 @@ EOF
 
 usage_hook()
 {
-	for k in $KERNELS; do
-		usage_oneline "$k[:dry-run]" "build kernel ${k#kernel-}"
-	done
-
 	usage_oneline "kernel[:dry-run]" "build kernel"
 	usage_oneline "recovery-kernel[:dry-run]" "build kernel for recovery"
 	usage_oneline "kernel-modules[:<dst dir>:dry-run]" "build kernel modules"
@@ -326,53 +320,14 @@ clean_hook()
 	rm -rf "$RK_FIRMWARE_DIR/boot.img"
 }
 
-INIT_CMDS="default $KERNELS"
+INIT_CMDS="default"
 init_hook()
 {
 	load_config RK_KERNEL_CFG
 	check_config RK_KERNEL_CFG &>/dev/null || return 0
 
-	local KERNEL_LAST="$(cat "$RK_OUTDIR/.kernel" 2>/dev/null || true)"
-	local KERNEL_CURRENT="$(kernel_version)"
-
-	load_config RK_KERNEL_PREFERRED
-
-	# Priority: cmdline > env > last selected > preferred > current symlink
-	if echo $1 | grep -q "^kernel-"; then
-		export RK_KERNEL_VERSION=${1#kernel-}
-		notice "Using kernel version($RK_KERNEL_VERSION) from cmdline"
-	elif [ "$RK_KERNEL_VERSION" ]; then
-		export RK_KERNEL_VERSION=${RK_KERNEL_VERSION//\"/}
-		notice "Using kernel version($RK_KERNEL_VERSION) from environment"
-	elif [ "$KERNEL_LAST" ]; then
-		export RK_KERNEL_VERSION=$KERNEL_LAST
-		notice "Using last kernel version($RK_KERNEL_VERSION)"
-	elif [ "$RK_KERNEL_PREFERRED" ]; then
-		export RK_KERNEL_VERSION=$RK_KERNEL_PREFERRED
-		notice "Using preferred kernel version($RK_KERNEL_VERSION)"
-	elif [ "$KERNEL_CURRENT" ]; then
-		RK_KERNEL_VERSION=$KERNEL_CURRENT
-		notice "Using current kernel version($RK_KERNEL_VERSION)"
-	else
-		RK_KERNEL_VERSION=5.10
-		notice "Fallback to kernel version($RK_KERNEL_VERSION)"
-	fi
-
-	# Save the selected version
-	echo "$RK_KERNEL_VERSION" > "$RK_OUTDIR/.kernel"
-
-	[ "$RK_KERNEL_VERSION" != "$KERNEL_CURRENT" ] || return 0
-
-	# Update kernel
-	KERNEL_DIR=kernel-$RK_KERNEL_VERSION
-	notice "\nSwitching to $KERNEL_DIR"
-	if [ ! -d "$KERNEL_DIR" ]; then
-		error "$KERNEL_DIR not exist!"
-		exit 1
-	fi
-
-	rm -rf kernel
-	ln -rsf $KERNEL_DIR kernel
+	# The SDK builds the single source tree checked out at kernel/.
+	export RK_KERNEL_VERSION="$(kernel_version)"
 }
 
 PRE_BUILD_CMDS="kernel-config kconfig kernel-make kmake"
@@ -417,7 +372,7 @@ pre_build_hook_dry()
 	DRY_RUN=1 pre_build_hook $@
 }
 
-BUILD_CMDS="$KERNELS kernel recovery-kernel kernel-modules modules"
+BUILD_CMDS="kernel recovery-kernel kernel-modules modules"
 build_hook()
 {
 	check_config RK_KERNEL RK_KERNEL_CFG || false
@@ -429,12 +384,6 @@ build_hook()
 
 	case "$1" in
 		recovery-kernel) build_recovery_kernel $@ ;;
-		kernel-*)
-			if [ "$RK_KERNEL_VERSION" != "${1#kernel-}" ] &&
-				echo $KERNELS | grep -wq "$1"; then
-				warning "Kernel version ${1#kernel-} ignored"
-			fi
-			;&
 		*) do_build $@ ;;
 	esac
 

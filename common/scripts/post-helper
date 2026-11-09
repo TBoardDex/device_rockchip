@@ -118,6 +118,7 @@ unset POST_OS
 case "$(grep "^ID=" "$TARGET_DIR/etc/os-release" 2>/dev/null || true)" in
 	ID=buildroot) POST_OS=buildroot ;;
 	ID=debian) POST_OS=debian ;;
+	ID=ubuntu|ID=\"ubuntu\") POST_OS=ubuntu ;;
 	ID=poky) POST_OS=yocto ;;
 esac
 case "$TARGET_DIR/" in
@@ -128,9 +129,40 @@ export POST_OS=${POST_OS:-unknown}
 
 # Override OS type
 case "$1" in
-	buildroot|debian|yocto|ramboot|recovery|unknown)
+	buildroot|debian|ubuntu|yocto|ramboot|recovery|unknown)
 		POST_OS="$1"
 		shift
+		;;
+esac
+
+# Each Debian/Ubuntu tree owns its runtime resources. Other rootfs builders
+# retain their original vendor source paths.
+case "$POST_OS" in
+	debian|ubuntu)
+		# Resolve resources only for the distributions included in this SDK.
+		POST_OS_VERSION=$(sed -n 's/^VERSION_ID=//p' \
+			"$TARGET_DIR/etc/os-release" 2>/dev/null | tr -d '"' | head -n 1)
+		case "$POST_OS:$POST_OS_VERSION" in
+			debian:11) POST_OS_SRC_DIR="$RK_SDK_DIR/debian11" ;;
+			ubuntu:22.04) POST_OS_SRC_DIR="$RK_SDK_DIR/ubuntu22.04" ;;
+			*)
+				error "Unsupported rootfs release: $POST_OS $POST_OS_VERSION"
+				exit 1
+				;;
+		esac
+
+		export RK_RKSCRIPT_DIR="$POST_OS_SRC_DIR/bsp/rkscript"
+		case "$RK_WIFIBT_MODULES" in
+			AIC8800*)
+				export RK_WIFIBT_RESOURCE_DIR="$POST_OS_SRC_DIR/bsp/wifibt"
+				;;
+			*) export RK_WIFIBT_RESOURCE_DIR="$RK_SDK_DIR/external/rkwifibt" ;;
+		esac
+		export RK_AIC_FIRMWARE_DIR="$POST_OS_SRC_DIR/overlay-firmware/lib/firmware/aic8800"
+		;;
+	*)
+		export RK_RKSCRIPT_DIR="$RK_SDK_DIR/external/rkscript"
+		export RK_WIFIBT_RESOURCE_DIR="$RK_SDK_DIR/external/rkwifibt"
 		;;
 esac
 
@@ -138,7 +170,7 @@ echo "$POST_OS_DISALLOWED" | grep -wvq $POST_OS || exit 0
 
 unset POST_ROOTFS
 case "$POST_OS" in
-	buildroot | debian | yocto) POST_ROOTFS=1 ;;
+	buildroot | debian | ubuntu | yocto) POST_ROOTFS=1 ;;
 	*) [ -z "$POST_ROOTFS_ONLY" ] || exit 0 ;;
 esac
 

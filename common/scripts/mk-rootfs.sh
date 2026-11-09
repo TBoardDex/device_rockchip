@@ -1,5 +1,33 @@
 #!/bin/bash -e
 
+# Source trees provided by this SDK: debian11 and ubuntu22.04.
+debian_src_dir()
+{
+	case "${RK_DEBIAN_VERSION:-bullseye}" in
+		bullseye) echo "$RK_SDK_DIR/debian11" ;;
+		*) error "Unsupported Debian release: $RK_DEBIAN_VERSION" >&2 ;;
+	esac
+}
+
+ubuntu_src_dir()
+{
+	case "${RK_UBUNTU_VERSION:-jammy}" in
+		jammy) echo "$RK_SDK_DIR/ubuntu22.04" ;;
+		*) error "Unsupported Ubuntu release: $RK_UBUNTU_VERSION" >&2 ;;
+	esac
+}
+
+# Debian Xfce output directory.
+debian_rootfs_dir()
+{
+	case "${RK_DEBIAN_VERSION:-bullseye}" in
+		bullseye) ;;
+		*) error "Unsupported Debian release: $RK_DEBIAN_VERSION" >&2; return 1 ;;
+	esac
+
+	echo "$RK_OUTDIR/debian-${RK_DEBIAN_VERSION:-bullseye}-xfce"
+}
+
 build_buildroot()
 {
 	check_config RK_BUILDROOT || false
@@ -188,16 +216,28 @@ build_debian()
 {
 	check_config RK_DEBIAN || false
 
-	IMAGE_DIR="${1:-$RK_OUTDIR/debian}"
+	IMAGE_DIR="${1:-$(debian_rootfs_dir)/images}"
 	ARCH=${RK_DEBIAN_ARCH:-armhf}
+
+	DEBIAN_SRC_DIR=$(debian_src_dir)
+	DEBIAN_MAJOR="${DEBIAN_SRC_DIR##*debian}"
+	[ -d "$DEBIAN_SRC_DIR" ] || {
+		error "Debian source tree not found: $DEBIAN_SRC_DIR"
+		error "Add debian${DEBIAN_MAJOR} or select another Debian release."
+		return 1
+	}
+
+	export RK_DEBIAN_SRC_DIR="$DEBIAN_SRC_DIR"
+
+	ARCH="$ARCH" "$DEBIAN_SRC_DIR/check-resources.sh"
 
 	"$RK_SCRIPTS_DIR/check-debian.sh"
 
 	message "=========================================="
-	message "          Start building $RK_DEBIAN_VERSION($ARCH)"
+	message "          Start building $RK_DEBIAN_VERSION($ARCH, xfce)"
 	message "=========================================="
 
-	cd debian
+	cd "$DEBIAN_SRC_DIR"
 	if [ ! -f linaro-$RK_DEBIAN_VERSION-alip-*.tar.gz ]; then
 		RELEASE=$RK_DEBIAN_VERSION TARGET=desktop ARCH=$ARCH \
 			./mk-base-debian.sh
@@ -212,16 +252,54 @@ build_debian()
 		sed -i "s#\(http://\)[^/]*#\1$RK_DEBIAN_MIRROR#" "$DEBIAN_SCRIPT"
 	fi
 
-	VERSION=debug ARCH=$ARCH ./$DEBIAN_SCRIPT
-	./mk-image.sh
+	VERSION=debug ARCH=$ARCH FLAVOR=xfce ./$DEBIAN_SCRIPT
+	ARCH="$ARCH" FLAVOR=xfce ./mk-image.sh
 
 	if ! [ -r "$RK_LOG_DIR/post-rootfs.log" ]; then
 		warning "Building without post-rootfs stage!"
 	fi
 
-	ln -rsf "$PWD/linaro-rootfs.img" "$IMAGE_DIR/rootfs.ext4"
+	ln -rsf "$PWD/tboard-debian$DEBIAN_MAJOR-xfce-rootfs.img" \
+		"$IMAGE_DIR/rootfs.ext4"
 
 	finish_build build_debian $@
+}
+
+ubuntu_rootfs_dir()
+{
+	local UBUNTU_VERSION="${RK_UBUNTU_VERSION:-jammy}"
+
+	case "$UBUNTU_VERSION" in
+		jammy) ;;
+		*) error "Unsupported Ubuntu release: $UBUNTU_VERSION" >&2; return 1 ;;
+	esac
+
+	echo "$RK_OUTDIR/ubuntu-$UBUNTU_VERSION-${RK_UBUNTU_FLAVOR:-server}"
+}
+
+build_ubuntu()
+{
+	check_config RK_UBUNTU || false
+	[ "$RK_KERNEL_ARCH" = arm64 ] && [ "$RK_ROOTFS_TYPE" = ext4 ] || {
+		error "Ubuntu requires an arm64 kernel and ext4 rootfs"
+		return 1
+	}
+
+	UBUNTU_SRC_DIR=$(ubuntu_src_dir)
+	[ -d "$UBUNTU_SRC_DIR" ] || {
+		error "Ubuntu source tree not found: $UBUNTU_SRC_DIR"
+		error "Add the matching ubuntu<version> tree for ${RK_UBUNTU_VERSION:-jammy}."
+		return 1
+	}
+
+	IMAGE_DIR="${1:-$(ubuntu_rootfs_dir)/images}"
+	RK_UBUNTU_FLAVOR="${RK_UBUNTU_FLAVOR:-server}" \
+	RK_UBUNTU_VERSION="${RK_UBUNTU_VERSION:-jammy}" \
+	RK_UBUNTU_MIRROR="$RK_UBUNTU_MIRROR" \
+	RK_UBUNTU_DESKTOP_GPU="${RK_UBUNTU_DESKTOP_GPU:-${UBUNTU_DESKTOP_GPU:-mali}}" \
+		"$UBUNTU_SRC_DIR/build.sh" "$IMAGE_DIR"
+
+	finish_build build_ubuntu $@
 }
 
 # Hooks
@@ -237,13 +315,16 @@ usage_hook()
 	usage_oneline "rootfs[:<rootfs type>]" "build default rootfs"
 	usage_oneline "buildroot" "build buildroot rootfs"
 	usage_oneline "yocto" "build yocto rootfs"
-	usage_oneline "debian" "build debian rootfs"
+	usage_oneline "debian" "build Debian Xfce Desktop"
+	usage_oneline "ubuntu" "build configured Ubuntu edition"
+	usage_oneline "ubuntu-server" "select and build Ubuntu Server"
+	usage_oneline "ubuntu-desktop" "select and build Ubuntu GNOME Desktop"
 }
 
 clean_hook()
 {
 	rm -rf yocto/build/tmp yocto/build/*cache
-	rm -rf debian/binary
+	rm -rf debian[0-9]*/binary debian[0-9]*/binary-*
 
 	if check_config RK_BUILDROOT &>/dev/null; then
 		rm -rf buildroot/output/$RK_BUILDROOT_CFG
@@ -252,19 +333,42 @@ clean_hook()
 	rm -rf "$RK_OUTDIR/buildroot"
 	rm -rf "$RK_OUTDIR/yocto"
 	rm -rf "$RK_OUTDIR/debian"
+	rm -rf "$RK_OUTDIR"/debian-*
+	rm -rf "$RK_OUTDIR/ubuntu"
+	rm -rf "$RK_OUTDIR/ubuntu-server" "$RK_OUTDIR/ubuntu-desktop"
+	rm -rf "$RK_OUTDIR/ubuntu-jammy-server" "$RK_OUTDIR/ubuntu-jammy-desktop"
 	rm -rf "$RK_OUTDIR/rootfs"
 	rm -rf "$RK_FIRMWARE_DIR/rootfs.img"
 }
 
-INIT_CMDS="default buildroot debian yocto"
+INIT_CMDS="default buildroot debian ubuntu ubuntu-server ubuntu-desktop yocto"
 init_hook()
 {
 	load_config RK_ROOTFS
 	check_config RK_ROOTFS &>/dev/null || return 0
 
+	# Keep Ubuntu as the OS; persist its edition as a separate Kconfig choice.
+	local ROOTFS_COMMAND="$1"
+	local CONFIG_CHANGED=
+	local FLAVOR
+	case "$1" in
+		ubuntu-server | ubuntu-desktop)
+			FLAVOR="${1#ubuntu-}"
+			local FLAVOR_CHOICE="RK_UBUNTU_${FLAVOR^^}"
+			if ! grep -q "^$FLAVOR_CHOICE=y$" "$RK_CONFIG"; then
+				sed -i -e "/RK_UBUNTU_SERVER/d" \
+					-e "/RK_UBUNTU_DESKTOP/d" \
+					-e "/^RK_UBUNTU_FLAVOR=/d" "$RK_CONFIG"
+				echo "$FLAVOR_CHOICE=y" >> "$RK_CONFIG"
+				CONFIG_CHANGED=1
+			fi
+			ROOTFS_COMMAND=ubuntu
+			;;
+	esac
+
 	# Priority: cmdline > custom env
 	if [ "$1" != default ]; then
-		export RK_ROOTFS_SYSTEM=$1
+		export RK_ROOTFS_SYSTEM=$ROOTFS_COMMAND
 		notice "Using rootfs system($RK_ROOTFS_SYSTEM) from cmdline"
 	elif [ "$RK_ROOTFS_SYSTEM" ]; then
 		export RK_ROOTFS_SYSTEM=${RK_ROOTFS_SYSTEM//\"/}
@@ -285,8 +389,13 @@ init_hook()
 		sed -i -e "/RK_ROOTFS_SYSTEM/d" "$RK_CONFIG"
 		echo "$ROOTFS_CONFIG" >> "$RK_CONFIG"
 		echo "$ROOTFS_CHOICE=y" >> "$RK_CONFIG"
+		CONFIG_CHANGED=1
+	fi
+	if [ "$CONFIG_CHANGED" ]; then
 		"$RK_SCRIPTS_DIR/mk-config.sh" olddefconfig &>/dev/null
 	fi
+	load_config RK_UBUNTU_FLAVOR RK_UBUNTU_VERSION RK_UBUNTU_DESKTOP_GPU \
+		RK_DEBIAN_VERSION RK_DEBIAN_ARCH RK_DEBIAN_MIRROR
 }
 
 PRE_BUILD_CMDS="buildroot-config bconfig buildroot-make bmake"
@@ -320,7 +429,7 @@ pre_build_hook()
 	esac
 }
 
-BUILD_CMDS="rootfs buildroot debian yocto"
+BUILD_CMDS="rootfs buildroot debian ubuntu ubuntu-server ubuntu-desktop yocto"
 build_hook()
 {
 	check_config RK_ROOTFS || false
@@ -330,9 +439,19 @@ build_hook()
 	else
 		ROOTFS=$1
 	fi
+	case "$ROOTFS" in
+		ubuntu-server | ubuntu-desktop)
+			export RK_UBUNTU_FLAVOR="${ROOTFS#ubuntu-}"
+			ROOTFS=ubuntu
+			;;
+	esac
 
 	ROOTFS_IMG=rootfs.${RK_ROOTFS_TYPE}
 	ROOTFS_DIR="$RK_OUTDIR/$ROOTFS"
+	case "$ROOTFS" in
+		ubuntu) ROOTFS_DIR=$(ubuntu_rootfs_dir) ;;
+		debian) ROOTFS_DIR=$(debian_rootfs_dir) ;;
+	esac
 	IMAGE_DIR="$ROOTFS_DIR/images"
 
 	message "=========================================="
@@ -340,7 +459,7 @@ build_hook()
 	message "=========================================="
 
 	case "$ROOTFS" in
-		yocto | debian | buildroot) ;;
+		yocto | debian | ubuntu | buildroot) ;;
 		*) usage ;;
 	esac
 
@@ -352,7 +471,18 @@ build_hook()
 	case "$ROOTFS" in
 		yocto) build_yocto "$IMAGE_DIR" ;;
 		debian) build_debian "$IMAGE_DIR" ;;
+		ubuntu) build_ubuntu "$IMAGE_DIR" ;;
 		buildroot) build_buildroot "$IMAGE_DIR" ;;
+	esac
+	# post-rootfs publishes the target under the generic OS directory.
+	# Keep it reachable through the selected, versioned output directory too.
+	case "$ROOTFS" in
+		debian | ubuntu)
+			if [ -d "$RK_OUTDIR/$ROOTFS/target" ]; then
+				ln -rsfT "$(realpath "$RK_OUTDIR/$ROOTFS/target")" \
+					"$ROOTFS_DIR/target"
+			fi
+			;;
 	esac
 	touch "$ROOTFS_DIR/.stamp_build_finish"
 
@@ -406,6 +536,6 @@ source "${RK_BUILD_HELPER:-$(dirname "$(realpath "$0")")/build-helper}"
 case "${1:-rootfs}" in
 	buildroot-config | bconfig | buildroot-make | bmake) pre_build_hook $@ ;;
 	buildroot-sdk | bsdk) post_build_hook $@ ;;
-	buildroot | debian | yocto) init_hook $@ ;&
+	buildroot | debian | ubuntu | ubuntu-server | ubuntu-desktop | yocto) init_hook $@ ;&
 	*) build_hook $@ ;;
 esac

@@ -19,6 +19,12 @@ build_firmware()
 
 	link_image "$RK_CHIP_DIR/$RK_PARAMETER" "$RK_FIRMWARE_DIR/parameter.txt"
 
+	# Drop a previous build's recovery image when the new layout omits it.
+	if [ -z "$RK_RECOVERY" ] && \
+		! rk_partition_parse_names | grep -qw recovery; then
+		rm -f "$RK_FIRMWARE_DIR/recovery.img"
+	fi
+
 	"$RK_SCRIPTS_DIR/mk-extra-parts.sh"
 
 	# Make sure that the loader is ready
