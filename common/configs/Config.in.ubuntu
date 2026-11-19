@@ -1,0 +1,55 @@
+#
+menuconfig RK_UBUNTU
+	bool "Ubuntu 24.04 (arm64)"
+	depends on RK_KERNEL_ARM64
+	default y if RK_CHIP_FAMILY = "rk3588"
+	help
+	  Build Ubuntu 24.04 Server or GNOME Desktop using debootstrap.
+	  Use the SDK kernel, device tree and bootloader.
+
+if RK_UBUNTU
+
+config RK_UBUNTU_NOBLE
+	bool
+	default y
+
+config RK_UBUNTU_VERSION
+	string
+	default "noble"
+
+choice
+	prompt "Ubuntu edition"
+	default RK_UBUNTU_SERVER
+
+config RK_UBUNTU_SERVER
+	bool "Server (no desktop)"
+
+config RK_UBUNTU_DESKTOP
+	bool "Desktop (GNOME + GDM3)"
+	help
+	  Use Noble-native Rockchip Xorg and Mali GLES for hardware rendering,
+	  with the distro Xorg/Mesa retained for software recovery.
+
+endchoice
+
+config RK_UBUNTU_FLAVOR
+	string
+	default "desktop" if RK_UBUNTU_DESKTOP
+	default "server"
+
+config RK_UBUNTU_DESKTOP_GPU
+	string "Desktop renderer (wayland, mali or software)"
+	default "wayland" if RK_UBUNTU_DESKTOP
+	default "software"
+	help
+	  wayland: GDM/GNOME on Wayland, Mutter GLES2 via the Mali GBM
+	  backend (same stack as the Debian trixie desktop image).
+	  mali: Rockchip Xorg on X11 with Mali GLES (Ubuntu 22.04 layout).
+	  software: distro Xorg/Mesa llvmpipe.
+
+config RK_UBUNTU_MIRROR
+	string "Ubuntu ports mirror URL"
+	default "https://ports.ubuntu.com/ubuntu-ports"
+
+endif
+endmenuconfig

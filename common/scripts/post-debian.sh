@@ -71,3 +71,6 @@ if ! [ "$RK_DEBIAN_UNIFIED_IMAGE" ]; then
 	rm -rfv *.deb *.tar
 	touch usr/local/first_boot_flag
 fi
+
+# Install the TBoard welcome at the SDK hook stage as well as standalone packing.
+python3 "$RK_SDK_DIR/debian13/setup-login.py" "$TARGET_DIR"

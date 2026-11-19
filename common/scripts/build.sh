@@ -731,7 +731,7 @@ main()
 
 	export RK_KERNEL_VERSION="$(kernel_version)"
 
-	export RK_DEBIAN_VERSION="$(basename debian/mk-rootfs-*.sh .sh | \
+	export RK_DEBIAN_VERSION="$(basename debian13/mk-rootfs-*.sh .sh | \
 		cut -d- -f3)"
 
 	if [ -z "$INITIAL_SESSION" ]; then

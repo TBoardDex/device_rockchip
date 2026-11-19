@@ -260,7 +260,7 @@ build_debian()
 		TARGET=desktop
 	fi
 
-	cd debian
+	cd debian13
 	if [ ! -f rockchip-$RK_DEBIAN_VERSION-$ARCH-$TARGET.tar.gz ]; then
 		rm -rf rockchip-$RK_DEBIAN_VERSION-*.tar.gz
 		RELEASE=$RK_DEBIAN_VERSION TARGET=$TARGET ARCH=$ARCH \
@@ -288,6 +288,25 @@ build_debian()
 	finish_build build_debian $@
 }
 
+ubuntu_src_dir()
+{
+	case "${RK_UBUNTU_VERSION:-noble}" in
+		noble) echo "$RK_SDK_DIR/ubuntu24.04" ;;
+		*) error "Unsupported Ubuntu release: $RK_UBUNTU_VERSION" >&2; return 1 ;;
+	esac
+}
+
+build_ubuntu()
+{
+	check_config RK_UBUNTU || false
+	local ubuntu_dir
+	ubuntu_dir=$(ubuntu_src_dir) || return 1
+	[ -x "$ubuntu_dir/build.sh" ] || return 1
+	RK_UBUNTU_FLAVOR="${RK_UBUNTU_FLAVOR:-server}" \
+		"$ubuntu_dir/build.sh" "${1:-$RK_OUTDIR/ubuntu-noble-server/images}"
+	finish_build build_ubuntu $@
+}
+
 # Hooks
 
 usage_hook()
@@ -303,6 +322,9 @@ usage_hook()
 	usage_oneline "buildroot" "build buildroot rootfs"
 	usage_oneline "yocto" "build yocto rootfs"
 	usage_oneline "debian" "build debian rootfs"
+	usage_oneline "ubuntu" "build configured Ubuntu rootfs"
+	usage_oneline "ubuntu-server" "build Ubuntu Server rootfs"
+	usage_oneline "ubuntu-desktop" "build Ubuntu GNOME rootfs"
 }
 
 clean_hook()
@@ -321,11 +343,21 @@ clean_hook()
 	rm -rf "$RK_FIRMWARE_DIR/rootfs.img"
 }
 
-INIT_CMDS="default buildroot debian yocto"
+INIT_CMDS="default buildroot debian ubuntu ubuntu-server ubuntu-desktop yocto"
 init_hook()
 {
 	load_config RK_ROOTFS
 	check_config RK_ROOTFS &>/dev/null || return 0
+
+	case "$1" in
+		ubuntu-server|ubuntu-desktop)
+			local flavor=${1#ubuntu-}
+			sed -i '/^RK_UBUNTU_\(SERVER\|DESKTOP\|FLAVOR\)=/d; /^# RK_UBUNTU_\(SERVER\|DESKTOP\) is not set$/d' "$RK_CONFIG"
+			echo "RK_UBUNTU_${flavor^^}=y" >> "$RK_CONFIG"
+			set -- ubuntu
+			"$RK_SCRIPTS_DIR/mk-config.sh" olddefconfig &>/dev/null
+			;;
+	esac
 
 	# Priority: cmdline > custom env
 	if [ "$1" != default ]; then
@@ -391,7 +423,7 @@ pre_build_hook()
 				TARGET=desktop
 			fi
 
-			cd "$RK_SDK_DIR/debian/ubuntu-build-service/"
+			cd "$RK_SDK_DIR/debian13/ubuntu-build-service/"
 			cd "$RK_DEBIAN_VERSION-$TARGET-$ARCH"
 			${EDITOR:-vi} \
 				customization/package-lists/*.list.chroot
@@ -400,7 +432,7 @@ pre_build_hook()
 	esac
 }
 
-BUILD_CMDS="rootfs buildroot debian yocto"
+BUILD_CMDS="rootfs buildroot debian ubuntu ubuntu-server ubuntu-desktop yocto"
 build_hook()
 {
 	check_config RK_ROOTFS || false
@@ -411,8 +443,17 @@ build_hook()
 		ROOTFS=$1
 	fi
 
+	case "$ROOTFS" in
+		ubuntu-server|ubuntu-desktop)
+			export RK_UBUNTU_FLAVOR=${ROOTFS#ubuntu-}
+			ROOTFS=ubuntu ;;
+	esac
+
 	ROOTFS_IMG="$RK_ROOTFS_IMG"
 	ROOTFS_DIR="$RK_OUTDIR/$ROOTFS"
+	if [ "$ROOTFS" = ubuntu ]; then
+		ROOTFS_DIR="$RK_OUTDIR/ubuntu-${RK_UBUNTU_VERSION:-noble}-${RK_UBUNTU_FLAVOR:-server}"
+	fi
 	IMAGE_DIR="$ROOTFS_DIR/images"
 
 	message "=========================================="
@@ -420,11 +461,14 @@ build_hook()
 	message "=========================================="
 
 	case "$ROOTFS" in
-		yocto | debian | buildroot) ;;
+		yocto | debian | ubuntu | buildroot) ;;
 		*) usage ;;
 	esac
 
-	rm -rf "$ROOTFS_DIR" "$RK_OUTDIR/rootfs"
+	if [ "$ROOTFS" != ubuntu ]; then
+		rm -rf "$ROOTFS_DIR"
+	fi
+	rm -rf "$RK_OUTDIR/rootfs"
 	mkdir -p "$IMAGE_DIR"
 	ln -rsf "$ROOTFS_DIR" "$RK_OUTDIR/rootfs"
 
@@ -432,6 +476,7 @@ build_hook()
 	case "$ROOTFS" in
 		yocto) build_yocto "$IMAGE_DIR" ;;
 		debian) build_debian "$IMAGE_DIR" ;;
+		ubuntu) build_ubuntu "$IMAGE_DIR" ;;
 		buildroot) build_buildroot "$IMAGE_DIR" ;;
 	esac
 	touch "$ROOTFS_DIR/.stamp_build_finish"
@@ -491,6 +536,6 @@ case "${1:-rootfs}" in
 	yocto-config | yconfig) build_yocto_conf ;;
 	buildroot-config | bconfig | buildroot-make | bmake) pre_build_hook $@ ;;
 	buildroot-sdk | bsdk) post_build_hook $@ ;;
-	buildroot | debian | yocto) init_hook $@ ;&
+	buildroot | debian | ubuntu | ubuntu-server | ubuntu-desktop | yocto) init_hook $@ ;&
 	*) build_hook $@ ;;
 esac

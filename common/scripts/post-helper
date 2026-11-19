@@ -119,7 +119,8 @@ shift
 unset POST_OS
 case "$(grep "^ID=" "$TARGET_DIR/etc/os-release" 2>/dev/null || true)" in
 	ID=buildroot) POST_OS=buildroot ;;
-	ID=debian) POST_OS=debian ;;
+	ID=debian|ID=\"debian\") POST_OS=debian ;;
+	ID=ubuntu|ID=\"ubuntu\") POST_OS=ubuntu ;;
 	ID=poky) POST_OS=yocto ;;
 esac
 case "$TARGET_DIR/" in
@@ -130,7 +131,7 @@ export POST_OS=${POST_OS:-unknown}
 
 # Override OS type
 case "$1" in
-	buildroot|debian|yocto|ramboot|recovery|unknown)
+	buildroot|debian|ubuntu|yocto|ramboot|recovery|unknown)
 		POST_OS="$1"
 		shift
 		;;
@@ -138,7 +139,7 @@ esac
 
 unset POST_ROOTFS
 case "$POST_OS" in
-	buildroot | debian | yocto) POST_ROOTFS=1 ;;
+	buildroot | debian | ubuntu | yocto) POST_ROOTFS=1 ;;
 	*) [ -z "$POST_ROOTFS_ONLY" ] || exit 0 ;;
 esac
 

@@ -53,11 +53,11 @@ config RK_DEBIAN_MIRROR
 
 config RK_DEBIAN_USER
 	string "default user"
-	default "rockchip"
+	default "tboard"
 
 config RK_DEBIAN_PASSWORD
 	string "password for the default user"
-	default "rockchip"
+	default "tboard"
 
 config RK_DEBIAN_LINUX_HEADERS
 	bool "install linux-headers"

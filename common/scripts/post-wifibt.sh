@@ -7,6 +7,35 @@ source "${RK_POST_HELPER:-$(dirname "$(realpath "$0")")/post-helper}"
 build_wifibt()
 {
 	check_config RK_KERNEL RK_WIFIBT RK_WIFIBT_MODULES || return 0
+	# TBoard's SDIO driver is part of the SDK kernel and is installed by
+	# post-modules.sh. Do not build the unrelated external AIC USB/PCIe tree.
+	if [[ "$RK_WIFIBT_MODULES" == AIC8800 && ( "$POST_OS" == ubuntu || "$POST_OS" == debian ) ]]; then
+		local distro_dir="$RK_SDK_DIR/ubuntu24.04"
+		[ "$POST_OS" != debian ] || distro_dir="$RK_SDK_DIR/debian13"
+		local resources="$distro_dir/bsp/wifibt"
+		local firmware="$distro_dir/overlay-firmware/lib/firmware/aic8800"
+		[ -d "$resources/scripts" ] && [ -d "$firmware" ] || return 1
+		grep -qx 'CONFIG_AIC_WLAN_SUPPORT=m' "$RK_SDK_DIR/kernel/.config" || {
+			error "Enable CONFIG_AIC_WLAN_SUPPORT=m in the board kernel"
+			return 1
+		}
+		mkdir -p "$TARGET_DIR/usr/bin" "$TARGET_DIR/etc" "$TARGET_DIR/lib/firmware/aic8800"
+		# Python tests may leave __pycache__ directories in the resource tree;
+		# install only regular files so a cache directory cannot abort the image.
+		find "$resources/scripts" -maxdepth 1 -type f -exec install -m 0755 {} "$TARGET_DIR/usr/bin/" \;
+		find "$resources/conf" -maxdepth 1 -type f -exec install -m 0644 {} "$TARGET_DIR/etc/" \;
+		find "$firmware" -maxdepth 1 -type f -exec install -m 0644 {} "$TARGET_DIR/lib/firmware/aic8800/" \;
+		install -m 0644 "$resources/aic8800-bluetooth.conf" "$TARGET_DIR/etc/"
+		for name in bt-tty wifibt-info wifibt-vendor wifibt-id wifibt-bus wifibt-chip wifibt-module; do
+			ln -sf wifibt-util.sh "$TARGET_DIR/usr/bin/$name"
+		done
+		install_systemd_service "$resources/wifibt-init.service"
+		install_systemd_service "$resources/aic8800-bluetooth.service"
+		install -D -m 0644 "$resources/LICENSE" "$TARGET_DIR/usr/share/doc/tboard-wifibt/copyright"
+		install -D -m 0644 "$resources/LICENSE.aic-bluetooth" "$TARGET_DIR/usr/share/doc/tboard-aic8800-bluetooth/copyright"
+		chroot "$TARGET_DIR" /usr/bin/python3 -B /usr/bin/aic8800-bt-attach --check-config --config /etc/aic8800-bluetooth.conf
+		return 0
+	fi
 	source "$RK_SCRIPTS_DIR/kernel-helper"
 
 	message "=========================================="
